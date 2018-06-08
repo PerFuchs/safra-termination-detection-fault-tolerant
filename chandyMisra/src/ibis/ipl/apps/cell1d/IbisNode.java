@@ -33,7 +33,7 @@ class IbisNode {
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, distanceMessagePortType);
     System.out.println("Created communication layer");
-    Network network = Network.getUndirectedRing(ibis.identifier(), communicationLayer.getIbises(), communicationLayer);
+    Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer);
     System.out.println("Created Network");
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, ibis.identifier());
     System.out.println("Created Misra algorithm");

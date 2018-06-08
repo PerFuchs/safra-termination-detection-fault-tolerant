@@ -36,6 +36,7 @@ public class ChandyMisraNode {
   // TODO is synchronized allowed and okay?
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, IbisIdentifier origin) throws IOException {
     int newDistance = dm.getDistance() + network.getWeight(origin, me);
+    assert newDistance > 0 : "Negative distance, overflow?";
     if (dist == -1 || newDistance < dist) {
       dist = newDistance;
       parent = origin;

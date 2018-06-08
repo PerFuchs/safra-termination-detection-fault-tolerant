@@ -79,6 +79,24 @@ public class Network {
     return new Network(me, ibises, channels, communicationLayer);
   }
 
+  public static Network getLineNetwork(IbisIdentifier me, IbisIdentifier[] ibises, CommunicationLayer communicationLayer) {
+    List<Channel> channels = new LinkedList<>();
+
+    int root = communicationLayer.getRoot();
+    for (int i = 0; i < communicationLayer.getIbises().length - 1; i++) {
+      channels.add(new Channel(i+1, i, 1));
+      channels.add(new Channel(i, i+1, 1));
+    }
+
+    // Add heavyweight edges from the root to all nodes for more messages
+    for (int i = 1; i < communicationLayer.getIbises().length; i++) {
+      channels.add(new Channel(0, i, Integer.MAX_VALUE/2));  // Carefull MAX_VALUE obviously leads to overflows later on
+      channels.add(new Channel(i, 0, Integer.MAX_VALUE/2));
+    }
+
+    return new Network(me, ibises, channels, communicationLayer);
+  }
+
 }
 
 
