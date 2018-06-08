@@ -6,19 +6,22 @@ import ibis.ipl.apps.cell1d.algorithm.DistanceMessage;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class CommunicationLayer {
 
   private Ibis ibis;
   private Registry registry;
+  private PortType distanceMessagePortType;
   private IbisIdentifier[] ibises;
-  private Map<IbisIdentifier, SendPort> distanceMessageSendPorts;
-  private Map<IbisIdentifier, ReceivePort> distanceMessageReceivePorts;
+  private Map<IbisIdentifier, SendPort> distanceMessageSendPorts = new TreeMap<>();
+  private Map<IbisIdentifier, ReceivePort> distanceMessageReceivePorts = new TreeMap<>();
   int me;
 
-  public CommunicationLayer(Ibis ibis, Registry registry) throws IOException {
+  public CommunicationLayer(Ibis ibis, Registry registry, PortType distanceMessagePortType) throws IOException {
     this.ibis = ibis;
     this.registry = registry;
+    this.distanceMessagePortType = distanceMessagePortType;
     findAllIbises();
   }
 
@@ -45,12 +48,6 @@ public class CommunicationLayer {
   }
 
   public void connectIbises(ChandyMisraNode chandyMisraNode) throws IOException {
-    PortType distanceMessagePortType = new PortType(
-        PortType.CONNECTION_ONE_TO_ONE,
-        PortType.COMMUNICATION_RELIABLE,
-        PortType.RECEIVE_AUTO_UPCALLS,
-        PortType.SERIALIZATION_DATA);
-
     for (int i = 0; i < ibises.length; i++) {
       IbisIdentifier id = ibises[i];
       if (!id.equals(ibis.identifier())) {
@@ -61,6 +58,7 @@ public class CommunicationLayer {
         p.enableMessageUpcalls();
       }
     }
+    System.out.println("Created receive ports");
 
     for (int i = 0; i < ibises.length; i++) {
       IbisIdentifier id = ibises[i];
@@ -68,9 +66,10 @@ public class CommunicationLayer {
         String name = "SendDistance" + i;
         SendPort p = ibis.createSendPort(distanceMessagePortType, name);
         distanceMessageSendPorts.put(id, p);
-        p.connect(id, getDistanceReceivePortName(i));
+        p.connect(id, getDistanceReceivePortName(me));
       }
     }
+    System.out.println("Created sent ports");
   }
 
   public boolean isRoot(IbisIdentifier id) {

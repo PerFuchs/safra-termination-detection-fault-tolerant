@@ -19,24 +19,29 @@ class IbisNode {
         IbisCapabilities.CLOSED_WORLD,
         IbisCapabilities.ELECTIONS_STRICT);
 
-    PortType t = new PortType(
+    PortType distanceMessagePortType = new PortType(
         PortType.CONNECTION_ONE_TO_ONE,
         PortType.COMMUNICATION_RELIABLE,
-        PortType.RECEIVE_EXPLICIT,
+        PortType.RECEIVE_AUTO_UPCALLS,
         PortType.SERIALIZATION_DATA);
 
-    ibis = IbisFactory.createIbis(s, null, t);
+    ibis = IbisFactory.createIbis(s, null, distanceMessagePortType);
 
     registry = ibis.registry();
-
+    System.out.println("Created IBIS");
     long startTime = System.currentTimeMillis();
 
-    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry);
-    Network network = new Network(communicationLayer.getIbises());
+    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, distanceMessagePortType);
+    System.out.println("Created communication layer");
+    Network network = new Network(ibis.identifier(), communicationLayer.getIbises());
+    System.out.println("Created Network");
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, ibis.identifier());
+    System.out.println("Created Misra algorithm");
 
     communicationLayer.connectIbises(chandyMisraNode);
+    System.out.println("connected communication layer");
     chandyMisraNode.startAlgorithm();
+    System.out.println("Started algorithm");
 
     Thread.sleep(4000);
 
