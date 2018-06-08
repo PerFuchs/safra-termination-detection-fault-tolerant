@@ -72,6 +72,10 @@ public class CommunicationLayer {
     System.out.println("Created sent ports");
   }
 
+  public int getRoot() {
+    return 0;
+  }
+
   public boolean isRoot(IbisIdentifier id) {
     return ibises[0].equals(id);
   }
