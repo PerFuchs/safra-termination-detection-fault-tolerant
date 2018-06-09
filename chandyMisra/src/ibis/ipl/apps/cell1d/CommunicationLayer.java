@@ -20,16 +20,19 @@ public class CommunicationLayer {
   int me;
   private boolean crashed;
   private PortType crashedMessagePortType;
+  private PortType requestMessagePortType;
   private Map<IbisIdentifier, SendPort> crashedMessageSendPorts = new TreeMap<>();
   private Map<IbisIdentifier, ReceivePort> crashedMessageReceivePorts = new TreeMap<>();
   private Map<IbisIdentifier, ReceivePort> requestMessageReceivePorts = new TreeMap<>();
   private Map<IbisIdentifier, SendPort> requestMessageSendPorts = new TreeMap<>();
 
-  public CommunicationLayer(Ibis ibis, Registry registry, PortType distanceMessagePortType, PortType crashedMessagePortType) throws IOException {
+  public CommunicationLayer(Ibis ibis, Registry registry, PortType distanceMessagePortType, PortType crashedMessagePortType,
+                            PortType requestMessagePortType) throws IOException {
     this.ibis = ibis;
     this.registry = registry;
     this.distanceMessagePortType = distanceMessagePortType;
     this.crashedMessagePortType = crashedMessagePortType;
+    this.requestMessagePortType = requestMessagePortType;
     findAllIbises();
   }
 
@@ -66,7 +69,7 @@ public class CommunicationLayer {
       IbisIdentifier id = ibises[i];
       if (!id.equals(ibis.identifier())) {
         String name = getRequestMessagePortName(i);
-        ReceivePort p = ibis.createReceivePort(crashedMessagePortType, name, new RequestMessageUpcall(chandyMisraNode, id));
+        ReceivePort p = ibis.createReceivePort(requestMessagePortType, name, new RequestMessageUpcall(chandyMisraNode, id));
         requestMessageReceivePorts.put(id, p);
         p.enableConnections();
         p.enableMessageUpcalls();
@@ -77,7 +80,7 @@ public class CommunicationLayer {
       IbisIdentifier id = ibises[i];
       if (!id.equals(ibis.identifier())) {
         String name = "SendRequest" + i;
-        SendPort p = ibis.createSendPort(crashedMessagePortType, name);
+        SendPort p = ibis.createSendPort(requestMessagePortType, name);
         requestMessageSendPorts.put(id, p);
         p.connect(id, getRequestMessagePortName(me));
       }

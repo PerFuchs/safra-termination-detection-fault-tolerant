@@ -31,17 +31,23 @@ class IbisNode {
         PortType.RECEIVE_AUTO_UPCALLS,
         PortType.SERIALIZATION_DATA);
 
+    PortType requestMessagePortType = new PortType(
+        PortType.CONNECTION_ONE_TO_ONE,
+        PortType.COMMUNICATION_RELIABLE,
+        PortType.RECEIVE_AUTO_UPCALLS,
+        PortType.SERIALIZATION_DATA);
 
-    ibis = IbisFactory.createIbis(s, null, distanceMessagePortType, crashedMessagePortType);
+
+    ibis = IbisFactory.createIbis(s, null, distanceMessagePortType, requestMessagePortType, crashedMessagePortType);
 
     registry = ibis.registry();
     System.out.println("Created IBIS");
     long startTime = System.currentTimeMillis();
 
-    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, distanceMessagePortType, crashedMessagePortType);
+    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, distanceMessagePortType, crashedMessagePortType, requestMessagePortType);
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer);
     System.out.println("Created communication layer");
-    Network network = Network.getUndirectedRing(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
+    Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
     System.out.println("Created Network");
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, ibis.identifier());
     System.out.println("Created Misra algorithm");
