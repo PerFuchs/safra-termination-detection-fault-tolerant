@@ -2,7 +2,7 @@ package ibis.ipl.apps.cell1d.algorithm;
 
 import java.util.Objects;
 
-public class Channel {
+public class Channel implements Comparable<Channel> {
 
   public final int src;
   public final int dest;
@@ -36,5 +36,20 @@ public class Channel {
     }
     final Channel that = (Channel) other;
     return src == that.src && dest == that.dest;
+  }
+
+  @Override
+  public int compareTo(Channel channel) {
+    if (channel == null) {
+      throw new NullPointerException();
+    }
+    int sort = weight - channel.weight;
+    if (sort == 0) {
+      sort = src - channel.src;
+      if (sort == 0) {
+        sort = dest - channel.dest;
+      }
+    }
+    return sort;
   }
 }

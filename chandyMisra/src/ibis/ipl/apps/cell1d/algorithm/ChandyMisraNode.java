@@ -20,7 +20,7 @@ public class ChandyMisraNode {
     this.me = ibisId;
   }
 
-  public SpanningTree getSpanningTree() {
+  public MinimumSpanningTree getSpanningTree() {
     return null;
   }
 

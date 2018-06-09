@@ -2,13 +2,9 @@ package ibis.ipl.apps.cell1d.algorithm;
 
 import ibis.ipl.IbisIdentifier;
 import ibis.ipl.apps.cell1d.CommunicationLayer;
-import ibis.ipl.apps.cell1d.CrashDetector;
 import ibis.ipl.apps.cell1d.CrashSimulator;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Network {
 
@@ -30,8 +26,25 @@ public class Network {
     this.channels = channels;
   }
 
-  public SpanningTree getExpectedSpanningTree() {
-    return null;
+  public MinimumSpanningTree getSpanningTree(List<IbisIdentifier> crashedNodes) {
+    Set<Integer> crashedNodeNumbers = new HashSet<>();
+    for (IbisIdentifier id : crashedNodes) {
+      crashedNodeNumbers.add(communicationLayer.getNodeNumber(id));
+    }
+
+    Set<Integer> aliveNodes = new HashSet<>();
+    for (int i = 0; i < communicationLayer.getIbises().length; i++) {
+      aliveNodes.add(i);
+    }
+    aliveNodes.removeAll(crashedNodeNumbers);
+
+    List<Channel> aliveChannels = new LinkedList<>(channels);
+    for (Channel c : channels) {
+      if (crashedNodeNumbers.contains(c.src) || crashedNodeNumbers.contains(c.dest)) {
+        aliveChannels.remove(c);
+      }
+    }
+    return new MinimumSpanningTree(aliveChannels, communicationLayer.getRoot(), aliveNodes);
   }
 
   // TODO refactor all to use integers

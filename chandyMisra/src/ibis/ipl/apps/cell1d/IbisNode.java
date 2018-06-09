@@ -7,6 +7,7 @@ import ibis.ipl.apps.cell1d.algorithm.ChandyMisraNode;
 import ibis.ipl.apps.cell1d.algorithm.Network;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 
 class IbisNode {
@@ -72,6 +73,7 @@ class IbisNode {
     int root = 0;
     int me = communicationLayer.getNodeNumber(ibis.identifier());
     System.out.println("Node: " + me + " Parent: " + communicationLayer.getNodeNumber(chandyMisraNode.getParent()) + "Dist: " + chandyMisraNode.getDist());
+    System.err.println(network.getSpanningTree(new LinkedList<IbisIdentifier>()));
 
     ibis.end();
   }
