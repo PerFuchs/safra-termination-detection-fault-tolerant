@@ -36,8 +36,7 @@ public class ChandyMisraNode {
   // TODO is synchronized allowed and okay?
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, IbisIdentifier origin) throws IOException {
     int newDistance = dm.getDistance() + network.getWeight(origin, me);
-    assert newDistance > 0 : "Negative distance, overflow?";
-    if (dist == -1 || newDistance < dist) {
+    if ((dist == -1 || newDistance < dist) && newDistance > 0) {  // > 0 for overflows
       dist = newDistance;
       parent = origin;
       sendDistanceMessagesToAllNeighbours(dist);
@@ -56,5 +55,37 @@ public class ChandyMisraNode {
 
   public IbisIdentifier getParent() {
     return parent;
+  }
+
+  public void handleCrash(IbisIdentifier crashedNode) throws IOException {
+    if (crashedNode.equals(parent)) {
+      handleRequestMessage(crashedNode);
+    }
+  }
+
+  public synchronized void handleRequestMessage(IbisIdentifier origin) throws IOException {
+    if (origin.equals(parent)) {
+      System.out.println("Got request message from parent or detected crash of parent at node: " + communicationLayer.getNodeNumber(communicationLayer.identifier()));
+      IbisIdentifier oldParent = parent;
+      parent = null;
+      dist = -1;
+      for (IbisIdentifier neighbour : network.getNeighbours(me)) {
+        if (!neighbour.equals(oldParent)) {
+          sendRequestMessage(neighbour);
+        }
+      }
+    } else {
+      if (dist != -1) {
+        sendDistanceMessage(dist, origin);
+      }
+    }
+  }
+
+  public void sendRequestMessage(IbisIdentifier receiver) throws IOException {
+    communicationLayer.sendRequestMessage(receiver);
+  }
+
+  public int getDist() {
+    return dist;
   }
 }
