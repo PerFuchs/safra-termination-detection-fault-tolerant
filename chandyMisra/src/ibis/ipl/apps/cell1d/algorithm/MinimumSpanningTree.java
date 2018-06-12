@@ -1,23 +1,14 @@
 package ibis.ipl.apps.cell1d.algorithm;
 
 
+import ibis.ipl.IbisIdentifier;
+import ibis.ipl.apps.cell1d.CommunicationLayer;
+import ibis.ipl.apps.cell1d.Result;
+
 import java.util.*;
 
 public class MinimumSpanningTree {
-
-  private class Node {
-    private final int parent;
-    private final int dist;
-    private final List<Node> children = new LinkedList<>();
-
-    private Node(int parent, int dist) {
-      this.parent = parent;
-      this.dist = dist;
-    }
-  }
-
   private int root;
-  private Node rootNode;
   private List<Channel> channels = new LinkedList<>();
 
   /**
@@ -47,6 +38,19 @@ public class MinimumSpanningTree {
       this.channels.add(lowestOutgoing);
       visited.add(lowestOutgoing.dest);
     }
+  }
+
+  public MinimumSpanningTree(List<Result> results, CommunicationLayer communicationLayer, Network network, List<IbisIdentifier> crashedNodes) {
+    this.root = communicationLayer.getRoot();
+
+    for (Result r : results) {
+      if (r.parent != -1 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
+        channels.add(new Channel(r.parent, r.node, network.getWeight(
+            communicationLayer.getIbises()[r.parent], communicationLayer.getIbises()[r.node])));
+      }
+    }
+
+    // TODO should I control weight calculation of Chandy misra?
   }
 
   public int getWeight() {
@@ -79,5 +83,16 @@ public class MinimumSpanningTree {
       work.addAll(channelsFrom(c.dest));
     }
     return b.toString();
+  }
+
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof MinimumSpanningTree)) {
+      return false;
+    }
+    final MinimumSpanningTree that = (MinimumSpanningTree) other;
+    return root == that.root && channels.equals(that.channels);
   }
 }

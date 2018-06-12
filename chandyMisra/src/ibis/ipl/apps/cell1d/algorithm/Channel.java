@@ -27,6 +27,7 @@ public class Channel implements Comparable<Channel> {
     return Objects.hash(src, dest);
   }
 
+  // TODO add weight to this
   public boolean equals(Object other) {
     if (this == other) {
       return true;
