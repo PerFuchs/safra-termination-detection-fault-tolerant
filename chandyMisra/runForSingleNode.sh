@@ -11,7 +11,5 @@ startChandyMisraInstance () {
 echo $1
 for i in $(seq 1 $1)
 do
-   echo "Start"
    startChandyMisraInstance $2 &
-   echo "After"
 done

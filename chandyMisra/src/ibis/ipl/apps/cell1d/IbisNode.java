@@ -29,32 +29,19 @@ class IbisNode {
         IbisCapabilities.CLOSED_WORLD,
         IbisCapabilities.ELECTIONS_STRICT);
 
-    PortType distanceMessagePortType = new PortType(
+    PortType porttype = new PortType(
         PortType.CONNECTION_ONE_TO_ONE,
         PortType.COMMUNICATION_RELIABLE,
         PortType.RECEIVE_AUTO_UPCALLS,
         PortType.SERIALIZATION_DATA);
 
-    PortType crashedMessagePortType = new PortType(
-        PortType.CONNECTION_ONE_TO_ONE,
-        PortType.COMMUNICATION_RELIABLE,
-        PortType.RECEIVE_AUTO_UPCALLS,
-        PortType.SERIALIZATION_DATA);
-
-    PortType requestMessagePortType = new PortType(
-        PortType.CONNECTION_ONE_TO_ONE,
-        PortType.COMMUNICATION_RELIABLE,
-        PortType.RECEIVE_AUTO_UPCALLS,
-        PortType.SERIALIZATION_DATA);
-
-
-    ibis = IbisFactory.createIbis(s, null, distanceMessagePortType, requestMessagePortType, crashedMessagePortType);
+    ibis = IbisFactory.createIbis(s, null, porttype);
 
     registry = ibis.registry();
     System.out.println("Created IBIS");
     long startTime = System.currentTimeMillis();
 
-    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, distanceMessagePortType, crashedMessagePortType, requestMessagePortType);
+    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
     Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
@@ -96,9 +83,10 @@ class IbisNode {
       System.out.println(String.format("Weight equal: %b Trees equal: %b",
           tree.getWeight() == expectedTree.getWeight(), tree.equals(expectedTree)));
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
+      System.out.println("End");
     }
 
-    Thread.sleep(1000);
+    Thread.sleep(5000);
 
     ibis.end();
   }
