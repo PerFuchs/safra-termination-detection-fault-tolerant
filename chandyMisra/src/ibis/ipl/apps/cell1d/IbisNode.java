@@ -66,19 +66,20 @@ class IbisNode {
 
     communicationLayer.connectIbises(chandyMisraNode, crashDetector);
     System.out.println("connected communication layer");
+    Thread.sleep(4000);
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
-    Thread.sleep(2000);
+    Thread.sleep(6000);
     crashSimulator.triggerLateCrash();
-    Thread.sleep(2000);
+    Thread.sleep(6000);
     writeResults(communicationLayer.getNodeNumber(ibis.identifier()), chandyMisraNode, communicationLayer);
-    Thread.sleep(200);
+    Thread.sleep(1000);
 
     System.out.println("After sleeping");
     int me = communicationLayer.getNodeNumber(ibis.identifier());
     System.out.println("Node: " + me + " Parent: " + communicationLayer.getNodeNumber(chandyMisraNode.getParent()) + "Dist: " + chandyMisraNode.getDist());
-    Thread.sleep(200);
+    Thread.sleep(1000);
 
     if (communicationLayer.isRoot(ibis.identifier())) {
       long endTime = System.currentTimeMillis();
@@ -97,7 +98,7 @@ class IbisNode {
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
     }
 
-
+    Thread.sleep(1000);
 
     ibis.end();
   }
@@ -120,6 +121,7 @@ class IbisNode {
     List<Result> results = new LinkedList<>();
 
     for (int i = 0; i < communicationLayer.getIbises().length; i++) {
+      System.out.println("Reading results " + i);
       Path path = Paths.get(filePathForResults(i));
       String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
       results.add(new Result(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));

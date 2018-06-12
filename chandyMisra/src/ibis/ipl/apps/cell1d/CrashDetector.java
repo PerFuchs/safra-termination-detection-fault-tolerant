@@ -22,7 +22,6 @@ public class CrashDetector {
   }
 
   public synchronized void handleCrash(IbisIdentifier crashedNode) throws IOException {
-    System.out.println("Detected crash of node: " + crashedNode);
     crashedNodes.add(crashedNode);
     chandyMisraNode.handleCrash(crashedNode);
   }

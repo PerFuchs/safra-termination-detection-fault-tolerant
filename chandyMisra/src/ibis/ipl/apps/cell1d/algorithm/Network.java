@@ -57,17 +57,10 @@ public class Network {
         neighbours.add(communicationLayer.getIbises()[c.dest]);
       }
     }
-    System.out.print("Neighbours of: " + communicationLayer.getNodeNumber(id) + ": ");
-    for (IbisIdentifier neighbour : neighbours) {
-      System.out.print(communicationLayer.getNodeNumber(neighbour));
-    }
-    System.out.println("");
     return neighbours.toArray(new IbisIdentifier[neighbours.size()]);
   }
 
   public int getWeight(IbisIdentifier source, IbisIdentifier destination) {
-
-    System.out.println("Weight for " + communicationLayer.getNodeNumber(source) + " --> " + communicationLayer.getNodeNumber(destination) + " requested");
     return channels.get(
         channels.indexOf(new Channel(
             communicationLayer.getNodeNumber(source), communicationLayer.getNodeNumber(destination), 0)
