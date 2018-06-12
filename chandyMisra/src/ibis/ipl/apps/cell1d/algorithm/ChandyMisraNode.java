@@ -45,7 +45,9 @@ public class ChandyMisraNode {
 
   private void sendDistanceMessagesToAllNeighbours(int distance) throws IOException {
     for (IbisIdentifier neighbour : network.getNeighbours(me)) {
-      sendDistanceMessage(distance, neighbour);
+      if (!neighbour.equals(parent)) {
+        sendDistanceMessage(distance, neighbour);
+      }
     }
   }
 

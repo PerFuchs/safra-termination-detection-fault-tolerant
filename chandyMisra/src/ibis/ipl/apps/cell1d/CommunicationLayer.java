@@ -3,10 +3,10 @@ package ibis.ipl.apps.cell1d;
 import ibis.ipl.*;
 import ibis.ipl.apps.cell1d.algorithm.ChandyMisraNode;
 import ibis.ipl.apps.cell1d.algorithm.DistanceMessage;
+import ibis.ipl.apps.cell1d.algorithm.Network;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class CommunicationLayer {
 
@@ -19,6 +19,7 @@ public class CommunicationLayer {
 
   int me;
   private boolean crashed;
+  private List<IbisIdentifier> neighbours;
 
   public CommunicationLayer(Ibis ibis, Registry registry, PortType messagePortType) throws IOException {
     this.ibis = ibis;
@@ -49,10 +50,11 @@ public class CommunicationLayer {
     return "Receive" + i;
   }
 
-  public void connectIbises(ChandyMisraNode chandyMisraNode, CrashDetector crashDetector) throws IOException {
+  public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, CrashDetector crashDetector) throws IOException {
+    neighbours = Arrays.asList(network.getNeighbours(ibis.identifier()));
     for (int i = 0; i < ibises.length; i++) {
       IbisIdentifier id = ibises[i];
-      if (!id.equals(ibis.identifier())) {
+      if (neighbours.contains(id)) {
         String name = getReceivePortName(i);
         ReceivePort p = ibis.createReceivePort(messagePortType, name, new MessageUpcall(chandyMisraNode, crashDetector, id));
         receivePorts.put(id, p);
@@ -63,7 +65,7 @@ public class CommunicationLayer {
 
     for (int i = 0; i < ibises.length; i++) {
       IbisIdentifier id = ibises[i];
-      if (!id.equals(ibis.identifier())) {
+      if (neighbours.contains(id)) {
         String name = "SendDistance" + i;
         SendPort p = ibis.createSendPort(messagePortType, name);
         sendPorts.put(id, p);
@@ -112,15 +114,14 @@ public class CommunicationLayer {
     this.crashed = true;
   }
 
+  // TODO failure detector only works for local failures
   public void broadcastCrashMessage() throws IOException {
-    for (IbisIdentifier id : ibises) {
-      if (!id.equals(ibis.identifier())) {
+    for (IbisIdentifier id : neighbours) {
         SendPort sendPort = sendPorts.get(id);
         WriteMessage m = sendPort.newMessage();
         m.writeInt(MessageTypes.CRASHED.ordinal());
         m.send();
         m.finish();
-      }
     }
   }
 

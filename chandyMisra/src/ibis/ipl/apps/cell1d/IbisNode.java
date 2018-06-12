@@ -33,7 +33,8 @@ class IbisNode {
         PortType.CONNECTION_ONE_TO_ONE,
         PortType.COMMUNICATION_RELIABLE,
         PortType.RECEIVE_AUTO_UPCALLS,
-        PortType.SERIALIZATION_DATA);
+        PortType.SERIALIZATION_DATA,
+        PortType.COMMUNICATION_FIFO);
 
     ibis = IbisFactory.createIbis(s, null, porttype);
 
@@ -51,21 +52,22 @@ class IbisNode {
 
     CrashDetector crashDetector = new CrashDetector(chandyMisraNode, communicationLayer);
 
-    communicationLayer.connectIbises(chandyMisraNode, crashDetector);
+    communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("connected communication layer");
-    Thread.sleep(4000);
+    // TODO use barriers instead of timers.
+    Thread.sleep(10000);
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
-    Thread.sleep(6000);
+    Thread.sleep(5000);
     crashSimulator.triggerLateCrash();
-    Thread.sleep(6000);
+    Thread.sleep(20000);
     writeResults(communicationLayer.getNodeNumber(ibis.identifier()), chandyMisraNode, communicationLayer);
-    Thread.sleep(1000);
+    Thread.sleep(3000);
 
-    System.out.println("After sleeping");
+//    System.out.println("After sleeping");
     int me = communicationLayer.getNodeNumber(ibis.identifier());
-    System.out.println("Node: " + me + " Parent: " + communicationLayer.getNodeNumber(chandyMisraNode.getParent()) + "Dist: " + chandyMisraNode.getDist());
+//    System.out.println("Node: " + me + " Parent: " + communicationLayer.getNodeNumber(chandyMisraNode.getParent()) + "Dist: " + chandyMisraNode.getDist());
     Thread.sleep(1000);
 
     if (communicationLayer.isRoot(ibis.identifier())) {
@@ -86,7 +88,7 @@ class IbisNode {
       System.out.println("End");
     }
 
-    Thread.sleep(5000);
+    Thread.sleep(7000);
 
     ibis.end();
   }

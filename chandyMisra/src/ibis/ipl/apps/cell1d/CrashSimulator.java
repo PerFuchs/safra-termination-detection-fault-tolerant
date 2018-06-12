@@ -3,7 +3,9 @@ package ibis.ipl.apps.cell1d;
 import ibis.ipl.IbisIdentifier;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 public class CrashSimulator {
 
@@ -20,8 +22,14 @@ public class CrashSimulator {
     long nodesToCrash = Math.round(networkSize * nodesToCrashPercentage);
 
     Random r = new Random();
+    Set<Integer> toCrash = new HashSet<>();
     for (int i = 0; i < nodesToCrash; i++) {
-      IbisIdentifier crash = communicationLayer.getIbises()[r.nextInt(networkSize)];
+      int crashNodeNumber;
+      do  {
+        crashNodeNumber = r.nextInt(networkSize);
+      } while ((toCrash.contains(crashNodeNumber)));
+      toCrash.add(crashNodeNumber);
+      IbisIdentifier crash = communicationLayer.getIbises()[crashNodeNumber];
       if (!communicationLayer.isRoot(crash)) {
         scheduleLateCrash(crash);
       }
@@ -45,8 +53,8 @@ public class CrashSimulator {
 
   private void crash() throws IOException {
     System.out.println("Simulated crash for node: " + communicationLayer.getNodeNumber(communicationLayer.identifier()));
-    communicationLayer.crash();
     communicationLayer.broadcastCrashMessage();
+    communicationLayer.crash();
   }
 
 }

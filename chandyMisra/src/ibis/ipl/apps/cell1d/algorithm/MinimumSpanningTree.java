@@ -71,6 +71,8 @@ public class MinimumSpanningTree {
     return ret;
   }
 
+
+  // TODO add warning or print of unreachable channels
   @Override
   public String toString() {
     StringBuilder b = new StringBuilder();

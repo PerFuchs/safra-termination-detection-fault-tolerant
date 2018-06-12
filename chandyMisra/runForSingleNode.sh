@@ -8,7 +8,6 @@ startChandyMisraInstance () {
     ibis.ipl.apps.cell1d.IbisNode
 }
 
-echo $1
 for i in $(seq 1 $1)
 do
    startChandyMisraInstance $2 &
