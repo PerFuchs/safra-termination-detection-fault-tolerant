@@ -25,6 +25,7 @@ class IbisNode {
 
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
+    System.setErr(System.out);  // Redirect because DAS4 does not show err.
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.CLOSED_WORLD,
         IbisCapabilities.ELECTIONS_STRICT);
@@ -40,10 +41,12 @@ class IbisNode {
 
     registry = ibis.registry();
     System.out.println("Created IBIS");
+
     long startTime = System.currentTimeMillis();
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
+
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
     System.out.println("Created communication layer");
     Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
     System.out.println("Created Network");
@@ -63,12 +66,7 @@ class IbisNode {
     crashSimulator.triggerLateCrash();
     Thread.sleep(20000);
     writeResults(communicationLayer.getNodeNumber(ibis.identifier()), chandyMisraNode, communicationLayer);
-    Thread.sleep(3000);
-
-//    System.out.println("After sleeping");
-    int me = communicationLayer.getNodeNumber(ibis.identifier());
-//    System.out.println("Node: " + me + " Parent: " + communicationLayer.getNodeNumber(chandyMisraNode.getParent()) + "Dist: " + chandyMisraNode.getDist());
-    Thread.sleep(1000);
+    Thread.sleep(5000);
 
     if (communicationLayer.isRoot(ibis.identifier())) {
       long endTime = System.currentTimeMillis();
@@ -88,7 +86,7 @@ class IbisNode {
       System.out.println("End");
     }
 
-    Thread.sleep(7000);
+    Thread.sleep(3000);
 
     ibis.end();
   }
@@ -97,24 +95,35 @@ class IbisNode {
     return String.format("/var/scratch/pfs250/%d.output", node);
   }
 
-  private static void writeResults(int node, ChandyMisraNode chandyMisraNode, CommunicationLayer communicationLayer) throws IOException {
+  private static void writeResults(int node, ChandyMisraNode chandyMisraNode, CommunicationLayer communicationLayer) {
     String str = String.format("%d %d %d\n", node, communicationLayer.getNodeNumber(chandyMisraNode.getParent()), chandyMisraNode.getDist());
 
     Path path = Paths.get(filePathForResults(node));
     byte[] strToBytes = str.getBytes();
 
-    Files.write(path, strToBytes);
+    try {
+      Files.write(path, strToBytes);
+    } catch (IOException e) {
+      System.out.println(String.format("Could not write output file: %d", node));
+    }
     System.out.println("Output files written.");
   }
 
-  private static List<Result> readResults(CommunicationLayer communicationLayer) throws IOException {
+  private static List<Result> readResults(CommunicationLayer communicationLayer) {
     List<Result> results = new LinkedList<>();
 
     for (int i = 0; i < communicationLayer.getIbises().length; i++) {
       System.out.println("Reading results " + i);
-      Path path = Paths.get(filePathForResults(i));
+
+        Path path = Paths.get(filePathForResults(i));
+
+    try {
       String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
       results.add(new Result(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
+    } catch (IOException e) {
+      System.out.println(String.format("Could not read output file from: %d", i));
+    }
+
     }
     return results;
   }
