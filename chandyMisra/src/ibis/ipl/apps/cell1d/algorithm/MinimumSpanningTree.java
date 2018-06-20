@@ -8,6 +8,7 @@ import ibis.ipl.apps.cell1d.Result;
 import java.util.*;
 
 public class MinimumSpanningTree {
+  private LinkedList<Integer> badRoots;
   private int root;
   private List<Channel> channels = new LinkedList<>();
 
@@ -42,11 +43,14 @@ public class MinimumSpanningTree {
 
   public MinimumSpanningTree(List<Result> results, CommunicationLayer communicationLayer, Network network, List<IbisIdentifier> crashedNodes) {
     this.root = communicationLayer.getRoot();
+    this.badRoots = new LinkedList<Integer>();
 
     for (Result r : results) {
       if (r.parent != -1 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
         channels.add(new Channel(r.parent, r.node, network.getWeight(
             communicationLayer.getIbises()[r.parent], communicationLayer.getIbises()[r.node])));
+      } else if (r.parent == -1 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
+        badRoots.add(r.node);
       }
     }
 
@@ -79,10 +83,28 @@ public class MinimumSpanningTree {
     Stack<Channel> work = new Stack<>();
 
     work.addAll(channelsFrom(root));
+    b.append("Actual tree:\n");
     while (!work.empty()) {
       Channel c = work.pop();
       b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
       work.addAll(channelsFrom(c.dest));
+    }
+
+    b.append("Bad Trees:\n");
+
+    for (int badRoot : badRoots) {
+      LinkedList<Integer> visited = new LinkedList<>();
+      work.addAll(channelsFrom(badRoot));
+      while (!work.empty()) {
+        Channel c = work.pop();
+        if (!visited.contains(c.src)) {
+          b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
+          work.addAll(channelsFrom(c.dest));
+          visited.add(c.src);
+        } else {
+          b.append(String.format("Detected cycle at: %d", c.src));
+        }
+      }
     }
     return b.toString();
   }

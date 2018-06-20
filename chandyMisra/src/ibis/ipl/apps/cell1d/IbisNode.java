@@ -46,7 +46,7 @@ class IbisNode {
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
     Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
     System.out.println("Created Network");
