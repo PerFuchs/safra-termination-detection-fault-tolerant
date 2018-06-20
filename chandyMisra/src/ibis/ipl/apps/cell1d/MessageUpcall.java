@@ -25,8 +25,9 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
 
   @Override
-  public void upcall(ReadMessage readMessage) throws IOException, ClassNotFoundException {
+  public synchronized void upcall(ReadMessage readMessage) throws IOException, ClassNotFoundException {
     MessageTypes messageType = MessageTypes.values()[readMessage.readInt()];
+
     if (!crashed) {
       switch (messageType) {
         case DISTANCE:
