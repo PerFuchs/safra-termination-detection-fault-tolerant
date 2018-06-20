@@ -20,6 +20,7 @@ public class MinimumSpanningTree {
    */
   public MinimumSpanningTree(List<Channel> channels, int root, Set<Integer> vertices) {
     this.root = root;
+    this.badRoots = new LinkedList<>();
     Set<Integer> visited = new HashSet<>();
     visited.add(root);
 
@@ -49,8 +50,11 @@ public class MinimumSpanningTree {
       if (r.parent != -1 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
         channels.add(new Channel(r.parent, r.node, network.getWeight(
             communicationLayer.getIbises()[r.parent], communicationLayer.getIbises()[r.node])));
-      } else if (r.parent == -1 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
-        badRoots.add(r.node);
+        if (crashedNodes.contains(communicationLayer.getIbises()[r.parent])) {
+          badRoots.add(r.parent);
+        }
+      } else if ((r.parent == -1) && r.node != 0 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
+        System.out.println(String.format("Node: %d has no parent.", r.node));
       }
     }
 
@@ -97,12 +101,12 @@ public class MinimumSpanningTree {
       work.addAll(channelsFrom(badRoot));
       while (!work.empty()) {
         Channel c = work.pop();
-        if (!visited.contains(c.src)) {
+        if (!visited.contains(c.dest)) {
           b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
           work.addAll(channelsFrom(c.dest));
-          visited.add(c.src);
+          visited.add(c.dest);
         } else {
-          b.append(String.format("Detected cycle at: %d", c.src));
+          b.append(String.format("Detected cycle at: %d", c.dest));
         }
       }
     }
