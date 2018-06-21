@@ -2,10 +2,12 @@ package ibis.ipl.apps.cell1d.algorithm;
 
 import ibis.ipl.IbisIdentifier;
 import ibis.ipl.apps.cell1d.CommunicationLayer;
+import ibis.ipl.apps.cell1d.CrashDetector;
 
 import java.io.IOException;
 
 public class ChandyMisraNode {
+  private CrashDetector crashDetector;
   private CommunicationLayer communicationLayer;
   private Network network;
 
@@ -20,6 +22,11 @@ public class ChandyMisraNode {
     this.me = ibisId;
   }
 
+
+  // TODO refactor to observer pattern
+  public void setCrashDetector(CrashDetector cd) {
+    this.crashDetector = cd;
+  }
   public MinimumSpanningTree getSpanningTree() {
     return null;
   }
@@ -35,8 +42,11 @@ public class ChandyMisraNode {
 
   // TODO is synchronized allowed and okay?
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, IbisIdentifier origin) throws IOException {
+    if (crashDetector.getCrashedNodes().contains(origin)) {
+      System.out.println("Got message from crashed node");  // TODO this happens, why? Either fix or ignore these in the communication layer
+    }
     int newDistance = dm.getDistance() + network.getWeight(origin, me);
-    if ((dist == -1 || newDistance < dist) && newDistance > 0) {  // > 0 for overflows
+    if ((dist == -1 || newDistance < dist) && newDistance > 0 && !crashDetector.getCrashedNodes().contains(origin)) {  // > 0 for overflows
       dist = newDistance;
       parent = origin;
       sendDistanceMessagesToAllNeighbours(dist);
@@ -61,6 +71,9 @@ public class ChandyMisraNode {
 
   public void handleCrash(IbisIdentifier crashedNode) throws IOException {
     if (crashedNode.equals(parent)) {
+      System.out.println(String.format("Detected parent (%d) crash on %d",
+          communicationLayer.getNodeNumber(crashedNode),
+          communicationLayer.getNodeNumber(communicationLayer.identifier())));
       handleRequestMessage(crashedNode);
     }
   }

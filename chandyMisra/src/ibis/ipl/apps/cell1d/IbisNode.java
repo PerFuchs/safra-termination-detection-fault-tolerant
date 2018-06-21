@@ -54,6 +54,7 @@ class IbisNode {
     System.out.println("Created Misra algorithm");
 
     CrashDetector crashDetector = new CrashDetector(chandyMisraNode, communicationLayer);
+    chandyMisraNode.setCrashDetector(crashDetector);
 
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("connected communication layer");

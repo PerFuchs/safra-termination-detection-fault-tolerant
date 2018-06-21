@@ -22,6 +22,9 @@ public class CrashDetector {
   }
 
   public synchronized void handleCrash(IbisIdentifier crashedNode) throws IOException {
+    System.out.println(String.format("Detected crash of %d at %d",
+        communicationLayer.getNodeNumber(crashedNode),
+        communicationLayer.getNodeNumber(communicationLayer.identifier())));
     crashedNodes.add(crashedNode);
     chandyMisraNode.handleCrash(crashedNode);
   }
