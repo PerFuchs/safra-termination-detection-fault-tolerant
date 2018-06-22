@@ -6,6 +6,9 @@ import ibis.ipl.*;
 import ibis.ipl.apps.cell1d.algorithm.ChandyMisraNode;
 import ibis.ipl.apps.cell1d.algorithm.MinimumSpanningTree;
 import ibis.ipl.apps.cell1d.algorithm.Network;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.MalformedInputException;
@@ -15,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 
 
 class IbisNode {
@@ -25,6 +29,11 @@ class IbisNode {
 
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
+    BasicConfigurator.configure();
+
+//    if (args.length >= 2 && args[1].equals("root")) {
+      Logger.getLogger("ibis").setLevel(Level.INFO);
+//    }
     System.setErr(System.out);  // Redirect because DAS4 does not show err.
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.CLOSED_WORLD,
@@ -41,6 +50,7 @@ class IbisNode {
 
     registry = ibis.registry();
     System.out.println("Created IBIS");
+    registry.waitUntilPoolClosed();
 
     long startTime = System.currentTimeMillis();
 
