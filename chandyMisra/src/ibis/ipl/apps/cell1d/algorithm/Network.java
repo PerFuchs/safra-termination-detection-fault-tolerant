@@ -107,10 +107,10 @@ public class Network {
     }
 
     // Add heavyweight edges from the root to all nodes for more messages
-    for (int i = 2; i < communicationLayer.getIbises().length; i++) {
-      channels.add(new Channel(0, i, 1000*i));  // Carefull MAX_VALUE obviously leads to overflows later on
-      channels.add(new Channel(i, 0, 1000*i));
-    }
+//    for (int i = 2; i < communicationLayer.getIbises().length; i++) {
+//      channels.add(new Channel(0, i, 1000*i));  // Carefull MAX_VALUE obviously leads to overflows later on
+//      channels.add(new Channel(i, 0, 1000*i));
+//    }
 
     return new Network(me, ibises, channels, communicationLayer);
   }

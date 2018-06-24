@@ -22,19 +22,31 @@ public class CommunicationLayer {
   private boolean crashed;
   private List<IbisIdentifier> neighbours;
 
-  public CommunicationLayer(Ibis ibis, Registry registry, RegistryEventHandler registryEventHandler, PortType messagePortType) throws IOException {
+  public CommunicationLayer(Ibis ibis, Registry registry, PortType messagePortType) throws IOException {
     this.ibis = ibis;
     this.registry = registry;
-    this.registryEventHandler = registryEventHandler;
+//    this.registryEventHandler = registryEventHandler;
     this.messagePortType = messagePortType;
     this.ibises = new IbisIdentifier[registry.getPoolSize()];
     findAllIbises();
   }
 
   private void findAllIbises() throws IOException {
-    registryEventHandler.getAllIbises().toArray(ibises);
+//    if (registryEventHandler.getAllIbises().size() != registry.getPoolSize()) {
+//      System.out.println("Shit");
+//    }
+//    registryEventHandler.getAllIbises().toArray(ibises);
+    ibises = registry.joinedIbises();
+    if (ibises.length != registry.getPoolSize()) {
+      System.out.println("Shit");
+    }
     Arrays.sort(ibises);
     me = getNodeNumber(ibis.identifier());
+//    StringBuilder sb = new StringBuilder();
+//    for (int i=0; i < ibises.length; i++) {
+//      sb.append(ibises[i] + ", ");
+//    }
+//    System.out.println("")
     System.out.println("Found all ibises");
   }
 
@@ -44,6 +56,12 @@ public class CommunicationLayer {
 
   public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, CrashDetector crashDetector) throws IOException {
     neighbours = Arrays.asList(network.getNeighbours(ibis.identifier()));
+    StringBuilder sb = new StringBuilder();
+    sb.append("Node " + me + ": ");
+    for (IbisIdentifier id : neighbours) {
+      sb.append(getNodeNumber(id) + ", ");
+    }
+    System.out.println(sb.toString());
     for (int i = 0; i < ibises.length; i++) {
       IbisIdentifier id = ibises[i];
       if (neighbours.contains(id)) {
