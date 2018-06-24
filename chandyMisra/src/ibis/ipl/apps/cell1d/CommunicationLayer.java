@@ -12,6 +12,7 @@ public class CommunicationLayer {
 
   private Ibis ibis;
   private Registry registry;
+  private RegistryEventHandler registryEventHandler;
   private PortType messagePortType;
   private IbisIdentifier[] ibises;
   private Map<IbisIdentifier, SendPort> sendPorts = new TreeMap<>();
@@ -21,29 +22,20 @@ public class CommunicationLayer {
   private boolean crashed;
   private List<IbisIdentifier> neighbours;
 
-  public CommunicationLayer(Ibis ibis, Registry registry, PortType messagePortType) throws IOException {
+  public CommunicationLayer(Ibis ibis, Registry registry, RegistryEventHandler registryEventHandler, PortType messagePortType) throws IOException {
     this.ibis = ibis;
     this.registry = registry;
+    this.registryEventHandler = registryEventHandler;
     this.messagePortType = messagePortType;
+    this.ibises = new IbisIdentifier[registry.getPoolSize()];
     findAllIbises();
   }
 
   private void findAllIbises() throws IOException {
-    final int processCount = registry.getPoolSize();
-    ibises = new IbisIdentifier[processCount];
-
-    for (int i = 0; i < processCount; i++) {
-      IbisIdentifier id = registry.elect("" + i);
-      ibises[i] = id;
-      if (id.equals(ibis.identifier())) {
-        me = i;
-        break;
-      }
-    }
-
-    for (int i = me + 1; i < processCount; i++) {
-      ibises[i] = registry.getElectionResult("" + i);
-    }
+    registryEventHandler.getAllIbises().toArray(ibises);
+    Arrays.sort(ibises);
+    me = getNodeNumber(ibis.identifier());
+    System.out.println("Found all ibises");
   }
 
   private String getReceivePortName(int i) {

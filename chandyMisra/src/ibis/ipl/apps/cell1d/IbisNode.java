@@ -32,10 +32,11 @@ class IbisNode {
     BasicConfigurator.configure();
 
 //    if (args.length >= 2 && args[1].equals("root")) {
-      Logger.getLogger("ibis").setLevel(Level.INFO);
+//      Logger.getLogger("ibis").setLevel(Level.INFO);
 //    }
     System.setErr(System.out);  // Redirect because DAS4 does not show err.
     IbisCapabilities s = new IbisCapabilities(
+        IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED,
         IbisCapabilities.CLOSED_WORLD,
         IbisCapabilities.ELECTIONS_STRICT);
 
@@ -46,15 +47,19 @@ class IbisNode {
         PortType.SERIALIZATION_DATA,
         PortType.COMMUNICATION_FIFO);
 
-    ibis = IbisFactory.createIbis(s, null, porttype);
+    RegistryEventHandler registryEventHandler = new RegistryEventHandler();
+    ibis = IbisFactory.createIbis(s, registryEventHandler, porttype);
 
     registry = ibis.registry();
+    registry.enableEvents();
+    registryEventHandler.setRegistry(registry);
     System.out.println("Created IBIS");
     registry.waitUntilPoolClosed();
+    System.out.println("Pool closed");
 
     long startTime = System.currentTimeMillis();
 
-    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
+    CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, registryEventHandler, porttype);
 
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
