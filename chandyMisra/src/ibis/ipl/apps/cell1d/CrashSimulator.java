@@ -1,7 +1,5 @@
 package ibis.ipl.apps.cell1d;
 
-import ibis.ipl.IbisIdentifier;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Random;
@@ -18,18 +16,17 @@ public class CrashSimulator {
     this.simulateCrashes = simulateCrashes;
 
     double nodesToCrashPercentage = 0.2;
-    int networkSize = communicationLayer.getIbises().length;
+    int networkSize = communicationLayer.getIbisCount();
     long nodesToCrash = Math.round(networkSize * nodesToCrashPercentage);
 
     Random r = new Random();
     Set<Integer> toCrash = new HashSet<>();
     for (int i = 0; i < nodesToCrash; i++) {
-      int crashNodeNumber;
+      int crash;
       do  {
-        crashNodeNumber = r.nextInt(networkSize);
-      } while ((toCrash.contains(crashNodeNumber)));
-      toCrash.add(crashNodeNumber);
-      IbisIdentifier crash = communicationLayer.getIbises()[crashNodeNumber];
+        crash = r.nextInt(networkSize);
+      } while ((toCrash.contains(crash)));
+      toCrash.add(crash);
       if (!communicationLayer.isRoot(crash)) {
         scheduleLateCrash(crash);
       }
@@ -37,10 +34,9 @@ public class CrashSimulator {
 
   }
 
-  public void scheduleLateCrash(IbisIdentifier node) {
-    // TODO use that everywhere instead of the ibis instance
-    if (node.equals(communicationLayer.identifier())) {
-      System.out.println("Scheduled late crash for node: " + communicationLayer.getNodeNumber(communicationLayer.identifier()));
+  public void scheduleLateCrash(int node) {
+    if (node == communicationLayer.getID()) {
+      System.out.println("Scheduled late crash for node: " + communicationLayer.getID());
       lateCrash = true;
     }
   }
@@ -52,7 +48,7 @@ public class CrashSimulator {
   }
 
   private void crash() throws IOException {
-    System.out.println("Simulated crash for node: " + communicationLayer.getNodeNumber(communicationLayer.identifier()));
+    System.out.println("Simulated crash for node: " + communicationLayer.getID());
     communicationLayer.broadcastCrashMessage();
     communicationLayer.crash();
   }

@@ -148,7 +148,15 @@ public class CommunicationLayer {
     }
   }
 
+  public int getID() {
+    return getNodeNumber(ibis.identifier());
+  }
+
   public IbisIdentifier identifier() {
     return ibis.identifier();
+  }
+
+  public int getIbisCount() {
+    return ibises.length;
   }
 }

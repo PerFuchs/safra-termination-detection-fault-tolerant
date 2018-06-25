@@ -74,7 +74,7 @@ class IbisNode {
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("connected communication layer");
     // TODO use barriers instead of timers.
-    Thread.sleep(10000);
+    Thread.sleep(5000);
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 

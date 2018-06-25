@@ -42,18 +42,17 @@ public class MinimumSpanningTree {
     }
   }
 
-  public MinimumSpanningTree(List<Result> results, CommunicationLayer communicationLayer, Network network, List<IbisIdentifier> crashedNodes) {
+  public MinimumSpanningTree(List<Result> results, CommunicationLayer communicationLayer, Network network, List<Integer> crashedNodes) {
     this.root = communicationLayer.getRoot();
     this.badRoots = new LinkedList<Integer>();
 
     for (Result r : results) {
-      if (r.parent != -1 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
-        channels.add(new Channel(r.parent, r.node, network.getWeight(
-            communicationLayer.getIbises()[r.parent], communicationLayer.getIbises()[r.node])));
-        if (crashedNodes.contains(communicationLayer.getIbises()[r.parent])) {
+      if (r.parent != -1 && !crashedNodes.contains(r.node)) {
+        channels.add(new Channel(r.parent, r.node, network.getWeight(r.parent, r.node)));
+        if (crashedNodes.contains(r.parent)) {
           badRoots.add(r.parent);
         }
-      } else if ((r.parent == -1) && r.node != 0 && !crashedNodes.contains(communicationLayer.getIbises()[r.node])) {
+      } else if ((r.parent == -1) && r.node != 0 && !crashedNodes.contains(r.node)) {
         System.out.println(String.format("Node: %d has no parent.", r.node));
       }
     }

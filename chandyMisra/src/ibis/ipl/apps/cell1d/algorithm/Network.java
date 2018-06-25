@@ -26,11 +26,8 @@ public class Network {
     this.channels = channels;
   }
 
-  public MinimumSpanningTree getSpanningTree(List<IbisIdentifier> crashedNodes) {
-    Set<Integer> crashedNodeNumbers = new HashSet<>();
-    for (IbisIdentifier id : crashedNodes) {
-      crashedNodeNumbers.add(communicationLayer.getNodeNumber(id));
-    }
+e  public MinimumSpanningTree getSpanningTree(List<Integer> crashedNodes) {
+    Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
 
     Set<Integer> aliveNodes = new HashSet<>();
     for (int i = 0; i < communicationLayer.getIbises().length; i++) {
@@ -104,7 +101,7 @@ public class Network {
     }
     channels.add(new Channel(0, communicationLayer.getIbises().length - 1, 1));
     channels.add(new Channel(communicationLayer.getIbises().length - 1, 0, 1));
-    crashSimulator.scheduleLateCrash(communicationLayer.getIbises()[2]);
+    crashSimulator.scheduleLateCrash(2);
     return new Network(me, ibises, channels, communicationLayer);
   }
 
@@ -116,7 +113,7 @@ public class Network {
       channels.add(new Channel(i+1, i, 1));
       channels.add(new Channel(i, i+1, 1));
       if (i == 1) {
-        crashSimulator.scheduleLateCrash(communicationLayer.getIbises()[i]);
+        crashSimulator.scheduleLateCrash(i);
       }
     }
 
