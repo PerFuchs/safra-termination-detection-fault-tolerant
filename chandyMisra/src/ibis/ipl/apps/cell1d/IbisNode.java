@@ -61,9 +61,9 @@ class IbisNode {
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
-    Network network = Network.getUndirectedRing(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
+    Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
     System.out.println("Created Network");
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, ibis.identifier());
     System.out.println("Created Misra algorithm");
@@ -74,18 +74,15 @@ class IbisNode {
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("connected communication layer");
     // TODO use barriers instead of timers.
-    Thread.sleep(30000);
+    Thread.sleep(10000);
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
     Thread.sleep(5000);
     crashSimulator.triggerLateCrash();
-    Thread.sleep(20000);
-    Thread.sleep(20000);
-    Thread.sleep(20000);
-    Thread.sleep(20000);
+    Thread.sleep(5000);
     writeResults(communicationLayer.getNodeNumber(ibis.identifier()), chandyMisraNode, communicationLayer);
-    Thread.sleep(20000);
+    Thread.sleep(5000);
 
     if (communicationLayer.isRoot(ibis.identifier())) {
       long endTime = System.currentTimeMillis();
@@ -105,7 +102,7 @@ class IbisNode {
       System.out.println("End");
     }
 
-    Thread.sleep(10000);
+    Thread.sleep(3000);
 
     ibis.end();
   }
