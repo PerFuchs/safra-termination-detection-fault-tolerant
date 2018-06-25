@@ -1,6 +1,5 @@
 package ibis.ipl.apps.cell1d.algorithm;
 
-import ibis.ipl.IbisIdentifier;
 import ibis.ipl.apps.cell1d.CommunicationLayer;
 import ibis.ipl.apps.cell1d.CrashDetector;
 
@@ -11,15 +10,15 @@ public class ChandyMisraNode {
   private CommunicationLayer communicationLayer;
   private Network network;
 
-  private IbisIdentifier me;
+  private int me;
 
   private int dist = -1;
-  private IbisIdentifier parent;
+  private int parent = -1;
 
-  public ChandyMisraNode(CommunicationLayer communicationLayer, Network network, IbisIdentifier ibisId) {
+  public ChandyMisraNode(CommunicationLayer communicationLayer, Network network, int id) {
     this.communicationLayer = communicationLayer;
     this.network = network;
-    this.me = ibisId;
+    this.me = id;
   }
 
 
@@ -34,19 +33,19 @@ public class ChandyMisraNode {
   public void startAlgorithm() throws IOException {
     if (communicationLayer.isRoot(me)) {
       this.dist = 0;
-      this.parent = null;
+      this.parent = -1;
 
       sendDistanceMessagesToAllNeighbours(0);
     }
   }
 
   // TODO is synchronized allowed and okay?
-  public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, IbisIdentifier origin) throws IOException {
-    if (crashDetector.getCrashedNodes().contains(origin)) {
+  public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException {
+    if (crashDetector.getCrashedNodes().contains(communicationLayer.getIbises()[origin])) {
       System.out.println("Got message from crashed node");  // TODO this happens, why? Either fix or ignore these in the communication layer
     }
     int newDistance = dm.getDistance() + network.getWeight(origin, me);
-    if ((dist == -1 || newDistance < dist) && newDistance > 0 && !crashDetector.getCrashedNodes().contains(origin)) {  // > 0 for overflows
+    if ((dist == -1 || newDistance < dist) && newDistance > 0 && !crashDetector.getCrashedNodes().contains(communicationLayer.getIbises()[origin])) {  // > 0 for overflows
       dist = newDistance;
       parent = origin;
       sendDistanceMessagesToAllNeighbours(dist);
@@ -54,38 +53,38 @@ public class ChandyMisraNode {
   }
 
   private void sendDistanceMessagesToAllNeighbours(int distance) throws IOException {
-    for (IbisIdentifier neighbour : network.getNeighbours(me)) {
-      if (!neighbour.equals(parent)) {
+    for (int neighbour : network.getNeighbours(me)) {
+      if (neighbour != parent) {
         sendDistanceMessage(distance, neighbour);
       }
     }
   }
 
-  private void sendDistanceMessage(int distance, IbisIdentifier receiver) throws IOException {
+  private void sendDistanceMessage(int distance, int receiver) throws IOException {
     communicationLayer.sendDistanceMessage(new DistanceMessage(distance), receiver);
   }
 
-  public IbisIdentifier getParent() {
+  public int getParent() {
     return parent;
   }
 
-  public void handleCrash(IbisIdentifier crashedNode) throws IOException {
-    if (crashedNode.equals(parent)) {
+  public void handleCrash(int crashedNode) throws IOException {
+    if (crashedNode == parent) {
       System.out.println(String.format("Detected parent (%d) crash on %d",
-          communicationLayer.getNodeNumber(crashedNode),
-          communicationLayer.getNodeNumber(communicationLayer.identifier())));
+          crashedNode,
+          me));
       handleRequestMessage(crashedNode);
     }
   }
 
-  public synchronized void handleRequestMessage(IbisIdentifier origin) throws IOException {
-    if (origin.equals(parent)) {
+  public synchronized void handleRequestMessage(int origin) throws IOException {
+    if (origin == parent) {
       System.out.println("Got request message from parent or detected crash of parent at node: " + communicationLayer.getNodeNumber(communicationLayer.identifier()));
-      IbisIdentifier oldParent = parent;
-      parent = null;
+      int oldParent = parent;
+      parent = -1;
       dist = -1;
-      for (IbisIdentifier neighbour : network.getNeighbours(me)) {
-        if (!neighbour.equals(oldParent)) {
+      for (int neighbour : network.getNeighbours(me)) {
+        if (neighbour != oldParent) {
           sendRequestMessage(neighbour);
         }
       }
@@ -96,7 +95,7 @@ public class ChandyMisraNode {
     }
   }
 
-  public void sendRequestMessage(IbisIdentifier receiver) throws IOException {
+  private void sendRequestMessage(int receiver) throws IOException {
     communicationLayer.sendRequestMessage(receiver);
   }
 

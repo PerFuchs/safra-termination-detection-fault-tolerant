@@ -66,7 +66,7 @@ public class CommunicationLayer {
       IbisIdentifier id = ibises[i];
       if (neighbours.contains(id)) {
         String name = getReceivePortName(i);
-        ReceivePort p = ibis.createReceivePort(messagePortType, name, new MessageUpcall(chandyMisraNode, crashDetector, id));
+        ReceivePort p = ibis.createReceivePort(messagePortType, name, new MessageUpcall(chandyMisraNode, crashDetector, i));
         receivePorts.put(id, p);
         p.enableConnections();
         p.enableMessageUpcalls();
@@ -89,13 +89,17 @@ public class CommunicationLayer {
     return 0;
   }
 
+  public boolean isRoot(int id) {
+    return id == 0;
+  }
+
   public boolean isRoot(IbisIdentifier id) {
     return ibises[0].equals(id);
   }
 
-  public void sendDistanceMessage(DistanceMessage dm, IbisIdentifier receiver) throws IOException {
+  public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
     if (!crashed) {
-      SendPort sendPort = sendPorts.get(receiver);
+      SendPort sendPort = sendPorts.get(ibises[receiver]);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.DISTANCE.ordinal());
       m.writeInt(dm.getDistance());
@@ -103,7 +107,6 @@ public class CommunicationLayer {
       m.finish();
     }
   }
-
 
   public IbisIdentifier[] getIbises() {
     return ibises;
@@ -135,9 +138,9 @@ public class CommunicationLayer {
     }
   }
 
-  public void sendRequestMessage(IbisIdentifier receiver) throws IOException {
+  public void sendRequestMessage(int receiver) throws IOException {
     if (!crashed) {
-      SendPort sendPort = sendPorts.get(receiver);
+      SendPort sendPort = sendPorts.get(ibises[receiver]);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.REQUEST.ordinal());
       m.send();

@@ -60,10 +60,24 @@ public class Network {
     return neighbours.toArray(new IbisIdentifier[neighbours.size()]);
   }
 
+  public List<Integer> getNeighbours(int id) {
+    List<Integer> neighbours = new LinkedList<>();
+
+    for (Channel c : channels) {
+      if (c.src == id) {
+        neighbours.add(c.dest);
+      }
+    }
+    return neighbours;
+  }
+
   public int getWeight(IbisIdentifier source, IbisIdentifier destination) {
+    return getWeight(communicationLayer.getNodeNumber(source), communicationLayer.getNodeNumber(destination));
+  }
+
+  public int getWeight(int source, int destination) {
     return channels.get(
-        channels.indexOf(new Channel(
-            communicationLayer.getNodeNumber(source), communicationLayer.getNodeNumber(destination), 0)
+        channels.indexOf(new Channel(source, destination, 0)
         )).getWeight();
   }
 

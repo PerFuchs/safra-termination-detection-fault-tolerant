@@ -14,10 +14,10 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
   private final ChandyMisraNode chandyMisraNode;
   private CrashDetector crashDetector;
-  private final IbisIdentifier origin;
+  private final int origin;
   private boolean crashed = false;
 
-  public MessageUpcall(ChandyMisraNode chandyMisraNode, CrashDetector crashDetector, IbisIdentifier origin) {
+  public MessageUpcall(ChandyMisraNode chandyMisraNode, CrashDetector crashDetector, int origin) {
     this.chandyMisraNode = chandyMisraNode;
     this.crashDetector = crashDetector;
     this.origin = origin;
