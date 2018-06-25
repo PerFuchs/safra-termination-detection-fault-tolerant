@@ -41,11 +41,11 @@ public class ChandyMisraNode {
 
   // TODO is synchronized allowed and okay?
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException {
-    if (crashDetector.getCrashedNodes().contains(communicationLayer.getIbises()[origin])) {
+    if (crashDetector.getCrashedNodes().contains(origin)) {
       System.out.println("Got message from crashed node");  // TODO this happens, why? Either fix or ignore these in the communication layer
     }
     int newDistance = dm.getDistance() + network.getWeight(origin, me);
-    if ((dist == -1 || newDistance < dist) && newDistance > 0 && !crashDetector.getCrashedNodes().contains(communicationLayer.getIbises()[origin])) {  // > 0 for overflows
+    if ((dist == -1 || newDistance < dist) && newDistance > 0 && !crashDetector.getCrashedNodes().contains(origin)) {  // > 0 for overflows
       dist = newDistance;
       parent = origin;
       sendDistanceMessagesToAllNeighbours(dist);

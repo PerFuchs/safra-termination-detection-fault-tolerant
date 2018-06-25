@@ -11,22 +11,17 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
 
 
 class IbisNode {
   static Ibis ibis;
   static Registry registry;
-  static IbisIdentifier[] instances;
-
-
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
     BasicConfigurator.configure();
@@ -63,7 +58,7 @@ class IbisNode {
 
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
-    Network network = Network.getLineNetwork(ibis.identifier(), communicationLayer.getIbises(), communicationLayer, crashSimulator);
+    Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     System.out.println("Created Network");
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, communicationLayer.getNodeNumber(ibis.identifier()));
     System.out.println("Created Misra algorithm");
@@ -74,17 +69,17 @@ class IbisNode {
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("connected communication layer");
     // TODO use barriers instead of timers.
-    Thread.sleep(5000);
+    Thread.sleep(10000);
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
     Thread.sleep(5000);
     crashSimulator.triggerLateCrash();
-    Thread.sleep(5000);
+    Thread.sleep(30000);
     writeResults(communicationLayer.getNodeNumber(ibis.identifier()), chandyMisraNode, communicationLayer);
-    Thread.sleep(5000);
+    Thread.sleep(10000);
 
-    if (communicationLayer.isRoot(ibis.identifier())) {
+    if (communicationLayer.isRoot(communicationLayer.getID())) {
       long endTime = System.currentTimeMillis();
       double time = ((double) (endTime - startTime)) / 1000.0;
 
@@ -102,7 +97,7 @@ class IbisNode {
       System.out.println("End");
     }
 
-    Thread.sleep(3000);
+    Thread.sleep(5000);
 
     ibis.end();
   }

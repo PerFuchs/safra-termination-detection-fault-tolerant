@@ -9,44 +9,30 @@ import java.io.IOException;
 import java.util.*;
 
 public class CommunicationLayer {
-
   private Ibis ibis;
   private Registry registry;
-  private RegistryEventHandler registryEventHandler;
-  private PortType messagePortType;
+  private PortType portType;
   private IbisIdentifier[] ibises;
-  private Map<IbisIdentifier, SendPort> sendPorts = new TreeMap<>();
-  private Map<IbisIdentifier, ReceivePort> receivePorts = new TreeMap<>();
+  private Map<Integer, SendPort> sendPorts = new HashMap<>();
+  private Map<Integer, ReceivePort> receivePorts = new HashMap<>();
 
-  int me;
   private boolean crashed;
-  private List<IbisIdentifier> neighbours;
+  private Network network;
 
-  public CommunicationLayer(Ibis ibis, Registry registry, PortType messagePortType) throws IOException {
+  public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) throws IOException {
     this.ibis = ibis;
     this.registry = registry;
-//    this.registryEventHandler = registryEventHandler;
-    this.messagePortType = messagePortType;
+    this.portType = portType;
     this.ibises = new IbisIdentifier[registry.getPoolSize()];
     findAllIbises();
   }
 
-  private void findAllIbises() throws IOException {
-//    if (registryEventHandler.getAllIbises().size() != registry.getPoolSize()) {
-//      System.out.println("Shit");
-//    }
-//    registryEventHandler.getAllIbises().toArray(ibises);
+  private void findAllIbises() {
     ibises = registry.joinedIbises();
     if (ibises.length != registry.getPoolSize()) {
-      System.out.println("Shit");
+      System.out.println("Not all ibises reported by joinedIbises");
     }
     Arrays.sort(ibises);
-    me = getNodeNumber(ibis.identifier());
-//    StringBuilder sb = new StringBuilder();
-//    for (int i=0; i < ibises.length; i++) {
-//      sb.append(ibises[i] + ", ");
-//    }
-//    System.out.println("")
     System.out.println("Found all ibises");
   }
 
@@ -55,34 +41,24 @@ public class CommunicationLayer {
   }
 
   public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, CrashDetector crashDetector) throws IOException {
-    neighbours = Arrays.asList(network.getNeighbours(ibis.identifier()));
-    StringBuilder sb = new StringBuilder();
-    sb.append("Node " + me + ": ");
-    for (IbisIdentifier id : neighbours) {
-      sb.append(getNodeNumber(id) + ", ");
-    }
-    System.out.println(sb.toString());
-    for (int i = 0; i < ibises.length; i++) {
-      IbisIdentifier id = ibises[i];
-      if (neighbours.contains(id)) {
-        String name = getReceivePortName(i);
-        ReceivePort p = ibis.createReceivePort(messagePortType, name, new MessageUpcall(chandyMisraNode, crashDetector, i));
-        receivePorts.put(id, p);
-        p.enableConnections();
-        p.enableMessageUpcalls();
-      }
+    this.network = network;
+    List<Integer> neighbours = network.getNeighbours(getID());
+
+    for (int i : neighbours) {
+      String name = getReceivePortName(i);
+      ReceivePort p = ibis.createReceivePort(portType, name, new MessageUpcall(chandyMisraNode, crashDetector, i));
+      receivePorts.put(i, p);
+      p.enableConnections();
+      p.enableMessageUpcalls();
     }
 
-    for (int i = 0; i < ibises.length; i++) {
+    for (int i : neighbours) {
       IbisIdentifier id = ibises[i];
-      if (neighbours.contains(id)) {
-        String name = "SendDistance" + i;
-        SendPort p = ibis.createSendPort(messagePortType, name);
-        sendPorts.put(id, p);
-        p.connect(id, getReceivePortName(me));
-      }
+      String name = "Send" + i;
+      SendPort p = ibis.createSendPort(portType, name);
+      sendPorts.put(i, p);
+      p.connect(id, getReceivePortName(getID()));
     }
-
   }
 
   public int getRoot() {
@@ -93,13 +69,9 @@ public class CommunicationLayer {
     return id == 0;
   }
 
-  public boolean isRoot(IbisIdentifier id) {
-    return ibises[0].equals(id);
-  }
-
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
     if (!crashed) {
-      SendPort sendPort = sendPorts.get(ibises[receiver]);
+      SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.DISTANCE.ordinal());
       m.writeInt(dm.getDistance());
@@ -122,25 +94,25 @@ public class CommunicationLayer {
     return -1;
   }
 
-    // TODO notify the upcalls
+  // TODO notify the upcalls
   public void crash() {
     this.crashed = true;
   }
 
   // TODO failure detector only works for local failures
   public void broadcastCrashMessage() throws IOException {
-    for (IbisIdentifier id : neighbours) {
-        SendPort sendPort = sendPorts.get(id);
-        WriteMessage m = sendPort.newMessage();
-        m.writeInt(MessageTypes.CRASHED.ordinal());
-        m.send();
-        m.finish();
+    for (int id : network.getNeighbours(getID())) {
+      SendPort sendPort = sendPorts.get(id);
+      WriteMessage m = sendPort.newMessage();
+      m.writeInt(MessageTypes.CRASHED.ordinal());
+      m.send();
+      m.finish();
     }
   }
 
   public void sendRequestMessage(int receiver) throws IOException {
     if (!crashed) {
-      SendPort sendPort = sendPorts.get(ibises[receiver]);
+      SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.REQUEST.ordinal());
       m.send();

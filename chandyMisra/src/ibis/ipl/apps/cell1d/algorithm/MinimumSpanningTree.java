@@ -1,7 +1,6 @@
 package ibis.ipl.apps.cell1d.algorithm;
 
 
-import ibis.ipl.IbisIdentifier;
 import ibis.ipl.apps.cell1d.CommunicationLayer;
 import ibis.ipl.apps.cell1d.Result;
 

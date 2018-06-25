@@ -1,14 +1,10 @@
 package ibis.ipl.apps.cell1d;
 
-import ibis.ipl.IbisIdentifier;
 import ibis.ipl.ReadMessage;
 import ibis.ipl.apps.cell1d.algorithm.ChandyMisraNode;
 import ibis.ipl.apps.cell1d.algorithm.DistanceMessage;
 
-import java.awt.*;
 import java.io.IOException;
-
-import static ibis.ipl.apps.cell1d.MessageTypes.DISTANCE;
 
 public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
@@ -25,7 +21,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
 
   @Override
-  public synchronized void upcall(ReadMessage readMessage) throws IOException, ClassNotFoundException {
+  public synchronized void upcall(ReadMessage readMessage) throws IOException {
     MessageTypes messageType = MessageTypes.values()[readMessage.readInt()];
 
     if (!crashed) {
