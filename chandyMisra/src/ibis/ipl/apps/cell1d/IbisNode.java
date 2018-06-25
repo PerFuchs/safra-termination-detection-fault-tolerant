@@ -60,7 +60,7 @@ class IbisNode {
     System.out.println("Created communication layer");
     Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     System.out.println("Created Network");
-    ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, communicationLayer.getNodeNumber(ibis.identifier()));
+    ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network);
     System.out.println("Created Misra algorithm");
 
     CrashDetector crashDetector = new CrashDetector(chandyMisraNode, communicationLayer);
@@ -76,7 +76,7 @@ class IbisNode {
     Thread.sleep(5000);
     crashSimulator.triggerLateCrash();
     Thread.sleep(30000);
-    writeResults(communicationLayer.getNodeNumber(ibis.identifier()), chandyMisraNode, communicationLayer);
+    writeResults(communicationLayer.getID(), chandyMisraNode, communicationLayer);
     Thread.sleep(10000);
 
     if (communicationLayer.isRoot(communicationLayer.getID())) {
@@ -123,7 +123,7 @@ class IbisNode {
   private static List<Result> readResults(CommunicationLayer communicationLayer) {
     List<Result> results = new LinkedList<>();
 
-    for (int i = 0; i < communicationLayer.getIbises().length; i++) {
+    for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
       System.out.println("Reading results " + i);
 
         Path path = Paths.get(filePathForResults(i));

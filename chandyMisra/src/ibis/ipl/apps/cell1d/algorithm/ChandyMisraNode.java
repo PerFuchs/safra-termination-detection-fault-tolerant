@@ -15,10 +15,10 @@ public class ChandyMisraNode {
   private int dist = -1;
   private int parent = -1;
 
-  public ChandyMisraNode(CommunicationLayer communicationLayer, Network network, int id) {
+  public ChandyMisraNode(CommunicationLayer communicationLayer, Network network) {
     this.communicationLayer = communicationLayer;
     this.network = network;
-    this.me = id;
+    this.me = communicationLayer.getID();
   }
 
 
@@ -79,7 +79,7 @@ public class ChandyMisraNode {
 
   public synchronized void handleRequestMessage(int origin) throws IOException {
     if (origin == parent) {
-      System.out.println("Got request message from parent or detected crash of parent at node: " + communicationLayer.getNodeNumber(communicationLayer.identifier()));
+      System.out.println("Got request message from parent or detected crash of parent at node: " + origin);
       int oldParent = parent;
       parent = -1;
       dist = -1;

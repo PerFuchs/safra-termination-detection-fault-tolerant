@@ -18,7 +18,7 @@ public class Network {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
 
     Set<Integer> aliveNodes = new HashSet<>();
-    for (int i = 0; i < communicationLayer.getIbises().length; i++) {
+    for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
       aliveNodes.add(i);
     }
     aliveNodes.removeAll(crashedNodeNumbers);

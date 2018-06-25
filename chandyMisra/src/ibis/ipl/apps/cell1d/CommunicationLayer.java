@@ -13,6 +13,7 @@ public class CommunicationLayer {
   private Registry registry;
   private PortType portType;
   private IbisIdentifier[] ibises;
+  private int me;
   private Map<Integer, SendPort> sendPorts = new HashMap<>();
   private Map<Integer, ReceivePort> receivePorts = new HashMap<>();
 
@@ -33,6 +34,7 @@ public class CommunicationLayer {
       System.out.println("Not all ibises reported by joinedIbises");
     }
     Arrays.sort(ibises);
+    me = Arrays.asList(ibises).indexOf(ibis.identifier());
     System.out.println("Found all ibises");
   }
 
@@ -66,7 +68,7 @@ public class CommunicationLayer {
   }
 
   public boolean isRoot(int id) {
-    return id == 0;
+    return id == getRoot();
   }
 
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
@@ -78,20 +80,6 @@ public class CommunicationLayer {
       m.send();
       m.finish();
     }
-  }
-
-  public IbisIdentifier[] getIbises() {
-    return ibises;
-  }
-
-  public int getNodeNumber(IbisIdentifier identifier) {
-    for (int i = 0; i < ibises.length; i++) {
-      if (ibises[i].equals(identifier)) {
-        return i;
-      }
-    }
-    // TODO throw exception
-    return -1;
   }
 
   // TODO notify the upcalls
@@ -121,11 +109,7 @@ public class CommunicationLayer {
   }
 
   public int getID() {
-    return getNodeNumber(ibis.identifier());
-  }
-
-  public IbisIdentifier identifier() {
-    return ibis.identifier();
+    return me;
   }
 
   public int getIbisCount() {
