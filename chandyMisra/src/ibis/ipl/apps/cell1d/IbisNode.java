@@ -33,7 +33,8 @@ class IbisNode {
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED,
         IbisCapabilities.CLOSED_WORLD,
-        IbisCapabilities.ELECTIONS_STRICT);
+        IbisCapabilities.ELECTIONS_STRICT,
+        IbisCapabilities.SIGNALS);
 
     PortType porttype = new PortType(
         PortType.CONNECTION_ONE_TO_ONE,
@@ -42,12 +43,17 @@ class IbisNode {
         PortType.SERIALIZATION_DATA,
         PortType.COMMUNICATION_FIFO);
 
-//    RegistryEventHandler registryEventHandler = new RegistryEventHandler();
+    final int barriersUsableUntil = 100;  // Barriers are not scalable use timers above this number of nodes.
+
     ibis = IbisFactory.createIbis(s, null, porttype);
 
     registry = ibis.registry();
-//    registry.enableEvents();
-//    registryEventHandler.setRegistry(registry);
+
+    SignalPollerThread signalHandler = new SignalPollerThread(registry);
+    if (registry.getPoolSize() < barriersUsableUntil) {
+      signalHandler.start();
+    }
+
     System.out.println("Created IBIS");
     registry.waitUntilPoolClosed();
     System.out.println("Pool closed");
@@ -55,6 +61,8 @@ class IbisNode {
     long startTime = System.currentTimeMillis();
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
+
+    RemoteBarrierFactory remoteBarrierFactory = new RemoteBarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
@@ -67,9 +75,13 @@ class IbisNode {
     chandyMisraNode.setCrashDetector(crashDetector);
 
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
-    System.out.println("connected communication layer");
-    // TODO use barriers instead of timers.
-    Thread.sleep(10000);
+    System.out.println("Connected communication layer");
+
+    if (registry.getPoolSize() < barriersUsableUntil) {
+      remoteBarrierFactory.getBarrier("Connected").await();
+    } else {
+      Thread.sleep(10000);
+    }
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
@@ -77,7 +89,12 @@ class IbisNode {
     crashSimulator.triggerLateCrash();
     Thread.sleep(30000);
     writeResults(communicationLayer.getID(), chandyMisraNode, communicationLayer);
-    Thread.sleep(10000);
+
+    if (registry.getPoolSize() < barriersUsableUntil) {
+      remoteBarrierFactory.getBarrier("Results written").await();
+    } else {
+      Thread.sleep(10000);
+    }
 
     if (communicationLayer.isRoot(communicationLayer.getID())) {
       long endTime = System.currentTimeMillis();
@@ -89,7 +106,7 @@ class IbisNode {
       System.out.println("Constructed tree:");
       System.out.println(tree);
       System.out.println("Expected tree:");
-      MinimumSpanningTree expectedTree =network.getSpanningTree(crashDetector.getCrashedNodes());
+      MinimumSpanningTree expectedTree = network.getSpanningTree(crashDetector.getCrashedNodes());
       System.out.println(expectedTree);
       System.out.println(String.format("Weight equal: %b Trees equal: %b",
           tree.getWeight() == expectedTree.getWeight(), tree.equals(expectedTree)));
@@ -97,7 +114,12 @@ class IbisNode {
       System.out.println("End");
     }
 
-    Thread.sleep(5000);
+    if (registry.getPoolSize() < barriersUsableUntil) {
+      remoteBarrierFactory.getBarrier("Done").await();
+      signalHandler.stop();
+    } else {
+      Thread.sleep(5000);
+    }
 
     ibis.end();
   }
@@ -126,14 +148,14 @@ class IbisNode {
     for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
       System.out.println("Reading results " + i);
 
-        Path path = Paths.get(filePathForResults(i));
+      Path path = Paths.get(filePathForResults(i));
 
-    try {
-      String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
-      results.add(new Result(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
-    } catch (IOException e) {
-      System.out.println(String.format("Could not read output file from: %d", i));
-    }
+      try {
+        String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
+        results.add(new Result(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
+      } catch (IOException e) {
+        System.out.println(String.format("Could not read output file from: %d", i));
+      }
 
     }
     return results;

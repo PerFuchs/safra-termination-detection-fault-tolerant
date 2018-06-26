@@ -115,4 +115,8 @@ public class CommunicationLayer {
   public int getIbisCount() {
     return ibises.length;
   }
+
+  public List<IbisIdentifier> getIbises() {
+    return Arrays.asList(ibises);
+  }
 }
