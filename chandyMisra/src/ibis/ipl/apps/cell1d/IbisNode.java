@@ -7,8 +7,6 @@ import ibis.ipl.apps.cell1d.algorithm.ChandyMisraNode;
 import ibis.ipl.apps.cell1d.algorithm.MinimumSpanningTree;
 import ibis.ipl.apps.cell1d.algorithm.Network;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +20,8 @@ import java.util.List;
 class IbisNode {
   static Ibis ibis;
   static Registry registry;
+
+
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
     BasicConfigurator.configure();
@@ -43,16 +43,12 @@ class IbisNode {
         PortType.SERIALIZATION_DATA,
         PortType.COMMUNICATION_FIFO);
 
-    final int barriersUsableUntil = 100;  // Barriers are not scalable use timers above this number of nodes.
-
     ibis = IbisFactory.createIbis(s, null, porttype);
 
     registry = ibis.registry();
 
     SignalPollerThread signalHandler = new SignalPollerThread(registry);
-    if (registry.getPoolSize() < barriersUsableUntil) {
-      signalHandler.start();
-    }
+    signalHandler.start();
 
     System.out.println("Created IBIS");
     registry.waitUntilPoolClosed();
@@ -62,7 +58,7 @@ class IbisNode {
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
-    RemoteBarrierFactory remoteBarrierFactory = new RemoteBarrierFactory(registry, signalHandler, communicationLayer);
+    BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
     System.out.println("Created communication layer");
@@ -77,11 +73,9 @@ class IbisNode {
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("Connected communication layer");
 
-    if (registry.getPoolSize() < barriersUsableUntil) {
-      remoteBarrierFactory.getBarrier("Connected").await();
-    } else {
-      Thread.sleep(10000);
-    }
+
+    barrierFactory.getBarrier("Connected").await();
+
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
@@ -90,11 +84,9 @@ class IbisNode {
     Thread.sleep(30000);
     writeResults(communicationLayer.getID(), chandyMisraNode, communicationLayer);
 
-    if (registry.getPoolSize() < barriersUsableUntil) {
-      remoteBarrierFactory.getBarrier("Results written").await();
-    } else {
-      Thread.sleep(10000);
-    }
+
+    barrierFactory.getBarrier("ResultsWritten").await();
+
 
     if (communicationLayer.isRoot(communicationLayer.getID())) {
       long endTime = System.currentTimeMillis();
@@ -114,18 +106,14 @@ class IbisNode {
       System.out.println("End");
     }
 
-    if (registry.getPoolSize() < barriersUsableUntil) {
-      remoteBarrierFactory.getBarrier("Done").await();
-      signalHandler.stop();
-    } else {
-      Thread.sleep(5000);
-    }
+    barrierFactory.getBarrier("Done").await();
 
+    signalHandler.stop();
     ibis.end();
   }
 
   private static String filePathForResults(int node) {
-    return String.format("/var/scratch/pfs250/%d.output", node);
+    return String.format("/var/scratch/pfs250/%04d.output", node);
   }
 
   private static void writeResults(int node, ChandyMisraNode chandyMisraNode, CommunicationLayer communicationLayer) {
