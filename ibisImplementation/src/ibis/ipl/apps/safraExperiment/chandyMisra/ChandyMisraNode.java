@@ -1,7 +1,9 @@
-package ibis.ipl.apps.cell1d.algorithm;
+package ibis.ipl.apps.safraExperiment.chandyMisra;
 
-import ibis.ipl.apps.cell1d.CommunicationLayer;
-import ibis.ipl.apps.cell1d.CrashDetector;
+import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.spanningTree.MinimumSpanningTree;
+import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 
 import java.io.IOException;
 
@@ -20,7 +22,6 @@ public class ChandyMisraNode {
     this.network = network;
     this.me = communicationLayer.getID();
   }
-
 
   // TODO refactor to observer pattern
   public void setCrashDetector(CrashDetector cd) {

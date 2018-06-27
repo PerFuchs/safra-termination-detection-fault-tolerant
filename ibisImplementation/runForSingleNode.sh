@@ -6,7 +6,7 @@ startChandyMisraInstance () {
     -Dibis.server.address=10.100.255.254 \
     -Dibis.pool.name=chandyMisra \
     -Dibis.pool.size=${networkSize} \
-    ibis.ipl.apps.cell1d.IbisNode
+    ibis.ipl.apps.safraExperiment.IbisNode
 }
 
 for i in $(seq 1 $1)

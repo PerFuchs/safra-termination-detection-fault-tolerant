@@ -1,8 +1,7 @@
-package ibis.ipl.apps.cell1d.algorithm;
+package ibis.ipl.apps.safraExperiment.spanningTree;
 
 
-import ibis.ipl.apps.cell1d.CommunicationLayer;
-import ibis.ipl.apps.cell1d.Result;
+import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 
 import java.util.*;
 

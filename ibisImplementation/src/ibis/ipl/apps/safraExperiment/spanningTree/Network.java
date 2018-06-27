@@ -1,7 +1,7 @@
-package ibis.ipl.apps.cell1d.algorithm;
+package ibis.ipl.apps.safraExperiment.spanningTree;
 
-import ibis.ipl.apps.cell1d.CommunicationLayer;
-import ibis.ipl.apps.cell1d.CrashSimulator;
+import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 
 import java.util.*;
 

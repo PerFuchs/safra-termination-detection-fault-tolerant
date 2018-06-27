@@ -1,4 +1,4 @@
-package ibis.ipl.apps.cell1d.algorithm;
+package ibis.ipl.apps.safraExperiment.chandyMisra;
 
 public class DistanceMessage {
 

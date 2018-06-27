@@ -1,8 +1,9 @@
-package ibis.ipl.apps.cell1d;
+package ibis.ipl.apps.safraExperiment.communication;
 
 import ibis.ipl.ReadMessage;
-import ibis.ipl.apps.cell1d.algorithm.ChandyMisraNode;
-import ibis.ipl.apps.cell1d.algorithm.DistanceMessage;
+import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
+import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 
 import java.io.IOException;
 

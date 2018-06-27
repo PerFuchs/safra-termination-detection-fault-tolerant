@@ -1,4 +1,4 @@
-package ibis.ipl.apps.cell1d;
+package ibis.ipl.apps.safraExperiment.spanningTree;
 
 public class Result {
   public final int node;

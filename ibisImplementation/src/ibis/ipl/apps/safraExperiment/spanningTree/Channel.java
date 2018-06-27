@@ -1,4 +1,4 @@
-package ibis.ipl.apps.cell1d.algorithm;
+package ibis.ipl.apps.safraExperiment.spanningTree;
 
 import java.util.Objects;
 

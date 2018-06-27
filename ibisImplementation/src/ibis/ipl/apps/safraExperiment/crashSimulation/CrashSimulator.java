@@ -1,4 +1,6 @@
-package ibis.ipl.apps.cell1d;
+package ibis.ipl.apps.safraExperiment.crashSimulation;
+
+import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 
 import java.io.IOException;
 import java.util.HashSet;
