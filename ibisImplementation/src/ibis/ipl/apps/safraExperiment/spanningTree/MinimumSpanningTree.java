@@ -40,9 +40,9 @@ public class MinimumSpanningTree {
     }
   }
 
-  public MinimumSpanningTree(List<Result> results, CommunicationLayer communicationLayer, Network network, List<Integer> crashedNodes) {
+  public MinimumSpanningTree(CommunicationLayer communicationLayer, Network network, List<Result> results, List<Integer> crashedNodes) {
     this.root = communicationLayer.getRoot();
-    this.badRoots = new LinkedList<Integer>();
+    this.badRoots = new LinkedList<>();
 
     for (Result r : results) {
       if (r.parent != -1 && !crashedNodes.contains(r.node)) {
@@ -50,7 +50,7 @@ public class MinimumSpanningTree {
         if (crashedNodes.contains(r.parent)) {
           badRoots.add(r.parent);
         }
-      } else if ((r.parent == -1) && r.node != 0 && !crashedNodes.contains(r.node)) {
+      } else if (r.parent == -1 && r.node != 0 && !crashedNodes.contains(r.node)) {
         System.out.println(String.format("Node: %d has no parent.", r.node));
       }
     }
@@ -76,8 +76,6 @@ public class MinimumSpanningTree {
     return ret;
   }
 
-
-  // TODO add warning or print of unreachable channels
   @Override
   public String toString() {
     StringBuilder b = new StringBuilder();
@@ -92,7 +90,6 @@ public class MinimumSpanningTree {
     }
 
     b.append("Bad Trees:\n");
-
     for (int badRoot : badRoots) {
       LinkedList<Integer> visited = new LinkedList<>();
       work.addAll(channelsFrom(badRoot));

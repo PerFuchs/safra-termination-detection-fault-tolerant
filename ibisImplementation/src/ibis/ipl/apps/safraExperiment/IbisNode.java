@@ -31,11 +31,10 @@ class IbisNode {
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
     BasicConfigurator.configure();
-
-//    if (args.length >= 2 && args[1].equals("root")) {
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
-//    }
+
     System.setErr(System.out);  // Redirect because DAS4 does not show err.
+
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED,
         IbisCapabilities.CLOSED_WORLD,
@@ -49,36 +48,34 @@ class IbisNode {
         PortType.SERIALIZATION_DATA,
         PortType.COMMUNICATION_FIFO);
 
-    ibis = IbisFactory.createIbis(s, null, porttype);
+    long startTime = System.currentTimeMillis();
 
+    ibis = IbisFactory.createIbis(s, null, porttype);
     registry = ibis.registry();
+    System.out.println("Created IBIS");
 
     SignalPollerThread signalHandler = new SignalPollerThread(registry);
     signalHandler.start();
 
-    System.out.println("Created IBIS");
     registry.waitUntilPoolClosed();
     System.out.println("Pool closed");
 
-    long startTime = System.currentTimeMillis();
-
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
+    System.out.println("Created communication layer");
 
     BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
+    CrashDetector crashDetector = new CrashDetector();
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
-    System.out.println("Created communication layer");
+
     Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     System.out.println("Created Network");
-    ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network);
-    System.out.println("Created Misra algorithm");
 
-    CrashDetector crashDetector = new CrashDetector(chandyMisraNode, communicationLayer);
-    chandyMisraNode.setCrashDetector(crashDetector);
+    ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector);
+    System.out.println("Created Misra algorithm");
 
     communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
     System.out.println("Connected communication layer");
-
 
     barrierFactory.getBarrier("Connected").await();
 
@@ -88,26 +85,28 @@ class IbisNode {
     Thread.sleep(5000);
     crashSimulator.triggerLateCrash();
     Thread.sleep(30000);
-    writeResults(communicationLayer.getID(), chandyMisraNode, communicationLayer);
 
-
+    writeResults(communicationLayer.getID(), chandyMisraNode);
     barrierFactory.getBarrier("ResultsWritten").await();
-
 
     if (communicationLayer.isRoot(communicationLayer.getID())) {
       long endTime = System.currentTimeMillis();
       double time = ((double) (endTime - startTime)) / 1000.0;
-
       System.out.println("ExecutionTime: " + time);
-      List<Result> results = readResults(communicationLayer);
-      MinimumSpanningTree tree = new MinimumSpanningTree(results, communicationLayer, network, crashDetector.getCrashedNodes());
+
+      List<Result> results = readResults(communicationLayer.getIbisCount());
+
+      MinimumSpanningTree tree = new MinimumSpanningTree(communicationLayer, network, results, crashDetector.getCrashedNodes());
       System.out.println("Constructed tree:");
       System.out.println(tree);
+
       System.out.println("Expected tree:");
       MinimumSpanningTree expectedTree = network.getSpanningTree(crashDetector.getCrashedNodes());
       System.out.println(expectedTree);
+
       System.out.println(String.format("Weight equal: %b Trees equal: %b",
           tree.getWeight() == expectedTree.getWeight(), tree.equals(expectedTree)));
+
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
       System.out.println("End");
     }
@@ -122,7 +121,7 @@ class IbisNode {
     return String.format("/var/scratch/pfs250/%04d.output", node);
   }
 
-  private static void writeResults(int node, ChandyMisraNode chandyMisraNode, CommunicationLayer communicationLayer) {
+  private static void writeResults(int node, ChandyMisraNode chandyMisraNode) {
     String str = String.format("%d %d %d\n", node, chandyMisraNode.getParent(), chandyMisraNode.getDist());
 
     Path path = Paths.get(filePathForResults(node));
@@ -136,10 +135,10 @@ class IbisNode {
     System.out.println("Output files written.");
   }
 
-  private static List<Result> readResults(CommunicationLayer communicationLayer) {
+  private static List<Result> readResults(int ibisCount) {
     List<Result> results = new LinkedList<>();
 
-    for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
+    for (int i = 0; i < ibisCount; i++) {
       System.out.println("Reading results " + i);
 
       Path path = Paths.get(filePathForResults(i));

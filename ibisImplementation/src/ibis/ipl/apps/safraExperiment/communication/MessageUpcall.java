@@ -20,7 +20,6 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
     this.origin = origin;
   }
 
-
   @Override
   public synchronized void upcall(ReadMessage readMessage) throws IOException {
     MessageTypes messageType = MessageTypes.values()[readMessage.readInt()];

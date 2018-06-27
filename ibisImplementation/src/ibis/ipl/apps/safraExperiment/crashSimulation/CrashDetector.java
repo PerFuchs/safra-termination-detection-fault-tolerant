@@ -1,29 +1,25 @@
 package ibis.ipl.apps.safraExperiment.crashSimulation;
-import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
-import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
-
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-
-// TODO observer pattern?
 public class CrashDetector {
-  private ChandyMisraNode chandyMisraNode;
-  private CommunicationLayer communicationLayer;
   private List<Integer> crashedNodes = new LinkedList<>();
+  private List<CrashHandler> crashHandlers = new LinkedList<>();
 
-  public CrashDetector(ChandyMisraNode chandyMisraNode, CommunicationLayer communicationLayer) {
-    this.chandyMisraNode = chandyMisraNode;
-    this.communicationLayer = communicationLayer;
+  public void addHandler(CrashHandler ch) {
+    crashHandlers.add(ch);
   }
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
-    System.out.println(String.format("Detected crash of %d at %d",
-        crashedNode,
-        communicationLayer.getID()));
     crashedNodes.add(crashedNode);
-    chandyMisraNode.handleCrash(crashedNode);
+    notifyCrashHandlers(crashedNode);
+  }
+
+  private void notifyCrashHandlers(int crashedNode) throws IOException {
+    for (CrashHandler ch : crashHandlers) {
+      ch.handleCrash(crashedNode);
+    }
   }
 
   public List<Integer> getCrashedNodes() {
