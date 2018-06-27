@@ -34,4 +34,8 @@ public class CrashDetector {
     }
     return sb.toString();
   }
+
+  public boolean hasCrashed(int node) {
+    return crashedNodes.contains(node);
+  }
 }

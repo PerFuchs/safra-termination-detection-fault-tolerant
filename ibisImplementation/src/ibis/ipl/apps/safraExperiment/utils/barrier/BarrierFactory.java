@@ -50,7 +50,7 @@ public class BarrierFactory implements Observer {
    * @return
    */
   public boolean signalBarrierWorking() {
-      return registry.getPoolSize() < 200;
+      return registry.getPoolSize() < 120;
 
   }
 }

@@ -29,7 +29,9 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         case DISTANCE:
           DistanceMessage dm = new DistanceMessage(readMessage.readInt());
           readMessage.finish();
-          chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
+          if (!crashDetector.hasCrashed(origin)) {
+            chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
+          }
           break;
         case CRASHED:
           readMessage.finish();
@@ -37,7 +39,9 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
           break;
         case REQUEST:
           readMessage.finish();
-          chandyMisraNode.handleRequestMessage(origin);
+          if (!crashDetector.hasCrashed(origin)) {
+            chandyMisraNode.handleRequestMessage(origin);
+          }
           break;
 
       }

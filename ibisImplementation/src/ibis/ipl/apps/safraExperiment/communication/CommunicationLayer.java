@@ -17,6 +17,7 @@ public class CommunicationLayer {
   private int me;
   private Map<Integer, SendPort> sendPorts = new HashMap<>();
   private Map<Integer, ReceivePort> receivePorts = new HashMap<>();
+  private Map<Integer, MessageUpcall> messageUpcalls = new HashMap<>();
 
   private boolean crashed;
   private Network network;
@@ -49,7 +50,11 @@ public class CommunicationLayer {
 
     for (int i : neighbours) {
       String name = getReceivePortName(i);
-      ReceivePort p = ibis.createReceivePort(portType, name, new MessageUpcall(chandyMisraNode, crashDetector, i));
+
+      MessageUpcall mu = new MessageUpcall(chandyMisraNode, crashDetector, i);
+      messageUpcalls.put(i, mu);
+
+      ReceivePort p = ibis.createReceivePort(portType, name, mu);
       receivePorts.put(i, p);
       p.enableConnections();
       p.enableMessageUpcalls();
@@ -83,9 +88,11 @@ public class CommunicationLayer {
     }
   }
 
-  // TODO notify the upcalls
   public void crash() {
     this.crashed = true;
+    for (MessageUpcall mu : messageUpcalls.values()) {
+      mu.crashed();
+    }
   }
 
   // TODO failure detector only works for local failures

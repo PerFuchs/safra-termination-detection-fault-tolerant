@@ -84,7 +84,7 @@ class IbisNode {
 
     Thread.sleep(5000);
     crashSimulator.triggerLateCrash();
-    Thread.sleep(30000);
+    Thread.sleep(10000);
 
     writeResults(communicationLayer.getID(), chandyMisraNode);
     barrierFactory.getBarrier("ResultsWritten").await();
