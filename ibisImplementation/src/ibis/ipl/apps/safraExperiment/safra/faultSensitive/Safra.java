@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 public class Safra implements Observer {
   private Semaphore semaphore = new Semaphore(1, false);
 
+  private boolean started = false;
   private boolean basicAlgorithmIsActive = false;
   private boolean nodeIsBlack = false;
   private boolean isInitiator = false;
@@ -32,12 +33,13 @@ public class Safra implements Observer {
   public void setActive(boolean status) throws IOException {
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
-//      handleToken(token);
+      handleToken(token);
     }
   }
 
   public void startAlgorithm() throws InterruptedException {
     semaphore.acquire();
+    started = true;
     if (communicationLayer.isRoot(communicationLayer.getID())) {
       token = new Token(0, false);
       isInitiator = true;
@@ -57,7 +59,7 @@ public class Safra implements Observer {
 
   public void receiveToken(Token token) throws IOException {
     this.token = token;
-//    handleToken(token);
+    handleToken(token);
   }
 
   private void handleToken(Token token) throws IOException {
@@ -82,7 +84,7 @@ public class Safra implements Observer {
   }
 
   public void await() throws InterruptedException {
-    if (semaphore.availablePermits() > 0) {
+    if (!started) {
       throw new IllegalStateException("Safra's algorithm has to be started before one can wait for termination.");
     }
     semaphore.acquire();

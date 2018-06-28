@@ -32,6 +32,15 @@ public class Network {
     return new MinimumSpanningTree(aliveChannels, communicationLayer.getRoot(), aliveNodes);
   }
 
+  public Network combineWith(Network network, int weightMultiplier) {
+    for (Channel c : network.channels) {
+      if (!channels.contains(c)) {
+        channels.add(new Channel(c.src, c.dest, c.getWeight() * weightMultiplier));
+      }
+    }
+    return this;
+  }
+
   public List<Integer> getNeighbours(int id) {
     List<Integer> neighbours = new LinkedList<>();
 

@@ -67,9 +67,10 @@ class IbisNode {
     BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashDetector crashDetector = new CrashDetector();
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
 
     Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
+    network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 3000);
     System.out.println("Created Network");
 
     Safra safraNode = new Safra(registry, signalHandler, communicationLayer);
@@ -82,12 +83,14 @@ class IbisNode {
 
     barrierFactory.getBarrier("Connected").await();
 
+    safraNode.startAlgorithm();
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
-    Thread.sleep(5000);
-    crashSimulator.triggerLateCrash();
-    Thread.sleep(10000);
+//    Thread.sleep(5000);
+//    crashSimulator.triggerLateCrash();
+//    Thread.sleep(10000);
+    safraNode.await();
 
     writeResults(communicationLayer.getID(), chandyMisraNode);
     barrierFactory.getBarrier("ResultsWritten").await();
