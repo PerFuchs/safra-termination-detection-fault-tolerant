@@ -2,6 +2,7 @@ package ibis.ipl.apps.safraExperiment.utils.barrier;
 
 import ibis.ipl.IbisIdentifier;
 import ibis.ipl.Registry;
+import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,7 +29,7 @@ public class SignalledBarrier implements Barrier {
   }
 
   public void await() throws InterruptedException, IOException {
-    registry.signal(name, ibises.toArray(new IbisIdentifier[0]));
+    IbisSignal.signal(registry, ibises, new IbisSignal("barrier", name));
     barrier.await();
     barrier = new CountDownLatch(ibises.size());
   }

@@ -4,6 +4,7 @@ package ibis.ipl.apps.safraExperiment;
 
 import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
 import ibis.ipl.apps.safraExperiment.spanningTree.MinimumSpanningTree;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
@@ -71,10 +72,12 @@ class IbisNode {
     Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     System.out.println("Created Network");
 
-    ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector);
+    Safra safraNode = new Safra(registry, signalHandler, communicationLayer);
+
+    ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
     System.out.println("Created Misra algorithm");
 
-    communicationLayer.connectIbises(network, chandyMisraNode, crashDetector);
+    communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector);
     System.out.println("Connected communication layer");
 
     barrierFactory.getBarrier("Connected").await();

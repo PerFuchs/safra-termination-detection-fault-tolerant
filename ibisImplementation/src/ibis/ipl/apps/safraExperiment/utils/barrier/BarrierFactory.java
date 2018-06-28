@@ -40,8 +40,10 @@ public class BarrierFactory implements Observer {
   public void update(Observable observable, Object o) {
     if (o instanceof IbisSignal && signalBarrierWorking()) {
       IbisSignal signal = (IbisSignal) o;
-      SignalledBarrier barrier = (SignalledBarrier) getBarrier(signal.name);
-      barrier.countDown();
+      if (signal.module.equals("barrier")) {
+        SignalledBarrier barrier = (SignalledBarrier) getBarrier(signal.name);
+        barrier.countDown();
+      }
     }
   }
 

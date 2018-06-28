@@ -34,8 +34,13 @@ public class SignalPollerThread extends Observable implements Runnable {
   }
 
   private void handleSignal(String signal) {
-    IbisSignal ibisSignal = new IbisSignal(signal);
-    setChanged();
-    notifyObservers(ibisSignal);
+    if (signal.contains(":")) {
+      String[] parts = signal.split(":");
+      IbisSignal ibisSignal = new IbisSignal(parts[0], parts[1]);
+      setChanged();
+      notifyObservers(ibisSignal);
+    } else {
+      System.err.println("Received unknown signal: " + signal);
+    }
   }
 }

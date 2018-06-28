@@ -4,18 +4,22 @@ import ibis.ipl.ReadMessage;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Token;
 
 import java.io.IOException;
 
 public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
   private final ChandyMisraNode chandyMisraNode;
+  private final Safra safraNode;
   private CrashDetector crashDetector;
   private final int origin;
   private boolean crashed = false;
 
-  public MessageUpcall(ChandyMisraNode chandyMisraNode, CrashDetector crashDetector, int origin) {
+  public MessageUpcall(ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, int origin) {
     this.chandyMisraNode = chandyMisraNode;
+    this.safraNode = safraNode;
     this.crashDetector = crashDetector;
     this.origin = origin;
   }
@@ -29,9 +33,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         case DISTANCE:
           DistanceMessage dm = new DistanceMessage(readMessage.readInt());
           readMessage.finish();
-          if (!crashDetector.hasCrashed(origin)) {
-            chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
-          }
+          chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
           break;
         case CRASHED:
           readMessage.finish();
@@ -39,11 +41,15 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
           break;
         case REQUEST:
           readMessage.finish();
-          if (!crashDetector.hasCrashed(origin)) {
-            chandyMisraNode.handleRequestMessage(origin);
-          }
+          chandyMisraNode.receiveRequestMessage(origin);
           break;
-
+        case TOKEN:
+          Token token = new Token(readMessage.readLong(), readMessage.readBoolean());
+          readMessage.finish();
+          safraNode.receiveToken(token);
+          break;
+        default:
+          throw new IOException("Got message of unknown type.");
       }
     } else {
       readMessage.finish();
