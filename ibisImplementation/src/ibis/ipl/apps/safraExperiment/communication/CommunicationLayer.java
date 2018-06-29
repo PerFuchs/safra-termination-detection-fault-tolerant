@@ -76,7 +76,11 @@ public class CommunicationLayer {
   }
 
   public boolean isRoot(int id) {
-    return id == getRoot();
+    return getID() == id;
+  }
+
+  public boolean isRoot() {
+    return getID() == getRoot();
   }
 
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
@@ -128,6 +132,20 @@ public class CommunicationLayer {
 
   public List<IbisIdentifier> getIbises() {
     return Arrays.asList(ibises);
+  }
+
+  public IbisIdentifier getIbisIdentifier() {
+    return getIbisIdentifier(getID());
+  }
+
+  public List<IbisIdentifier> getOtherIbises() {
+    List<IbisIdentifier> otherIbises = new LinkedList(Arrays.asList(ibises));
+    otherIbises.remove(getID());
+    return otherIbises;
+  }
+
+  public IbisIdentifier getIbisIdentifier(int id) {
+    return ibises[id];
   }
 
   public void sendToken(Token token, int receiver) throws IOException {

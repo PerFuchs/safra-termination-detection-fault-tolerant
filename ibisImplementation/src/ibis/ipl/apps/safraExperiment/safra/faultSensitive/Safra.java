@@ -40,7 +40,7 @@ public class Safra implements Observer {
   public void startAlgorithm() throws InterruptedException {
     semaphore.acquire();
     started = true;
-    if (communicationLayer.isRoot(communicationLayer.getID())) {
+    if (communicationLayer.isRoot()) {
       token = new Token(0, false);
       isInitiator = true;
       nodeIsBlack = true;

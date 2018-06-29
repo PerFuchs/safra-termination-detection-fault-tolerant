@@ -95,7 +95,7 @@ class IbisNode {
     writeResults(communicationLayer.getID(), chandyMisraNode);
     barrierFactory.getBarrier("ResultsWritten").await();
 
-    if (communicationLayer.isRoot(communicationLayer.getID())) {
+    if (communicationLayer.isRoot()) {
       long endTime = System.currentTimeMillis();
       double time = ((double) (endTime - startTime)) / 1000.0;
       System.out.println("ExecutionTime: " + time);

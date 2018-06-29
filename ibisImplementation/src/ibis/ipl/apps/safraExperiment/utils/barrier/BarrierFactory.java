@@ -27,7 +27,7 @@ public class BarrierFactory implements Observer {
       if (barriers.containsKey(name)) {
         return barriers.get(name);
       }
-      SignalledBarrier barrier = new SignalledBarrier(name, communicationLayer.getIbises(), registry);
+      SignalledBarrier barrier = new SignalledBarrier(name, communicationLayer, registry);
       barriers.put(name, barrier);
 
       return barrier;
@@ -52,7 +52,7 @@ public class BarrierFactory implements Observer {
    * @return
    */
   public boolean signalBarrierWorking() {
-      return registry.getPoolSize() < 120;
+      return registry.getPoolSize() < 500;
 
   }
 }

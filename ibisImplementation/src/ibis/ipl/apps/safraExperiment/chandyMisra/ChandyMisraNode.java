@@ -30,7 +30,7 @@ public class ChandyMisraNode implements CrashHandler {
 
   public void startAlgorithm() throws IOException {
     safraNode.setActive(true);
-    if (communicationLayer.isRoot(me)) {
+    if (communicationLayer.isRoot()) {
       this.dist = 0;
       this.parent = -1;
 
