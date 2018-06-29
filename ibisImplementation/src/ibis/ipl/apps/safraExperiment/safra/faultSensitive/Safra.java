@@ -15,10 +15,11 @@ public class Safra implements Observer {
 
   private boolean started = false;
   private boolean basicAlgorithmIsActive = false;
-  private boolean nodeIsBlack = false;
-  private boolean isInitiator = false;
+  private int isBlackUntil;
   private long messageCounter = 0;
+  private long sequenceNumber = 0;
   private Token token;
+
 
   private CommunicationLayer communicationLayer;
   private final Registry registry;
@@ -26,55 +27,79 @@ public class Safra implements Observer {
   public Safra(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
     this.registry = registry;
     this.communicationLayer = communicationLayer;
+    isBlackUntil = communicationLayer.getID();
 
     signalHandler.addObserver(this);
+  }
+
+  /**
+   *
+   * @param j id of node in ring
+   * @param k id or node in ring
+   * @return The id that is further away from this node.
+   */
+  private int furthest(int j, int k) {
+    int me = communicationLayer.getID();
+    if ((me <= j && j <= k)
+        || (k < me && me <= j)
+        || (j <= k && k < me)) {
+      return k;
+    }
+    return j;
   }
 
   public void setActive(boolean status) throws IOException {
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
-      handleToken(token);
+      handleToken();
     }
   }
 
   public void startAlgorithm() throws InterruptedException {
     semaphore.acquire();
     started = true;
+    token = null;
     if (communicationLayer.isRoot()) {
-      token = new Token(0, false);
-      isInitiator = true;
-      nodeIsBlack = true;
+      token = new Token(0, communicationLayer.getIbisCount() - 1);
     }
   }
 
-  public void handleSendingBasicMessage() {
+  public synchronized void handleSendingBasicMessage() {
     messageCounter++;
   }
 
-  public void handleReceiveBasicMessage() {
+  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
     basicAlgorithmIsActive = true;
     messageCounter--;
-    nodeIsBlack = true;
+
+    // Only color myself black if the message overtook the token. As defined in the paper
+    if ((sender < communicationLayer.getID()
+        && sequenceNumber > this.sequenceNumber)
+        || (sender > communicationLayer.getID() && sequenceNumber == this.sequenceNumber)) {
+      isBlackUntil = furthest(isBlackUntil, sender);
+    }
   }
 
-  public void receiveToken(Token token) throws IOException {
+  public synchronized void receiveToken(Token token) throws IOException {
     this.token = token;
-    handleToken(token);
+    handleToken();
   }
 
-  private void handleToken(Token token) throws IOException {
-    if (basicAlgorithmIsActive == false && token != null) {
-      if (!nodeIsBlack && !token.isBlack) {
-        messageCounter += token.messageCounter;
-      }
-      if (!isInitiator) {
-        forwardToken(new Token(messageCounter, nodeIsBlack || token.isBlack));
-        nodeIsBlack = false;
-      } else if (nodeIsBlack || messageCounter > 0) {
-        forwardToken(new Token(0, false));
-        nodeIsBlack = false;
-      } else {
+  private synchronized void handleToken() throws IOException {
+    if (!basicAlgorithmIsActive && this.token != null) {
+      int me = communicationLayer.getID();
+      isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
+      token.messageCounter += messageCounter;
+
+      System.out.println("Message Count: " + messageCounter);
+      System.out.println(String.format("Handle token: %d %d", isBlackUntil, token.messageCounter));
+      if (token.messageCounter == 0 && isBlackUntil == me) {
+        System.out.println("Calling announce");
         announce();
+      } else {
+        forwardToken(new Token(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())));
+        isBlackUntil = me;
+        messageCounter = 0;
       }
     }
   }
@@ -92,8 +117,10 @@ public class Safra implements Observer {
 
   private void forwardToken(Token token) throws IOException {
     this.token = null;
+    sequenceNumber++;
 
     int nextNode = (communicationLayer.getID() + 1) % communicationLayer.getIbisCount();
+    System.out.println(String.format("Forwarding token to %d Token: %d %d", nextNode, token.isBlackUntil, token.messageCounter));
     communicationLayer.sendToken(token, nextNode);
   }
 
@@ -106,5 +133,9 @@ public class Safra implements Observer {
         semaphore.release();
       }
     }
+  }
+
+  public long getSequenceNumber() {
+    return sequenceNumber;
   }
 }

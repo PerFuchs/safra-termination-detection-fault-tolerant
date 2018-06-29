@@ -1,11 +1,11 @@
 package ibis.ipl.apps.safraExperiment.safra.faultSensitive;
 
 public class Token {
-  public boolean isBlack;
+  public int isBlackUntil;
   public long messageCounter;
 
-  public Token(long messageCounter, boolean isBlack) {
+  public Token(long messageCounter, int isBlackUntil) {
     this.messageCounter = messageCounter;
-    this.isBlack = isBlack;
+    this.isBlackUntil = isBlackUntil;
   }
 }

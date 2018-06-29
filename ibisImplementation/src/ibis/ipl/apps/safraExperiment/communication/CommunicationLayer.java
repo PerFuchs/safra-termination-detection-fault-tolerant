@@ -23,6 +23,7 @@ public class CommunicationLayer {
 
   private boolean crashed;
   private Network network;
+  private Safra safraNode;
 
   public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) throws IOException {
     this.ibis = ibis;
@@ -48,6 +49,7 @@ public class CommunicationLayer {
 
   public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector) throws IOException {
     this.network = network;
+    this.safraNode = safraNode;
     List<Integer> neighbours = network.getNeighbours(getID());
 
     for (int i : neighbours) {
@@ -85,9 +87,11 @@ public class CommunicationLayer {
 
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
     if (!crashed) {
+      safraNode.handleSendingBasicMessage();
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.DISTANCE.ordinal());
+      m.writeLong(safraNode.getSequenceNumber());
       m.writeInt(dm.getDistance());
       m.send();
       m.finish();
@@ -114,9 +118,11 @@ public class CommunicationLayer {
 
   public void sendRequestMessage(int receiver) throws IOException {
     if (!crashed) {
+      safraNode.handleSendingBasicMessage();
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.REQUEST.ordinal());
+      m.writeLong(safraNode.getSequenceNumber());
       m.send();
       m.finish();
     }
@@ -154,7 +160,7 @@ public class CommunicationLayer {
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.TOKEN.ordinal());
       m.writeLong(token.messageCounter);
-      m.writeBoolean(token.isBlack);
+      m.writeInt(token.isBlackUntil);
       m.send();
       m.finish();
     }

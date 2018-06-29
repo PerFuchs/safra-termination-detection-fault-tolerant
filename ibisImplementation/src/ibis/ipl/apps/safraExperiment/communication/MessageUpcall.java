@@ -31,6 +31,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
     if (!crashed) {
       switch (messageType) {
         case DISTANCE:
+          safraNode.handleReceiveBasicMessage(origin, readMessage.readLong());
           DistanceMessage dm = new DistanceMessage(readMessage.readInt());
           readMessage.finish();
           chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
@@ -40,11 +41,14 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
           crashDetector.handleCrash(origin);
           break;
         case REQUEST:
+          safraNode.handleReceiveBasicMessage(origin, readMessage.readLong());
           readMessage.finish();
           chandyMisraNode.receiveRequestMessage(origin);
           break;
         case TOKEN:
-          Token token = new Token(readMessage.readLong(), readMessage.readBoolean());
+          long messageCount = readMessage.readLong();
+          int blackUntil = readMessage.readInt();
+          Token token = new Token(messageCount, blackUntil);
           readMessage.finish();
           safraNode.receiveToken(token);
           break;

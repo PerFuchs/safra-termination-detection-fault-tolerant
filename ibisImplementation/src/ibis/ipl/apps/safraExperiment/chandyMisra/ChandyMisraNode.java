@@ -40,7 +40,6 @@ public class ChandyMisraNode implements CrashHandler {
   }
 
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException {
-    safraNode.handleReceiveBasicMessage();
     if (!crashDetector.hasCrashed(origin)) {
       int newDistance = dm.getDistance() + network.getWeight(origin, me);
       if ((dist == -1 || newDistance < dist) && newDistance > 0) {  // > 0 for overflows
@@ -61,7 +60,6 @@ public class ChandyMisraNode implements CrashHandler {
   }
 
   private void sendDistanceMessage(int distance, int receiver) throws IOException {
-    safraNode.handleSendingBasicMessage();
     communicationLayer.sendDistanceMessage(new DistanceMessage(distance), receiver);
   }
 
@@ -82,7 +80,6 @@ public class ChandyMisraNode implements CrashHandler {
 
   // TODO reunify naming scheme
   public synchronized void receiveRequestMessage(int origin) throws IOException {
-    safraNode.handleReceiveBasicMessage();
     if (!crashDetector.hasCrashed(origin)) {
       handleRequestMessage(origin);
     }
@@ -108,7 +105,6 @@ public class ChandyMisraNode implements CrashHandler {
   }
 
   private void sendRequestMessage(int receiver) throws IOException {
-    safraNode.handleSendingBasicMessage();
     communicationLayer.sendRequestMessage(receiver);
   }
 
