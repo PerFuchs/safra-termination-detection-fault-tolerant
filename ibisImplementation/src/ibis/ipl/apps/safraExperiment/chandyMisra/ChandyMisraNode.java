@@ -3,7 +3,8 @@ package ibis.ipl.apps.safraExperiment.chandyMisra;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
+import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 
 import java.io.IOException;

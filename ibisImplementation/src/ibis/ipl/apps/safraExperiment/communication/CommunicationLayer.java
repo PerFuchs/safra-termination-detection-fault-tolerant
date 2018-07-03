@@ -3,8 +3,8 @@ package ibis.ipl.apps.safraExperiment.communication;
 import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Token;
+import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.TokenFS;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
@@ -92,7 +92,7 @@ public class CommunicationLayer {
 
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
     if (!crashed) {
-      safraNode.handleSendingBasicMessage();
+      safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.DISTANCE.ordinal());
@@ -123,7 +123,7 @@ public class CommunicationLayer {
 
   public void sendRequestMessage(int receiver) throws IOException {
     if (!crashed) {
-      safraNode.handleSendingBasicMessage();
+      safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.REQUEST.ordinal());
@@ -168,7 +168,7 @@ public class CommunicationLayer {
     return ibises[id];
   }
 
-  public void sendToken(Token token, int receiver) throws IOException {
+  public void sendToken(TokenFS token, int receiver) throws IOException {
     if (!crashed) {
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();

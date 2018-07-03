@@ -4,8 +4,9 @@ import ibis.ipl.ReadMessage;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Token;
+import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.api.Token;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.TokenFS;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 
 import java.io.IOException;
@@ -55,7 +56,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         case TOKEN:
           long messageCount = readMessage.readLong();
           int blackUntil = readMessage.readInt();
-          Token token = new Token(messageCount, blackUntil);
+          Token token = new TokenFS(messageCount, blackUntil);
           readMessage.finish();
           safraNode.receiveToken(token);
           break;

@@ -4,13 +4,15 @@ import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
+import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.api.Token;
 
 import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Semaphore;
 
-public class Safra implements Observer {
+public class SafraFS implements Observer, Safra {
   private Semaphore semaphore = new Semaphore(1, false);
 
   private boolean started = false;
@@ -18,13 +20,13 @@ public class Safra implements Observer {
   private int isBlackUntil;
   private long messageCounter = 0;
   private long sequenceNumber = 0;
-  private Token token;
+  private TokenFS token;
 
 
   private CommunicationLayer communicationLayer;
   private final Registry registry;
 
-  public Safra(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
+  public SafraFS(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
     this.registry = registry;
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
@@ -60,12 +62,12 @@ public class Safra implements Observer {
     started = true;
     token = null;
     if (communicationLayer.isRoot()) {
-      token = new Token(0, communicationLayer.getIbisCount() - 1);
+      token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
       setActive(true);
     }
   }
 
-  public synchronized void handleSendingBasicMessage() {
+  public synchronized void handleSendingBasicMessage(int receiver) {
     messageCounter++;
   }
 
@@ -82,7 +84,10 @@ public class Safra implements Observer {
   }
 
   public synchronized void receiveToken(Token token) throws IOException {
-    this.token = token;
+    if (!(token instanceof TokenFS)) {
+      throw new IllegalStateException("None FS token used with FS safra");
+    }
+    this.token = (TokenFS) token;
     handleToken();
   }
 
@@ -98,7 +103,7 @@ public class Safra implements Observer {
         System.out.println("Calling announce");
         announce();
       } else {
-        forwardToken(new Token(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())));
+        forwardToken(new TokenFS(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())));
         isBlackUntil = me;
         messageCounter = 0;
       }
@@ -111,17 +116,17 @@ public class Safra implements Observer {
 
   public void await() throws InterruptedException {
     if (!started) {
-      throw new IllegalStateException("Safra's algorithm has to be started before one can wait for termination.");
+      throw new IllegalStateException("SafraFS's algorithm has to be started before one can wait for termination.");
     }
     semaphore.acquire();
   }
 
-  private synchronized void forwardToken(Token token) throws IOException {
+  private synchronized void forwardToken(TokenFS token) throws IOException {
     this.token = null;
     sequenceNumber++;
 
     int nextNode = (communicationLayer.getID() + 1) % communicationLayer.getIbisCount();
-    System.out.println(String.format("Forwarding token to %d Token: %d %d", nextNode, token.isBlackUntil, token.messageCounter));
+    System.out.println(String.format("Forwarding token to %d TokenFS: %d %d", nextNode, token.isBlackUntil, token.messageCounter));
     communicationLayer.sendToken(token, nextNode);
   }
 
