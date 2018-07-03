@@ -4,6 +4,7 @@ import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.TokenFS;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
@@ -168,13 +169,12 @@ public class CommunicationLayer {
     return ibises[id];
   }
 
-  public void sendToken(TokenFS token, int receiver) throws IOException {
+  public void sendToken(Token token, int receiver) throws IOException {
     if (!crashed) {
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.TOKEN.ordinal());
-      m.writeLong(token.messageCounter);
-      m.writeInt(token.isBlackUntil);
+      token.writeToMessage(m);
       m.send();
       m.finish();
     }

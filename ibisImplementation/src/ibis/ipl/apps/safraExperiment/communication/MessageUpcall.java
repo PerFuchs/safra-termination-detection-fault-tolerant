@@ -54,9 +54,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
           chandyMisraNode.receiveRequestMessage(origin);
           break;
         case TOKEN:
-          long messageCount = readMessage.readLong();
-          int blackUntil = readMessage.readInt();
-          Token token = new TokenFS(messageCount, blackUntil);
+          Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
           readMessage.finish();
           safraNode.receiveToken(token);
           break;

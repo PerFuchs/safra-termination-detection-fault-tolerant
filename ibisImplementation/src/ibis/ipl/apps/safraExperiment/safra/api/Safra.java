@@ -14,4 +14,6 @@ public interface Safra {
   long getSequenceNumber();
 
   void receiveToken(Token token) throws IOException;
+
+  TokenFactory getTokenFactory();
 }

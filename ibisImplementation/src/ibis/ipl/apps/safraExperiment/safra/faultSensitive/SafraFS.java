@@ -6,6 +6,7 @@ import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
+import ibis.ipl.apps.safraExperiment.safra.api.TokenFactory;
 
 import java.io.IOException;
 import java.util.Observable;
@@ -89,6 +90,11 @@ public class SafraFS implements Observer, Safra {
     }
     this.token = (TokenFS) token;
     handleToken();
+  }
+
+  @Override
+  public TokenFactory getTokenFactory() {
+    return new TokenFactoryFS();
   }
 
   private synchronized void handleToken() throws IOException {
