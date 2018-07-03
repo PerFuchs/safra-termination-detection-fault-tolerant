@@ -159,7 +159,7 @@ public class CommunicationLayer {
   }
 
   public List<IbisIdentifier> getOtherIbises() {
-    List<IbisIdentifier> otherIbises = new LinkedList(Arrays.asList(ibises));
+    List<IbisIdentifier> otherIbises = new LinkedList<IbisIdentifier>(Arrays.asList(ibises));
     otherIbises.remove(getID());
     return otherIbises;
   }
