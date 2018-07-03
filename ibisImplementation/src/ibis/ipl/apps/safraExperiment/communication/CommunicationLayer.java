@@ -7,6 +7,7 @@ import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Token;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -47,7 +48,11 @@ public class CommunicationLayer {
     return "Receive" + i;
   }
 
-  public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector) throws IOException {
+  public void connectIbises(Network network,
+                            ChandyMisraNode chandyMisraNode,
+                            Safra safraNode,
+                            CrashDetector crashDetector,
+                            BarrierFactory barrierFactory) throws IOException {
     this.network = network;
     this.safraNode = safraNode;
     List<Integer> neighbours = network.getNeighbours(getID());
@@ -55,7 +60,7 @@ public class CommunicationLayer {
     for (int i : neighbours) {
       String name = getReceivePortName(i);
 
-      MessageUpcall mu = new MessageUpcall(chandyMisraNode, safraNode, crashDetector, i);
+      MessageUpcall mu = new MessageUpcall(chandyMisraNode, safraNode, crashDetector, barrierFactory, i);
       messageUpcalls.put(i, mu);
 
       ReceivePort p = ibis.createReceivePort(portType, name, mu);
@@ -126,6 +131,15 @@ public class CommunicationLayer {
       m.send();
       m.finish();
     }
+  }
+
+  public void sendBarrierMessage(int receiver, String name) throws IOException {
+    SendPort sendPort = sendPorts.get(receiver);
+    WriteMessage m = sendPort.newMessage();
+    m.writeInt(MessageTypes.BARRIER.ordinal());
+    m.writeString(name);
+    m.send();
+    m.finish();
   }
 
   public int getID() {

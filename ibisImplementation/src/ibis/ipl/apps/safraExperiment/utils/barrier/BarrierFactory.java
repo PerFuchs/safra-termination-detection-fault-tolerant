@@ -11,7 +11,7 @@ import java.util.*;
 public class BarrierFactory implements Observer {
   private final Registry registry;
   private final CommunicationLayer communicationLayer;
-  private Map<String, SignalledBarrier> barriers = new HashMap<>();
+  private Map<String, Barrier> barriers = new HashMap<>();
 
   public BarrierFactory(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
     this.registry = registry;
@@ -23,17 +23,19 @@ public class BarrierFactory implements Observer {
   }
 
   public Barrier getBarrier(String name) {
-    if (signalBarrierWorking()) {
-      if (barriers.containsKey(name)) {
-        return barriers.get(name);
+    if (!barriers.containsKey(name)) {
+      if (signalBarrierWorking()) {
+        barriers.put(name, new SignalledBarrier(name, communicationLayer, registry));
+      } else {
+        barriers.put(name, new MessageBarrier(name, communicationLayer));
       }
-      SignalledBarrier barrier = new SignalledBarrier(name, communicationLayer, registry);
-      barriers.put(name, barrier);
-
-      return barrier;
-    } else {
-      return new TimerBarrier(15000);
     }
+    return barriers.get(name);
+  }
+
+  public synchronized void handleBarrierMessage(String name) {
+    MessageBarrier barrier = (MessageBarrier) getBarrier(name);
+    barrier.countDown();
   }
 
   @Override
@@ -48,11 +50,9 @@ public class BarrierFactory implements Observer {
   }
 
   /**
-   *  SignalBarriers are not scalable so use timers above a certain number of nodes.
-   * @return
+   * SignalBarriers are not scalable so use different barrier instead.
    */
   public boolean signalBarrierWorking() {
-      return registry.getPoolSize() < 500;
-
+    return registry.getPoolSize() < 500;
   }
 }

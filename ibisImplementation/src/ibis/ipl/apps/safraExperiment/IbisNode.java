@@ -78,8 +78,13 @@ class IbisNode {
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
     System.out.println("Created Misra algorithm");
 
-    communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector);
+    communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
     System.out.println("Connected communication layer");
+
+    if (!barrierFactory.signalBarrierWorking()) {
+      // Barrier relies on messages. Lets wait until all nodes have there channels setup.
+      Thread.sleep(20000);
+    }
 
     barrierFactory.getBarrier("Connected").await();
 

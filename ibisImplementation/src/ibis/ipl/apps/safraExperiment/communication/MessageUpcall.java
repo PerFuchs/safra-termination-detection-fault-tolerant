@@ -6,6 +6,7 @@ import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.Token;
+import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 
 import java.io.IOException;
 
@@ -14,13 +15,19 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
   private final ChandyMisraNode chandyMisraNode;
   private final Safra safraNode;
   private CrashDetector crashDetector;
+  private BarrierFactory barrierFactory;
   private final int origin;
   private boolean crashed = false;
 
-  public MessageUpcall(ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, int origin) {
+  public MessageUpcall(ChandyMisraNode chandyMisraNode,
+                       Safra safraNode,
+                       CrashDetector crashDetector,
+                       BarrierFactory barrierFactory,
+                       int origin) {
     this.chandyMisraNode = chandyMisraNode;
     this.safraNode = safraNode;
     this.crashDetector = crashDetector;
+    this.barrierFactory = barrierFactory;
     this.origin = origin;
   }
 
@@ -51,6 +58,11 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
           Token token = new Token(messageCount, blackUntil);
           readMessage.finish();
           safraNode.receiveToken(token);
+          break;
+        case BARRIER:
+          String name = readMessage.readString();
+          readMessage.finish();
+          barrierFactory.handleBarrierMessage(name);
           break;
         default:
           throw new IOException("Got message of unknown type.");

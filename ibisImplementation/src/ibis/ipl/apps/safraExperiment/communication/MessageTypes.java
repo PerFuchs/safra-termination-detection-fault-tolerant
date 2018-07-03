@@ -4,5 +4,6 @@ public enum MessageTypes {
   DISTANCE,
   REQUEST,
   CRASHED,
-  TOKEN
+  TOKEN,
+  BARRIER
 }
