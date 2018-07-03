@@ -32,7 +32,7 @@ public class BarrierFactory implements Observer {
 
       return barrier;
     } else {
-      return new TimerBarrier(10000);
+      return new TimerBarrier(15000);
     }
   }
 

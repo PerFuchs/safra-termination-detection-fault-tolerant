@@ -48,19 +48,20 @@ public class Safra implements Observer {
     return j;
   }
 
-  public void setActive(boolean status) throws IOException {
+  public synchronized void setActive(boolean status) throws IOException {
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
       handleToken();
     }
   }
 
-  public void startAlgorithm() throws InterruptedException {
+  public synchronized void startAlgorithm() throws InterruptedException, IOException {
     semaphore.acquire();
     started = true;
     token = null;
     if (communicationLayer.isRoot()) {
       token = new Token(0, communicationLayer.getIbisCount() - 1);
+      setActive(true);
     }
   }
 
@@ -104,7 +105,7 @@ public class Safra implements Observer {
     }
   }
 
-  private void announce() throws IOException {
+  private synchronized void announce() throws IOException {
     IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
   }
 
@@ -115,7 +116,7 @@ public class Safra implements Observer {
     semaphore.acquire();
   }
 
-  private void forwardToken(Token token) throws IOException {
+  private synchronized void forwardToken(Token token) throws IOException {
     this.token = null;
     sequenceNumber++;
 
@@ -126,7 +127,7 @@ public class Safra implements Observer {
 
 
   @Override
-  public void update(Observable observable, Object o) {
+  public synchronized void update(Observable observable, Object o) {
     if (o instanceof IbisSignal) {
       IbisSignal signal = (IbisSignal) o;
       if (signal.module.equals("safra") && signal.name.equals("announce")) {
