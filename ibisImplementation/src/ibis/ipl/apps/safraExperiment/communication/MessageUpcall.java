@@ -11,29 +11,34 @@ import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 
 import java.io.IOException;
 
+import static ibis.ipl.apps.safraExperiment.communication.MessageTypes.DISTANCE;
+
 public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
+  private CommunicationLayer communicationLayer;
   private final ChandyMisraNode chandyMisraNode;
   private final Safra safraNode;
   private CrashDetector crashDetector;
   private BarrierFactory barrierFactory;
-  private final int origin;
   private boolean crashed = false;
 
-  public MessageUpcall(ChandyMisraNode chandyMisraNode,
+  public MessageUpcall(CommunicationLayer communicationLayer,
+                       ChandyMisraNode chandyMisraNode,
                        Safra safraNode,
                        CrashDetector crashDetector,
-                       BarrierFactory barrierFactory,
-                       int origin) {
+                       BarrierFactory barrierFactory) {
+    this.communicationLayer = communicationLayer;
     this.chandyMisraNode = chandyMisraNode;
     this.safraNode = safraNode;
     this.crashDetector = crashDetector;
     this.barrierFactory = barrierFactory;
-    this.origin = origin;
   }
+
+  // TODO clean up synchronization.
 
   @Override
   public synchronized void upcall(ReadMessage readMessage) throws IOException {
+    int origin = communicationLayer.getIbises().indexOf(readMessage.origin().ibisIdentifier());
     MessageTypes messageType = MessageTypes.values()[readMessage.readInt()];
 
     if (!crashed) {

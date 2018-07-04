@@ -5,7 +5,6 @@ import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.TokenFS;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
@@ -45,6 +44,10 @@ public class CommunicationLayer {
     System.out.println("Found all ibises");
   }
 
+  private String getGeneralReceivePortName() {
+    return "Receive";
+  }
+
   private String getReceivePortName(int i) {
     return "Receive" + i;
   }
@@ -58,10 +61,23 @@ public class CommunicationLayer {
     this.safraNode = safraNode;
     List<Integer> neighbours = network.getNeighbours(getID());
 
+    MessageUpcall generalUpcall = new MessageUpcall(
+        this,
+        chandyMisraNode,
+        safraNode,
+        crashDetector,
+        barrierFactory);
+    messageUpcalls.put(-1, generalUpcall);
+
+    ReceivePort generalReceivePort = ibis.createReceivePort(portType, getGeneralReceivePortName(), generalUpcall);
+    receivePorts.put(-1, generalReceivePort);
+    generalReceivePort.enableConnections();
+    generalReceivePort.enableMessageUpcalls();
+
     for (int i : neighbours) {
       String name = getReceivePortName(i);
 
-      MessageUpcall mu = new MessageUpcall(chandyMisraNode, safraNode, crashDetector, barrierFactory, i);
+      MessageUpcall mu = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
       messageUpcalls.put(i, mu);
 
       ReceivePort p = ibis.createReceivePort(portType, name, mu);

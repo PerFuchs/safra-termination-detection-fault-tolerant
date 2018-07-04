@@ -20,6 +20,8 @@ public class ChandyMisraNode implements CrashHandler {
   private int dist = -1;
   private int parent = -1;
 
+
+  // TODO add a stop function
   public ChandyMisraNode(CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector, Safra safraNode) {
     this.communicationLayer = communicationLayer;
     this.network = network;

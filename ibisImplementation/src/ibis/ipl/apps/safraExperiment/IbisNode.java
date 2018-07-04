@@ -45,7 +45,7 @@ class IbisNode {
         IbisCapabilities.SIGNALS);
 
     PortType porttype = new PortType(
-        PortType.CONNECTION_ONE_TO_ONE,
+        PortType.CONNECTION_MANY_TO_ONE,
         PortType.COMMUNICATION_RELIABLE,
         PortType.RECEIVE_AUTO_UPCALLS,
         PortType.SERIALIZATION_DATA,
@@ -95,8 +95,8 @@ class IbisNode {
     chandyMisraNode.startAlgorithm();
     System.out.println("Started algorithm");
 
-//    Thread.sleep(5000);
-//    crashSimulator.triggerLateCrash();
+    Thread.sleep(500);
+    crashSimulator.triggerLateCrash();
 //    Thread.sleep(10000);
     safraNode.await();
 
