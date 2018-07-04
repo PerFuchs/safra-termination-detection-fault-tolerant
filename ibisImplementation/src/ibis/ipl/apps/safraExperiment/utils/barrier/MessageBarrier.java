@@ -2,12 +2,15 @@ package ibis.ipl.apps.safraExperiment.utils.barrier;
 
 import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MessageBarrier implements Barrier {
+  private static Logger logger = Logger.getLogger(MessageBarrier.class);
+
   private String name;
   private CountDownLatch barrier;
   private CommunicationLayer communicationLayer;
@@ -50,7 +53,7 @@ public class MessageBarrier implements Barrier {
         try {
           communicationLayer.sendBarrierMessage(getNextNode(), name);
         } catch (IOException e) {
-          System.err.println("Could not message next node.");
+          logger.error("Could not message next node.");
         }
       }
     } finally {

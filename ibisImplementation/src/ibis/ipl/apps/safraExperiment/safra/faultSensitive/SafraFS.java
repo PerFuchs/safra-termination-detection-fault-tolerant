@@ -103,10 +103,7 @@ public class SafraFS implements Observer, Safra {
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
       token.messageCounter += messageCounter;
 
-      System.out.println("Message Count: " + messageCounter);
-      System.out.println(String.format("Handle token: %d %d", isBlackUntil, token.messageCounter));
       if (token.messageCounter == 0 && isBlackUntil == me) {
-        System.out.println("Calling announce");
         announce();
       } else {
         forwardToken(new TokenFS(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())));
@@ -132,7 +129,6 @@ public class SafraFS implements Observer, Safra {
     sequenceNumber++;
 
     int nextNode = (communicationLayer.getID() + 1) % communicationLayer.getIbisCount();
-    System.out.println(String.format("Forwarding token to %d TokenFS: %d %d", nextNode, token.isBlackUntil, token.messageCounter));
     communicationLayer.sendToken(token, nextNode);
   }
 

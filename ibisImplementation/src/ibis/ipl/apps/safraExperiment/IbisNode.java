@@ -4,18 +4,18 @@ package ibis.ipl.apps.safraExperiment;
 
 import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
-import ibis.ipl.apps.safraExperiment.safra.api.Safra;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
-import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
-import ibis.ipl.apps.safraExperiment.spanningTree.MinimumSpanningTree;
-import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
+import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
+import ibis.ipl.apps.safraExperiment.spanningTree.MinimumSpanningTree;
+import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.spanningTree.Result;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
-import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.*;
+import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,16 +27,22 @@ import java.util.List;
 
 
 class IbisNode {
+  static Logger logger = Logger.getLogger(IbisNode.class);
   static Ibis ibis;
   static Registry registry;
 
 
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
-    BasicConfigurator.configure();
+    BasicConfigurator.configure(new ConsoleAppender(new PatternLayout("[%t] - %m%n")));
+
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
 
     System.setErr(System.out);  // Redirect because DAS4 does not show err.
+
+    Logger.getLogger(IbisNode.class).setLevel(Level.DEBUG);
+    Logger.getLogger(CommunicationLayer.class).setLevel(Level.DEBUG);
+    Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
 
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED,
@@ -55,49 +61,46 @@ class IbisNode {
 
     ibis = IbisFactory.createIbis(s, null, porttype);
     registry = ibis.registry();
-    System.out.println("Created IBIS");
+    logger.info(String.format("%s Created IBIS", ibis.identifier().toString()));
 
     SignalPollerThread signalHandler = new SignalPollerThread(registry);
     signalHandler.start();
 
     registry.waitUntilPoolClosed();
-    System.out.println("Pool closed");
+    logger.trace(String.format("%s Pool closed", ibis.identifier().toString()));
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
-    System.out.println("Created communication layer");
 
     BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashDetector crashDetector = new CrashDetector();
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
 
     Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 3000);
-    System.out.println("Created Network");
 
     Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashDetector);
 //    Safra safraNode = new SafraFS(registry, signalHandler, communicationLayer);
 
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
-    System.out.println("Created Misra algorithm");
 
     communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
-    System.out.println("Connected communication layer");
+    logger.debug(String.format("%d connected communication layer", communicationLayer.getID()));
 
     if (!barrierFactory.signalBarrierWorking()) {
       // Barrier relies on messages. Lets wait until all nodes have there channels setup.
-      Thread.sleep(20000);
+      Thread.sleep(10000);
     }
 
     barrierFactory.getBarrier("Connected").await();
 
     safraNode.startAlgorithm();
     chandyMisraNode.startAlgorithm();
-    System.out.println("Started algorithm");
 
-    Thread.sleep(500);
+    logger.debug(String.format("%d started algorithm", communicationLayer.getID()));
+
+    Thread.sleep(2000);
     crashSimulator.triggerLateCrash();
-//    Thread.sleep(10000);
     safraNode.await();
 
     writeResults(communicationLayer.getID(), chandyMisraNode);
@@ -144,16 +147,16 @@ class IbisNode {
     try {
       Files.write(path, strToBytes);
     } catch (IOException e) {
-      System.out.println(String.format("Could not write output file: %d", node));
+      logger.error(String.format("Could not write output file: %d", node));
     }
-    System.out.println("Output files written.");
+    logger.trace(String.format("%d output written", node));
   }
 
   private static List<Result> readResults(int ibisCount) {
     List<Result> results = new LinkedList<>();
 
     for (int i = 0; i < ibisCount; i++) {
-      System.out.println("Reading results " + i);
+      logger.trace(String.format("Reading result %d", i));
 
       Path path = Paths.get(filePathForResults(i));
 
@@ -161,7 +164,7 @@ class IbisNode {
         String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
         results.add(new Result(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
       } catch (IOException e) {
-        System.out.println(String.format("Could not read output file from: %d", i));
+        logger.error(String.format("Could not read output file from: %d", i));
       }
 
     }

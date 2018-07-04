@@ -8,11 +8,14 @@ import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
 
 public class CommunicationLayer {
+  private static Logger logger = Logger.getLogger(CommunicationLayer.class);
+
   private Ibis ibis;
   private Registry registry;
   private PortType portType;
@@ -37,11 +40,10 @@ public class CommunicationLayer {
   private void findAllIbises() {
     ibises = registry.joinedIbises();
     if (ibises.length != registry.getPoolSize()) {
-      System.out.println("Not all ibises reported by joinedIbises");
+      logger.error("Not all ibises reported by joinedIbises");
     }
     Arrays.sort(ibises);
     me = Arrays.asList(ibises).indexOf(ibis.identifier());
-    System.out.println("Found all ibises");
   }
 
   private String getGeneralReceivePortName() {
@@ -50,6 +52,14 @@ public class CommunicationLayer {
 
   private String getReceivePortName(int i) {
     return "Receive" + i;
+  }
+
+  private void createdSendPort(int receiver, String receiverPortName) throws IOException {
+    IbisIdentifier id = ibises[receiver];
+    String name = "Send" + receiver;
+    SendPort p = ibis.createSendPort(portType, name);
+    sendPorts.put(receiver, p);
+    p.connect(id, receiverPortName);
   }
 
   public void connectIbises(Network network,
@@ -87,11 +97,7 @@ public class CommunicationLayer {
     }
 
     for (int i : neighbours) {
-      IbisIdentifier id = ibises[i];
-      String name = "Send" + i;
-      SendPort p = ibis.createSendPort(portType, name);
-      sendPorts.put(i, p);
-      p.connect(id, getReceivePortName(getID()));
+      createdSendPort(i, getReceivePortName(getID()));
     }
   }
 
@@ -109,6 +115,7 @@ public class CommunicationLayer {
 
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
     if (!crashed) {
+      logger.trace(String.format("%d sending distance message to %d", getID(), receiver));
       safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
@@ -130,6 +137,7 @@ public class CommunicationLayer {
   // TODO failure detector only works for local failures
   public void broadcastCrashMessage() throws IOException {
     for (int id : network.getNeighbours(getID())) {
+      logger.trace(String.format("%d sending crash message to %d", getID(), id));
       SendPort sendPort = sendPorts.get(id);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.CRASHED.ordinal());
@@ -140,6 +148,7 @@ public class CommunicationLayer {
 
   public void sendRequestMessage(int receiver) throws IOException {
     if (!crashed) {
+      logger.trace(String.format("%d sending request message to %d", getID(), receiver));
       safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
@@ -187,6 +196,11 @@ public class CommunicationLayer {
 
   public void sendToken(Token token, int receiver) throws IOException {
     if (!crashed) {
+      logger.debug(String.format("%d sending token to %d", getID(), receiver));
+      if (!sendPorts.containsKey(receiver)) {
+        logger.debug(String.format("%d Creating new send port to %d.", getID(), receiver));
+        createdSendPort(receiver, getGeneralReceivePortName());
+      }
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.TOKEN.ordinal());

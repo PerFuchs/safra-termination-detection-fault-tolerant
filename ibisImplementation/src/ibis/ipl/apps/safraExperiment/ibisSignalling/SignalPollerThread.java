@@ -1,6 +1,7 @@
 package ibis.ipl.apps.safraExperiment.ibisSignalling;
 
 import ibis.ipl.Registry;
+import org.apache.log4j.Logger;
 
 import java.util.Observable;
 import java.util.concurrent.Executors;
@@ -9,6 +10,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class SignalPollerThread extends Observable implements Runnable {
+  private static Logger logger = Logger.getLogger(SignalPollerThread.class);
+
   private Registry registry;
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private ScheduledFuture<?> signalPollerHandle;
@@ -40,7 +43,7 @@ public class SignalPollerThread extends Observable implements Runnable {
       setChanged();
       notifyObservers(ibisSignal);
     } else {
-      System.err.println("Received unknown signal: " + signal);
+      logger.error("Received unknown signal: " + signal);
     }
   }
 }

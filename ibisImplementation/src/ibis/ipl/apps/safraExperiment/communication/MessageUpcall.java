@@ -8,12 +8,15 @@ import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.TokenFS;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
 import static ibis.ipl.apps.safraExperiment.communication.MessageTypes.DISTANCE;
 
 public class MessageUpcall implements ibis.ipl.MessageUpcall {
+
+  private static Logger logger = Logger.getLogger(MessageUpcall.class);
 
   private CommunicationLayer communicationLayer;
   private final ChandyMisraNode chandyMisraNode;
@@ -41,38 +44,46 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
     int origin = communicationLayer.getIbises().indexOf(readMessage.origin().ibisIdentifier());
     MessageTypes messageType = MessageTypes.values()[readMessage.readInt()];
 
-    if (!crashed) {
-      switch (messageType) {
-        case DISTANCE:
+    switch (messageType) {
+      case DISTANCE:
+        if (!crashed) {
           safraNode.handleReceiveBasicMessage(origin, readMessage.readLong());
-          DistanceMessage dm = new DistanceMessage(readMessage.readInt());
-          readMessage.finish();
+        }
+        DistanceMessage dm = new DistanceMessage(readMessage.readInt());
+        readMessage.finish();
+        if (!crashed) {
           chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
-          break;
-        case CRASHED:
-          readMessage.finish();
+        }
+        break;
+      case CRASHED:
+        readMessage.finish();
+        if (!crashed) {
           crashDetector.handleCrash(origin);
-          break;
-        case REQUEST:
+        }
+        break;
+      case REQUEST:
+        if (!crashed) {
           safraNode.handleReceiveBasicMessage(origin, readMessage.readLong());
-          readMessage.finish();
+        }
+        readMessage.finish();
+        if (!crashed) {
           chandyMisraNode.receiveRequestMessage(origin);
-          break;
-        case TOKEN:
-          Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
-          readMessage.finish();
+        }
+        break;
+      case TOKEN:
+        Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
+        readMessage.finish();
+        if (!crashed) {
           safraNode.receiveToken(token);
-          break;
-        case BARRIER:
-          String name = readMessage.readString();
-          readMessage.finish();
-          barrierFactory.handleBarrierMessage(name);
-          break;
-        default:
-          throw new IOException("Got message of unknown type.");
-      }
-    } else {
-      readMessage.finish();
+        }
+        break;
+      case BARRIER:
+        String name = readMessage.readString();
+        readMessage.finish();
+        barrierFactory.handleBarrierMessage(name);
+        break;
+      default:
+        throw new IOException("Got message of unknown type.");
     }
   }
 

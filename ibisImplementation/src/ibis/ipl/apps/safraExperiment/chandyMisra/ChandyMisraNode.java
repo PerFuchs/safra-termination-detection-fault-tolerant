@@ -6,10 +6,13 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
 public class ChandyMisraNode implements CrashHandler {
+  private static Logger logger = Logger.getLogger(ChandyMisraNode.class);
+
   private CrashDetector crashDetector;
   private Safra safraNode;
   private CommunicationLayer communicationLayer;
@@ -73,9 +76,7 @@ public class ChandyMisraNode implements CrashHandler {
   public void handleCrash(int crashedNode) throws IOException {
     safraNode.setActive(true);
     if (crashedNode == parent) {
-      System.out.println(String.format("Detected parent (%d) crash on %d",
-          crashedNode,
-          me));
+      logger.trace(String.format("%d Detected parent %d", me, parent));
       handleRequestMessage(crashedNode);
     }
     safraNode.setActive(false);
@@ -91,7 +92,7 @@ public class ChandyMisraNode implements CrashHandler {
 
   private void handleRequestMessage(int origin) throws IOException {
     if (origin == parent) {
-      System.out.println("Got request message from parent or detected crash of parent at node: " + origin);
+      logger.trace(String.format("%d got request message from parent %d", communicationLayer.getID(), origin));
       int oldParent = parent;
       parent = -1;
       dist = -1;
