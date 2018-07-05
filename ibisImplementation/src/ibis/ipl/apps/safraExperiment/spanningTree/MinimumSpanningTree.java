@@ -44,11 +44,11 @@ public class MinimumSpanningTree {
     }
   }
 
-  public MinimumSpanningTree(CommunicationLayer communicationLayer, Network network, List<Result> results, List<Integer> crashedNodes) {
+  public MinimumSpanningTree(CommunicationLayer communicationLayer, Network network, List<ChandyMisraResult> results, List<Integer> crashedNodes) {
     this.root = communicationLayer.getRoot();
     this.badRoots = new LinkedList<>();
 
-    for (Result r : results) {
+    for (ChandyMisraResult r : results) {
       if (r.parent != -1 && !crashedNodes.contains(r.node)) {
         channels.add(new Channel(r.parent, r.node, network.getWeight(r.parent, r.node)));
         if (crashedNodes.contains(r.parent)) {

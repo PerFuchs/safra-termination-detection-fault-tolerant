@@ -22,9 +22,8 @@ public class ChandyMisraNode implements CrashHandler {
 
   private int dist = -1;
   private int parent = -1;
+  private boolean terminated = false;
 
-
-  // TODO add a stop function
   public ChandyMisraNode(CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector, Safra safraNode) {
     this.communicationLayer = communicationLayer;
     this.network = network;
@@ -46,6 +45,9 @@ public class ChandyMisraNode implements CrashHandler {
   }
 
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException {
+    if (terminated) {
+      logger.error(String.format("%d received distance message after termination.", communicationLayer.getID()));
+    }
     if (!crashDetector.hasCrashed(origin)) {
       int newDistance = dm.getDistance() + network.getWeight(origin, me);
       if ((dist == -1 || newDistance < dist) && newDistance > 0) {  // > 0 for overflows
@@ -75,6 +77,9 @@ public class ChandyMisraNode implements CrashHandler {
 
   public void handleCrash(int crashedNode) throws IOException {
     safraNode.setActive(true);
+    if (terminated) {
+      logger.error(String.format("%d notified crash after termination.", communicationLayer.getID()));
+    }
     if (crashedNode == parent) {
       logger.trace(String.format("%d Detected parent %d", me, parent));
       handleRequestMessage(crashedNode);
@@ -84,6 +89,9 @@ public class ChandyMisraNode implements CrashHandler {
 
   // TODO reunify naming scheme
   public synchronized void receiveRequestMessage(int origin) throws IOException {
+    if (terminated) {
+      logger.error(String.format("%d received request message after termination.", communicationLayer.getID()));
+    }
     if (!crashDetector.hasCrashed(origin)) {
       handleRequestMessage(origin);
     }
@@ -114,5 +122,9 @@ public class ChandyMisraNode implements CrashHandler {
 
   public int getDist() {
     return dist;
+  }
+
+  public void terminate() {
+    terminated = true;
   }
 }

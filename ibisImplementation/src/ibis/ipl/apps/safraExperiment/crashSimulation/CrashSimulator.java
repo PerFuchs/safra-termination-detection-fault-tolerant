@@ -56,7 +56,7 @@ public class CrashSimulator {
   }
 
   private void crash() throws IOException {
-    logger.info(String.format("Simulated crash for node %d", communicationLayer.getID()));
+    logger.info(String.format("Simulated crash for node %d.", communicationLayer.getID()));
     communicationLayer.broadcastCrashMessage();
     communicationLayer.crash();
   }

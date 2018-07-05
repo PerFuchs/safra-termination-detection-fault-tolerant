@@ -7,13 +7,17 @@ import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.api.TokenFactory;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Semaphore;
 
+
 public class SafraFS implements Observer, Safra {
+  private static Logger logger = Logger.getLogger(SafraFS.class);
+
   private Semaphore semaphore = new Semaphore(1, false);
 
   private boolean started = false;
@@ -26,6 +30,8 @@ public class SafraFS implements Observer, Safra {
 
   private CommunicationLayer communicationLayer;
   private final Registry registry;
+
+  private boolean terminationDetected = false;
 
   public SafraFS(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
     this.registry = registry;
@@ -52,6 +58,9 @@ public class SafraFS implements Observer, Safra {
   }
 
   public synchronized void setActive(boolean status) throws IOException {
+    if (terminationDetected) {
+      logger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
+    }
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
       handleToken();
@@ -69,10 +78,17 @@ public class SafraFS implements Observer, Safra {
   }
 
   public synchronized void handleSendingBasicMessage(int receiver) {
+    if (terminationDetected) {
+      logger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
+    }
+
     messageCounter++;
   }
 
   public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
+    if (terminationDetected) {
+      logger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
+    }
     basicAlgorithmIsActive = true;
     messageCounter--;
 
@@ -85,6 +101,9 @@ public class SafraFS implements Observer, Safra {
   }
 
   public synchronized void receiveToken(Token token) throws IOException {
+    if (terminationDetected) {
+      logger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+    }
     if (!(token instanceof TokenFS)) {
       throw new IllegalStateException("None FS token used with FS safra");
     }
@@ -114,6 +133,7 @@ public class SafraFS implements Observer, Safra {
   }
 
   private synchronized void announce() throws IOException {
+    logger.info(String.format("%d called announce", communicationLayer.getID()));
     IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
   }
 
@@ -138,6 +158,7 @@ public class SafraFS implements Observer, Safra {
     if (o instanceof IbisSignal) {
       IbisSignal signal = (IbisSignal) o;
       if (signal.module.equals("safra") && signal.name.equals("announce")) {
+        terminationDetected = true;
         semaphore.release();
       }
     }

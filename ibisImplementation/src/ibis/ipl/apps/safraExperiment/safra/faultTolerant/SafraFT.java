@@ -36,6 +36,8 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private CommunicationLayer communicationLayer;
   private final Registry registry;
 
+  private boolean terminationDetected = false;
+
   public SafraFT(Registry registry,
                  SignalPollerThread signalHandler,
                  CommunicationLayer communicationLayer,
@@ -90,6 +92,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void setActive(boolean status) throws IOException {
+    if (terminationDetected) {
+      logger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
+    }
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
       handleToken();
@@ -103,6 +108,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void handleSendingBasicMessage(int receiver) {
+    if (terminationDetected) {
+      logger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
+    }
     if (!crashed.contains(receiver) && !report.contains(receiver)) {
       int count = messageCounters.get(receiver);
       count++;
@@ -111,6 +119,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
+    if (terminationDetected) {
+      logger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
+    }
     if (!crashed.contains(sender)) {
       if (!report.contains(sender)) {
         basicAlgorithmIsActive = true;
@@ -129,6 +140,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
+    if (terminationDetected) {
+      logger.error(String.format("%d notfified crash after termination.", communicationLayer.getID()));
+    }
     if (!crashed.contains(crashedNode) && !report.contains(crashedNode)) {
       report.add(crashedNode);
       if (crashedNode == nextNode) {
@@ -164,6 +178,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void receiveToken(Token token) throws IOException {
+    if (terminationDetected) {
+      logger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+    }
     if (!(token instanceof TokenFT)) {
       throw new IllegalStateException("None TokenFT used with SafraFT");
     }
@@ -255,7 +272,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   // TODO add tests that nothing happens after announce
   private synchronized void announce() throws IOException {
-    logger.debug(String.format("%d called announce", communicationLayer.getID()));
+    logger.info(String.format("%d called announce", communicationLayer.getID()));
     IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
   }
 
@@ -288,6 +305,8 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     if (o instanceof IbisSignal) {
       IbisSignal signal = (IbisSignal) o;
       if (signal.module.equals("safra") && signal.name.equals("announce")) {
+        logger.info(String.format("%d got announce signal", communicationLayer.getID()));
+        terminationDetected = true;
         semaphore.release();
       }
     }
