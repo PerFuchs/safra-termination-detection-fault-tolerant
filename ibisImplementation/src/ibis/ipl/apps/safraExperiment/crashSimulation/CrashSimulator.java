@@ -37,7 +37,7 @@ public class CrashSimulator {
 //    }
     Random r = new Random();
 
-    if (r.nextInt(100) < 21) {
+    if (r.nextInt(100) < 21 && !communicationLayer.isRoot()) {
       scheduleLateCrash(communicationLayer.getID());
     }
 

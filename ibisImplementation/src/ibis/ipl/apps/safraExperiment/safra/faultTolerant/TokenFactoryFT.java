@@ -16,7 +16,8 @@ public class TokenFactoryFT implements TokenFactory {
     int crashedNodesLength = m.readInt();
     Set<Integer> crashed = new HashSet<>();
     for (int i=0; i < crashedNodesLength; i++) {
-      crashed.add(m.readInt());
+      int c = m.readInt();
+      crashed.add(c);
     }
 
     int mcLength = m.readInt();
@@ -25,6 +26,6 @@ public class TokenFactoryFT implements TokenFactory {
       mcs.add(m.readLong());
     }
 
-    return new TokenFT(mcs, isBlackUntil, sequenceNumber, new HashSet<Integer>());
+    return new TokenFT(mcs, isBlackUntil, sequenceNumber, crashed);
   }
 }

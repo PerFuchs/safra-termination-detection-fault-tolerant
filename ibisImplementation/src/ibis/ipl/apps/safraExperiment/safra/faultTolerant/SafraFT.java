@@ -165,6 +165,13 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
     TokenFT t = (TokenFT) token;
     logger.debug(String.format("%d received token.", communicationLayer.getID()));
+    StringBuilder crashedNodes = new StringBuilder();
+    for (int c : ((TokenFT) token).crashed) {
+      crashedNodes.append(c);
+      crashedNodes.append(", ");
+    }
+
+    logger.debug(String.format("%d Token crashed nodes: %s", communicationLayer.getID(), crashedNodes.toString()));
     if (t.sequenceNumber == getSequenceNumber() + 1) {
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);
@@ -182,6 +189,19 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       report.removeAll(token.crashed);
 
       logger.debug(String.format("%d isBlackUntil %d", me, isBlackUntil));
+
+
+      StringBuilder crashedNodes = new StringBuilder();
+      for (int c : crashed) {
+        crashedNodes.append(c);
+        crashedNodes.append(", ");
+      }
+      crashedNodes.append("Report: ");
+      for (int r : report) {
+        crashedNodes.append(r);
+        crashedNodes.append(", ");
+      }
+      logger.debug(String.format("%d Crashed: %s", communicationLayer.getID(), crashedNodes.toString()));
       if (isBlackUntil == me || report.isEmpty()) {
         long mySum = 0;
         for (int i = 0; i < messageCounters.size(); i++) {
@@ -229,6 +249,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
   }
 
+  // TODO add tests that nothing happens after announce
   private synchronized void announce() throws IOException {
     logger.debug(String.format("%d called announce", communicationLayer.getID()));
     IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
@@ -243,6 +264,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   private synchronized void forwardToken(TokenFT token) throws IOException {
     logger.debug(String.format("%d Forwarding token to %d", communicationLayer.getID(), nextNode));
+    logger.debug(String.format("%d Token has %d crash reports", communicationLayer.getID(), token.crashed.size()));
     this.backupToken = token;
     this.token = null;
     if (nextNode == communicationLayer.getID()) {
