@@ -75,6 +75,8 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         readMessage.finish();
         if (!crashed) {
           safraNode.receiveToken(token);
+        } else {
+          communicationLayer.sendCrashMessage(origin);
         }
         break;
       case BARRIER:

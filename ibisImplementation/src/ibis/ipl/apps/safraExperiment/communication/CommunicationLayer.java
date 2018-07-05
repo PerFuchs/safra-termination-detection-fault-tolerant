@@ -137,13 +137,21 @@ public class CommunicationLayer {
   // TODO failure detector only works for local failures
   public void broadcastCrashMessage() throws IOException {
     for (int id : network.getNeighbours(getID())) {
-      logger.trace(String.format("%d sending crash message to %d", getID(), id));
-      SendPort sendPort = sendPorts.get(id);
-      WriteMessage m = sendPort.newMessage();
-      m.writeInt(MessageTypes.CRASHED.ordinal());
-      m.send();
-      m.finish();
+     sendCrashMessage(id);
     }
+  }
+
+  public void sendCrashMessage(int receiver) throws IOException {
+    logger.trace(String.format("%d sending crash message to %d", getID(), receiver));
+    if (!sendPorts.containsKey(receiver)) {
+      logger.debug(String.format("%d Creating new send port to %d.", getID(), receiver));
+      createdSendPort(receiver, getGeneralReceivePortName());
+    }
+    SendPort sendPort = sendPorts.get(receiver);
+    WriteMessage m = sendPort.newMessage();
+    m.writeInt(MessageTypes.CRASHED.ordinal());
+    m.send();
+    m.finish();
   }
 
   public void sendRequestMessage(int receiver) throws IOException {
