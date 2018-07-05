@@ -11,10 +11,14 @@ public class MinimumSpanningTree {
   private List<Channel> channels = new LinkedList<>();
 
   /**
-   * Prims algorithm is used
-   * @param channels
-   * @param root
-   * @param vertices
+   * Prims algorithm is used to build the expected spanning tree from given channels and vertices.
+   *
+   * Channels that have a src or dest outside of vertices are ignored. That is useful to simulated crashed channels.
+   *
+   * @param channels The channels/edges defining the graph to construct the spanning tree for. Can include "illegal"
+   *                 channels which have src or dest set to a value not contained in vertices. These are ignored.
+   * @param root The root of the spanning tree to build.
+   * @param vertices The vertices of the graph includes root
    */
   public MinimumSpanningTree(List<Channel> channels, int root, Set<Integer> vertices) {
     this.root = root;

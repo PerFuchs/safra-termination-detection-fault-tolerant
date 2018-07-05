@@ -58,7 +58,6 @@ public class Network {
         )).getWeight();
   }
 
-  // TODO not fault tolerant
   public static Network getUndirectedRing(CommunicationLayer communicationLayer, CrashSimulator crashSimulator) {
     List<Channel> channels = new LinkedList<>();
 
@@ -81,8 +80,11 @@ public class Network {
     }
 
     crashSimulator.scheduleLateCrash(1);
+    
+    // TODO not working for 2000 nodes.
 
-    // Add heavyweight edges from the root to all nodes for more messages
+    // Add heavyweight edges from the root to all nodes to simulate an fully connected network - because the root cannot
+    // fail this guarantees the network stays connected with arbitrary failing nodes.
     for (int i = 2; i < communicationLayer.getIbisCount(); i++) {
       channels.add(new Channel(0, i, 1000*i));  // Carefull MAX_VALUE obviously leads to overflows later on
       channels.add(new Channel(i, 0, 1000*i));
