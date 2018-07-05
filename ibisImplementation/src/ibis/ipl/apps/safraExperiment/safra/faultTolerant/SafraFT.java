@@ -36,13 +36,34 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private CommunicationLayer communicationLayer;
   private final Registry registry;
 
-  public SafraFT(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer, CrashDetector crashDetector) {
+  public SafraFT(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer, CrashDetector crashDetector) throws IOException {
     this.registry = registry;
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
 
     messageCounters = new ArrayList<>(Collections.nCopies(communicationLayer.getIbisCount(), 0));
     nextNode = (communicationLayer.getID() + 1) % communicationLayer.getIbisCount();
+
+    backupToken = new TokenFT(new ArrayList<Long>(
+        Collections.nCopies(communicationLayer.getIbisCount(), 0L)),
+        communicationLayer.getID(),
+        0,
+        new HashSet<Integer>());
+
+    token = null;
+
+    if (communicationLayer.isRoot()) {
+      token = new TokenFT(new ArrayList<Long>(
+          Collections.nCopies(communicationLayer.getIbisCount(), 0L)),
+          communicationLayer.getIbisCount() - 1,
+          1,
+          new HashSet<Integer>());
+      backupToken = token;
+    }
+    // TODO change to isInitiator
+    if (communicationLayer.isRoot()) {
+      setActive(true);
+    }
 
     signalHandler.addObserver(this);
     crashDetector.addHandler(this);
@@ -74,23 +95,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   public synchronized void startAlgorithm() throws InterruptedException, IOException {
     semaphore.acquire();
     started = true;
-    token = null;
-
-    backupToken = new TokenFT(new ArrayList<Long>(
-        Collections.nCopies(communicationLayer.getIbisCount(), 0L)),
-        communicationLayer.getID(),
-        0,
-        new HashSet<Integer>());
-
-    if (communicationLayer.isRoot()) {
-      token = new TokenFT(new ArrayList<Long>(
-          Collections.nCopies(communicationLayer.getIbisCount(), 0L)),
-          communicationLayer.getIbisCount() - 1,
-          1,
-          new HashSet<Integer>());
-      backupToken = token;
-      setActive(true);
-    }
+    handleToken();
   }
 
   public synchronized void handleSendingBasicMessage(int receiver) {
@@ -119,8 +124,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
   }
 
-  public void handleCrash(int crashedNode) throws IOException {
-    logger.debug(String.format("%d detected crash of node %d", communicationLayer.getID(), crashedNode));
+  public synchronized void handleCrash(int crashedNode) throws IOException {
     if (!crashed.contains(crashedNode) && !report.contains(crashedNode)) {
       report.add(crashedNode);
       if (crashedNode == nextNode) {
@@ -191,7 +195,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       if (isBlackUntil == me) {
         long sum = 0;
         for (int i = 0; i < token.messageCounters.size(); i++) {
-          sum += token.messageCounters.get(i);
+          if (!crashed.contains(i)) {
+            sum += token.messageCounters.get(i);
+          }
         }
         logger.debug(String.format("%d calculated sum %d", me, sum));
         if (sum == 0) {

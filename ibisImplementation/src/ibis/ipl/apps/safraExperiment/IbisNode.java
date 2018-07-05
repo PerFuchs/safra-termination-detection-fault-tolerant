@@ -15,7 +15,6 @@ import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.spanningTree.Result;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
-import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +40,7 @@ class IbisNode {
     System.setErr(System.out);  // Redirect because DAS4 does not show err.
 
     Logger.getLogger(IbisNode.class).setLevel(Level.DEBUG);
-    Logger.getLogger(CommunicationLayer.class).setLevel(Level.DEBUG);
+    Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
 
     IbisCapabilities s = new IbisCapabilities(
@@ -85,7 +84,7 @@ class IbisNode {
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
 
     communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
-    logger.debug(String.format("%d connected communication layer", communicationLayer.getID()));
+    logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
 
     if (!barrierFactory.signalBarrierWorking()) {
       // Barrier relies on messages. Lets wait until all nodes have there channels setup.
@@ -97,9 +96,14 @@ class IbisNode {
     safraNode.startAlgorithm();
     chandyMisraNode.startAlgorithm();
 
-    logger.debug(String.format("%d started algorithm", communicationLayer.getID()));
+    logger.debug(String.format("%04d started algorithm", communicationLayer.getID()));
 
-    Thread.sleep(2000);
+    if (communicationLayer.getIbisCount() > 300) {
+      Thread.sleep(2000);
+    } else {
+      Thread.sleep(100);
+    }
+
     crashSimulator.triggerLateCrash();
     safraNode.await();
 
@@ -149,14 +153,14 @@ class IbisNode {
     } catch (IOException e) {
       logger.error(String.format("Could not write output file: %d", node));
     }
-    logger.trace(String.format("%d output written", node));
+    logger.trace(String.format("%04d output written", node));
   }
 
   private static List<Result> readResults(int ibisCount) {
     List<Result> results = new LinkedList<>();
 
     for (int i = 0; i < ibisCount; i++) {
-      logger.trace(String.format("Reading result %d", i));
+      logger.trace(String.format("Reading result %04d", i));
 
       Path path = Paths.get(filePathForResults(i));
 
