@@ -78,7 +78,7 @@ class IbisNode {
     Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 3000);
 
-    Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashDetector);
+    Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashDetector, communicationLayer.isRoot());
 //    Safra safraNode = new SafraFS(registry, signalHandler, communicationLayer);
 
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);

@@ -36,7 +36,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private CommunicationLayer communicationLayer;
   private final Registry registry;
 
-  public SafraFT(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer, CrashDetector crashDetector) throws IOException {
+  public SafraFT(Registry registry,
+                 SignalPollerThread signalHandler,
+                 CommunicationLayer communicationLayer,
+                 CrashDetector crashDetector,
+                 boolean isBasicInitiator) throws IOException {
     this.registry = registry;
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
@@ -60,8 +64,8 @@ public class SafraFT implements Observer, Safra, CrashHandler {
           new HashSet<Integer>());
       backupToken = token;
     }
-    // TODO change to isInitiator
-    if (communicationLayer.isRoot()) {
+
+    if (isBasicInitiator) {
       setActive(true);
     }
 
