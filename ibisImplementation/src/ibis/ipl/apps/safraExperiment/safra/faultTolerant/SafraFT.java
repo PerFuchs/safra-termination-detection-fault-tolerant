@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
+
+// TODO add timer metrics
 public class SafraFT implements Observer, Safra, CrashHandler {
   private final static Logger logger = Logger.getLogger(SafraFT.class);
   private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
@@ -34,7 +36,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   private long sequenceNumber = 0;
   private TokenFT token;
-  private TokenFT backupToken;  // TODO initialize
+  private TokenFT backupToken;
 
   private CommunicationLayer communicationLayer;
   private final Registry registry;

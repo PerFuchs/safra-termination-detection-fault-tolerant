@@ -13,7 +13,7 @@ public class Event implements Comparable<Event> {
   private final static Logger logger = Logger.getLogger(Event.class);
 
   private final int lineNumber;
-  private final Date time;  // TODO does this support milliseconds?
+  private final Date time;
   private final Level level;
   private final int node;
   private final String event;

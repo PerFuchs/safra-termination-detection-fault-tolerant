@@ -88,7 +88,6 @@ public class ChandyMisraNode implements CrashHandler {
     safraNode.setActive(false);
   }
 
-  // TODO reunify naming scheme
   public synchronized void receiveRequestMessage(int origin) throws IOException {
     safraNode.setActive(true);
     if (terminated) {
