@@ -1,6 +1,7 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -9,23 +10,43 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Event implements Comparable<Event> {
+  private final static Logger logger = Logger.getLogger(Event.class);
+
+  private final int lineNumber;
   private final Date time;  // TODO does this support milliseconds?
-  private Level level;
+  private final Level level;
   private final int node;
   private final String event;
 
+  /**
+   * Set of all nodes an event has been created for ever. To debug some early problems of logging.
+   */
   public static Set<Integer> eventCreatedFor = new HashSet<>();
 
-  public Event(int node, String e) throws ParseException {
+  private Event(int node, int lineNumber, String e, Date time, Level level) {
     this.node = node;
+    this.lineNumber = lineNumber;
     this.event = e;
+    this.time = time;
+    this.level = level;
     eventCreatedFor.add(node);
+  }
 
-    String[] parts = e.split(" - ");
+  public static Event createEventFromLogLine(int node, int lineNumber, String line) {
+    String[] parts = line.split(" - ");
+
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
-    time = format.parse(parts[0].trim());
+    Date time;
+    try {
+      time = format.parse(parts[0].trim());
+    } catch (ParseException e) {
+      logger.debug(String.format("Could not parse event: %s", line));
+      return null;
+    }
+
     String l = parts[2].trim();
 
+    Level level;
     switch (l) {
       case "INFO":
         level = Level.INFO;
@@ -37,9 +58,10 @@ public class Event implements Comparable<Event> {
         level = Level.WARN;
         break;
       default:
-          System.err.println("Cannot parse level: " + l);
+        level = Level.FATAL;
+        logger.error("Cannot parse level: " + l);
     }
-
+    return new Event(node, lineNumber, line, time, level);
   }
 
   public boolean isCalledAnnounce() {
@@ -54,11 +76,18 @@ public class Event implements Comparable<Event> {
     return level;
   }
 
-
   @Override
   public int compareTo(Event event) {
     if (event == null) {
       throw new NullPointerException();
+    }
+
+    /**
+     * Order events from the same node by their linenumber as they can have the exact same time easily but
+     * should not be reordered from their original occurence.
+     */
+    if (node == event.node) {
+      return lineNumber - event.lineNumber;
     }
     int sort = time.compareTo(event.time);
     if (sort == 0) {
@@ -83,7 +112,7 @@ public class Event implements Comparable<Event> {
     if (!isActiveStatusChange()) {
       throw new IllegalStateException("Cannot get active status from this event");
     }
-    Pattern pattern = Pattern.compile("<<ActiveStatus>(.*)");
+    Pattern pattern = Pattern.compile("<<ActiveStatus>(.*)>");
     Matcher m = pattern.matcher(event);
     m.find();
     String status = m.group(1);
@@ -101,9 +130,8 @@ public class Event implements Comparable<Event> {
     String[] stringSums = matcher.group(1).split(",");
     List<Integer> sums = new LinkedList<>();
 
-    // The last comma creates an empty string at stringSums[last]
-    for (int i = 0; i < stringSums.length; i++) {
-        sums.add(Integer.valueOf(stringSums[i]));
+    for (String stringSum : stringSums) {
+      sums.add(Integer.valueOf(stringSum));
     }
     return sums;
   }

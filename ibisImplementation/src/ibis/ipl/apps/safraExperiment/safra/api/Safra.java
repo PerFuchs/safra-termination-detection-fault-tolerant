@@ -8,7 +8,7 @@ public interface Safra {
   void await() throws InterruptedException;
 
   void setActive(boolean status) throws IOException;
-  void handleReceiveBasicMessage(int origin, long sequenceNumber);
+  void handleReceiveBasicMessage(int origin, long sequenceNumber) throws IOException;
   void handleSendingBasicMessage(int receiver);
 
   long getSequenceNumber();

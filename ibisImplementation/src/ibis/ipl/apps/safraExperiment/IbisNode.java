@@ -12,22 +12,12 @@ import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
-import ibis.ipl.apps.safraExperiment.spanningTree.MinimumSpanningTree;
 import ibis.ipl.apps.safraExperiment.spanningTree.Network;
-import ibis.ipl.apps.safraExperiment.spanningTree.ChandyMisraResult;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
-import org.apache.log4j.spi.Filter;
-import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.ParseException;
-import java.util.LinkedList;
-import java.util.List;
 
 
 class IbisNode {
@@ -46,8 +36,10 @@ class IbisNode {
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
     Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
+    Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(Experiment.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
 
     IbisCapabilities s = new IbisCapabilities(
@@ -64,8 +56,6 @@ class IbisNode {
         PortType.COMMUNICATION_FIFO);
 
     long startTime = System.currentTimeMillis();
-
-
 
     ibis = IbisFactory.createIbis(s, null, porttype);
     registry = ibis.registry();
@@ -119,7 +109,7 @@ class IbisNode {
     safraNode.await();
     chandyMisraNode.terminate();
 
-    experiment.writeResults(chandyMisraNode);
+    experiment.writeChandyMisraResults(chandyMisraNode);
     experiment.finalizeExperimentLogger();
     barrierFactory.getBarrier("ResultsWritten").await();
 

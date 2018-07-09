@@ -6,7 +6,6 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
-import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -19,10 +18,9 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class SafraFT implements Observer, Safra, CrashHandler {
-  // TODO think of save way of starting algorithms.
-  private static Logger logger = Logger.getLogger(SafraFT.class);
+  private final static Logger logger = Logger.getLogger(SafraFT.class);
+  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
-  private Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
   private Semaphore semaphore = new Semaphore(1, false);
 
   private boolean started = false;
@@ -100,8 +98,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
+    if (status != basicAlgorithmIsActive) {
+      experimentLogger.info(Event.getActiveStatusChangedEvent(status));
+    }
+
     basicAlgorithmIsActive = status;
-    experimentLogger.info(Event.getActiveStatusChangedEvent(status));
     if (!basicAlgorithmIsActive) {
       handleToken();
     }
@@ -117,6 +118,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
     }
+    if (!basicAlgorithmIsActive) {
+      logger.error(String.format("Send message while being passive %d", communicationLayer.getID()));
+    }
     if (!crashed.contains(receiver) && !report.contains(receiver)) {
       int count = messageCounters.get(receiver);
       count++;
@@ -125,14 +129,13 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
   }
 
-  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
+  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) throws IOException {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
     }
     if (!crashed.contains(sender)) {
       if (!report.contains(sender)) {
-        basicAlgorithmIsActive = true;
-        experimentLogger.info(Event.getActiveStatusChangedEvent(true));
+        setActive(true);
       }
       int counter = messageCounters.get(sender);
       counter--;

@@ -1,23 +1,30 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
-import java.awt.*;
+import org.apache.log4j.Logger;
+
 import java.util.*;
-import java.util.List;
 
 public class SafraStatistics {
+  private final static Logger logger = Logger.getLogger(SafraStatistics.class);
+
   private int backupTokenSend;
   private int tokenSendAfterTermination;
   private int tokenSend;
 
   public SafraStatistics(int numberOfNodes, List<Event> events) {
-    System.out.println(events.size());
     List<Event> sortedEvents = new ArrayList<Event>(events);
     Collections.sort(sortedEvents);
-    System.out.println("Sorted event size " + sortedEvents.size());
 
     boolean terminated = false;
     tokenSend = 0;
     tokenSendAfterTermination = 0;
+
+    Set<Integer> allCrashedNodes = new HashSet<>();
+    for (Event e : sortedEvents) {
+      if (e.isNodeCrashed()) {
+        allCrashedNodes.add(e.getNode());
+      }
+    }
 
     List<List<Integer>> nodeSums = new ArrayList<>();
     List<Boolean> nodeActiveStatus = new ArrayList<>();
@@ -26,21 +33,26 @@ public class SafraStatistics {
       nodeActiveStatus.add(false);
     }
 
-    List<Integer> crashedNodes = new LinkedList<>();
-
+    Set<Integer> crashedNodes = new HashSet<>();
 
     for (Event e : sortedEvents) {
+      logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
+      if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isSafraSums())) {
+        logger.error(String.format("Basic event happened  on node %d after termination: %s",
+            e.getNode(), e.getEvent()));
+      }
       if (e.isNodeCrashed()) {
         crashedNodes.add(e.getNode());
-        terminated = hasTerminated(nodeSums, nodeActiveStatus, crashedNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
       }
       if (e.isActiveStatusChange()) {
+        logger.trace("Set status to " + e.getActiveStatus());
         nodeActiveStatus.set(e.getNode(), e.getActiveStatus());
-        terminated = hasTerminated(nodeSums, nodeActiveStatus, crashedNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
       }
       if (e.isSafraSums()) {
         nodeSums.set(e.getNode(), e.getSafraSum());
-        terminated = hasTerminated(nodeSums, nodeActiveStatus, crashedNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
       }
       if (e.isTokenSend()) {
         tokenSend++;
@@ -50,11 +62,27 @@ public class SafraStatistics {
       }
       if (e.isBackupTokenSend()) {
         backupTokenSend++;
+        // Backup tokens can be issued after termination this behaviour is accounted for because every backupTokenSend
+        // event has a corresponding tokenSend event.
        }
     }
   }
 
-  private boolean hasTerminated(List<List<Integer>> nodeSums, List<Boolean> nodeActiveStatus, List<Integer> crashedNodes) {
+  /**
+   * Determines if the basic algorithm has terminated.
+   *
+   * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
+   * messages from and to crashed nodes. Also termination cannot be reached before final fault.
+   *
+   * @return if the system has terminated.
+   */
+  private boolean hasTerminated(List<List<Integer>> nodeSums,
+                                List<Boolean> nodeActiveStatus,
+                                Set<Integer> currentlyCrashedNodes,
+                                Set<Integer> allCrashedNodes) {
+    if (!currentlyCrashedNodes.equals(allCrashedNodes)) {
+      return false;
+    }
     int sum = 0;
 
     // nodeSums and nodeActiveStatus are of the same size
@@ -62,14 +90,17 @@ public class SafraStatistics {
       if (nodeActiveStatus.get(i)) {
         return false;
       }
-      if (!crashedNodes.contains(i)) {
+      if (!currentlyCrashedNodes.contains(i)) {
         List<Integer> sums = nodeSums.get(i);
         for (int j = 0; j < sums.size(); j++) {
-          if (!crashedNodes.contains(j)) {
+          if (!currentlyCrashedNodes.contains(j)) {
             sum += sums.get(j);
           }
         }
       }
+    }
+    if (sum == 0) {
+      logger.debug("Termination detected");
     }
     return sum == 0;
   }

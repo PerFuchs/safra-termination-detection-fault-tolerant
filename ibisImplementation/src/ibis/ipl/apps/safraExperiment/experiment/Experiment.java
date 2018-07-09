@@ -10,8 +10,6 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.apache.log4j.spi.Filter;
-import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,36 +62,27 @@ public class Experiment {
       Files.delete(logFile);
     }
 
-    FileAppender fa = new FileAppender(new PatternLayout("%d{ISO8601} - %t - %p - %m%n"),
-        filePathForEvents(nodeID).toString(), false);
+    FileAppender fa = new FileAppender(new PatternLayout("%d{ISO8601} - %t - %p - %m%n"), filePathForEvents(nodeID).toString(), false);
     fa.setName(experimentAppenderName);
-    fa.addFilter(new Filter() {
-      @Override
-      public int decide(LoggingEvent loggingEvent) {
-        if (loggingEvent.getLevel().toInt() > Level.DEBUG_INT) {
-          return ACCEPT;
-        }
-        return DENY;
-      }
-    });
+
     experimentLogger.addAppender(fa);
   }
 
-  private Path filePathForResults(int node) {
-    return Paths.get(outputFolder, String.format("%04d.statistics", node));
+  private Path filePathForChandyMisraResults(int node) {
+    return Paths.get(outputFolder, String.format("%04d.chandyMisra", node));
   }
 
-  public boolean verify() throws ParseException {
+  public boolean verify() throws IOException {
     boolean ret = true;
-    List<ChandyMisraResult> results = readStatistics();
+    List<ChandyMisraResult> results = readChandyMisraResults();
 
     ret &= verifyChandyMisraResult(results);
 
 
-    List<Event> logs = getEvents();
-    for (Event e : logs) {
+    List<Event> events = getEvents();
+    for (Event e : events) {
       if (e.getLevel() == Level.ERROR || e.getLevel() == Level.WARN) {
-        System.err.println(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
+        logger.error(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
         ret = false;
         break;
       }
@@ -101,7 +90,7 @@ public class Experiment {
     return ret;
   }
 
-  public SafraStatistics getSafraStatistics() throws ParseException {
+  public SafraStatistics getSafraStatistics() throws IOException {
     return new SafraStatistics(nodeCount, getEvents());
   }
 
@@ -117,72 +106,62 @@ public class Experiment {
     }
   }
 
-  public void writeResults(ChandyMisraNode chandyMisraNode) {
+  public void writeChandyMisraResults(ChandyMisraNode chandyMisraNode) throws IOException {
     String str = String.format("%d %d %d\n", nodeID, chandyMisraNode.getParent(), chandyMisraNode.getDist());
 
-    Path path = filePathForResults(nodeID);
+    Path path = filePathForChandyMisraResults(nodeID);
     byte[] strToBytes = str.getBytes();
 
-    try {
-      Files.write(path, strToBytes);
-    } catch (IOException e) {
-      logger.error(String.format("Could not write output file: %d", nodeID));
-    }
+    Files.write(path, strToBytes);
+
     logger.trace(String.format("%04d output written", nodeID));
   }
 
-  private List<ChandyMisraResult> readStatistics() {
+  private List<ChandyMisraResult> readChandyMisraResults() throws IOException {
     List<ChandyMisraResult> results = new LinkedList<>();
 
     for (int i = 0; i < nodeCount; i++) {
       logger.trace(String.format("Reading result %04d", i));
 
-      Path path = filePathForResults(i);
+      Path path = filePathForChandyMisraResults(i);
 
-      try {
-        String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
-        results.add(new ChandyMisraResult(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
-      } catch (IOException e) {
-        logger.error(String.format("Could not read output file from: %d", i));
-      }
-
+      String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
+      results.add(new ChandyMisraResult(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
     }
     return results;
   }
 
-  public List<Event> getEvents() throws ParseException {
+  public List<Event> getEvents() throws IOException {
     if (events == null) {
       events = readEvents();
     }
     return events;
   }
 
-  private List<Event> readEvents() throws ParseException {
+  private List<Event> readEvents() throws IOException {
     List<Event> events = new LinkedList<>();
 
     for (int i = 0; i < nodeCount; i++) {
       Path path = filePathForEvents(i);
       logger.trace("Reading events from file path: " + path.toString());
 
-      try {
-        List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-
-        for (String e : lines) {
-          // TODO bad way of reconizing a good event ;)
-
-          if (e.startsWith("2018-")) {
-            events.add(new Event(i, e));
-          }
-        }
-      } catch (IOException e) {
-        logger.error(String.format("Could not read output file from: %d", i));
+      List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+      if (lines.isEmpty()) {
+        logger.warn(String.format("No events logged on node %d", i));
       }
+      int lineNumber = 0;
+      for (String e : lines) {
+        events.add(Event.createEventFromLogLine(i, lineNumber, e));
+        lineNumber++;
+      }
+    }
 
-    }
-    System.out.println("Event created for");
+    StringBuilder sb = new StringBuilder();
     for (int i : Event.eventCreatedFor) {
-      System.out.print(i + ",");
+      sb.append(i);
+      sb.append(", ");
     }
+    logger.trace(String.format("Event created for: %s", sb.toString()));
 
     return events;
   }
@@ -191,6 +170,12 @@ public class Experiment {
     return Paths.get(outputFolder, String.format("%04d.log", node));
   }
 
+  /**
+   * Needs to be called before readEvents because otherwise file writes from other DAS4 nodes won't be readable - the
+   * files appear to be empty.
+   *
+   * The logger should not be used after.
+   */
   public void finalizeExperimentLogger() {
     FileAppender fa = (FileAppender) experimentLogger.getAppender(experimentAppenderName);
     fa.close();
