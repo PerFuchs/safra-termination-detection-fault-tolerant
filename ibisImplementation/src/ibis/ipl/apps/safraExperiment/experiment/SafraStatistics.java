@@ -32,7 +32,6 @@ public class SafraStatistics {
     for (Event e : sortedEvents) {
       if (e.isNodeCrashed()) {
         crashedNodes.add(e.getNode());
-        System.out.println("Node crashed: " + e.getNode());
         terminated = hasTerminated(nodeSums, nodeActiveStatus, crashedNodes);
       }
       if (e.isActiveStatusChange()) {
@@ -72,7 +71,6 @@ public class SafraStatistics {
         }
       }
     }
-//    System.out.println("All nodes passive, sum: " + sum);
     return sum == 0;
   }
 

@@ -38,24 +38,12 @@ class IbisNode {
 
 
   public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException, ParseException {
-    ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("[%t] - %m%n"));
+    System.setErr(System.out);  // Redirect because DAS4 does not show err.
 
-    // TODO add clean filter
-    consoleAppender.addFilter(new Filter() {
-      @Override
-      public int decide(LoggingEvent loggingEvent) {
-        if (loggingEvent.getRenderedMessage().contains("<<")) {
-          return DENY;
-        }
-        return NEUTRAL;
-      }
-    });
+    ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("[%t] - %m%n"));
     BasicConfigurator.configure(consoleAppender);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
-
-    System.setErr(System.out);  // Redirect because DAS4 does not show err.
-
     Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);

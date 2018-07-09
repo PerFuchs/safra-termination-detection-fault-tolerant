@@ -27,15 +27,18 @@ public class Experiment {
   private static Logger logger = Logger.getLogger(Experiment.class);
 
   public final static String experimentLoggerName = "safraExperimentLogger";
-  private final static Logger experimentLogger = Logger.getLogger(experimentLoggerName);
+
   private final static String experimentAppenderName = "experimentAppenderName";
   private final static String outputFolder = "/var/scratch/pfs250/safraExperiment/";
+
+  private Logger experimentLogger = Logger.getLogger(experimentLoggerName);
+
   private final CommunicationLayer communicationLayer;
   private final Network network;
+  private CrashDetector crashDetector;
 
   private int nodeID;
   private int nodeCount;
-  private CrashDetector crashDetector;
 
   private List<Event> events;
 
@@ -54,6 +57,8 @@ public class Experiment {
 
   private void setupLogger() throws IOException {
     experimentLogger.setLevel(Level.INFO);
+    experimentLogger.setAdditivity(false);
+
     Path logFile = Paths.get(outputFolder, filePathForEvents(nodeID).toString());
     if (logFile.toFile().exists()) {
       Files.delete(logFile);
