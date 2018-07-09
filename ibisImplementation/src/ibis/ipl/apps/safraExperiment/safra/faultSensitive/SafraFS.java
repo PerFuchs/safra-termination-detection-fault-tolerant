@@ -2,6 +2,7 @@ package ibis.ipl.apps.safraExperiment.safra.faultSensitive;
 
 import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -14,9 +15,10 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Semaphore;
 
-
+// TODO add logging for events
 public class SafraFS implements Observer, Safra {
-  private static Logger logger = Logger.getLogger(SafraFS.class);
+  private final static Logger logger = Logger.getLogger(SafraFS.class);
+  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
   private Semaphore semaphore = new Semaphore(1, false);
 
@@ -26,7 +28,6 @@ public class SafraFS implements Observer, Safra {
   private long messageCounter = 0;
   private long sequenceNumber = 0;
   private TokenFS token;
-
 
   private CommunicationLayer communicationLayer;
   private final Registry registry;
@@ -59,7 +60,7 @@ public class SafraFS implements Observer, Safra {
 
   public synchronized void setActive(boolean status) throws IOException {
     if (terminationDetected) {
-      logger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
+      experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
@@ -79,7 +80,7 @@ public class SafraFS implements Observer, Safra {
 
   public synchronized void handleSendingBasicMessage(int receiver) {
     if (terminationDetected) {
-      logger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
+      experimentLogger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
     }
 
     messageCounter++;
@@ -87,7 +88,7 @@ public class SafraFS implements Observer, Safra {
 
   public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
     if (terminationDetected) {
-      logger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
+      experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
     }
     basicAlgorithmIsActive = true;
     messageCounter--;
@@ -102,7 +103,7 @@ public class SafraFS implements Observer, Safra {
 
   public synchronized void receiveToken(Token token) throws IOException {
     if (terminationDetected) {
-      logger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+      experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
     }
     if (!(token instanceof TokenFS)) {
       throw new IllegalStateException("None FS token used with FS safra");

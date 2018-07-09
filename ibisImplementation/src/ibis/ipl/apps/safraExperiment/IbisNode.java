@@ -8,6 +8,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
@@ -16,12 +17,15 @@ import ibis.ipl.apps.safraExperiment.spanningTree.Network;
 import ibis.ipl.apps.safraExperiment.spanningTree.ChandyMisraResult;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
+import org.apache.log4j.spi.Filter;
+import org.apache.log4j.spi.LoggingEvent;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,8 +37,20 @@ class IbisNode {
 
 
 
-  public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException {
-    BasicConfigurator.configure(new ConsoleAppender(new PatternLayout("[%t] - %m%n")));
+  public static void main(String[] args) throws IbisCreationFailedException, IOException, InterruptedException, ParseException {
+    ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("[%t] - %m%n"));
+
+    // TODO add clean filter
+    consoleAppender.addFilter(new Filter() {
+      @Override
+      public int decide(LoggingEvent loggingEvent) {
+        if (loggingEvent.getRenderedMessage().contains("<<")) {
+          return DENY;
+        }
+        return NEUTRAL;
+      }
+    });
+    BasicConfigurator.configure(consoleAppender);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
 
@@ -44,6 +60,7 @@ class IbisNode {
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(Experiment.class).setLevel(Level.INFO);
+    Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
 
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED,
@@ -115,6 +132,7 @@ class IbisNode {
     chandyMisraNode.terminate();
 
     experiment.writeResults(chandyMisraNode);
+    experiment.finalizeExperimentLogger();
     barrierFactory.getBarrier("ResultsWritten").await();
 
     if (communicationLayer.isRoot()) {
@@ -124,6 +142,8 @@ class IbisNode {
 
       experiment.verify();
 
+      SafraStatistics ss = experiment.getSafraStatistics();
+      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination()));
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
       System.out.println("End");
     }

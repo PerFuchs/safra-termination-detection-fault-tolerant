@@ -19,19 +19,25 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Experiment {
   private static Logger logger = Logger.getLogger(Experiment.class);
 
-  private static String outputFolder = "/var/scratch/pfs250/safraExperiment/";
+  public final static String experimentLoggerName = "safraExperimentLogger";
+  private final static Logger experimentLogger = Logger.getLogger(experimentLoggerName);
+  private final static String experimentAppenderName = "experimentAppenderName";
+  private final static String outputFolder = "/var/scratch/pfs250/safraExperiment/";
   private final CommunicationLayer communicationLayer;
   private final Network network;
 
   private int nodeID;
   private int nodeCount;
   private CrashDetector crashDetector;
+
+  private List<Event> events;
 
   public Experiment(CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector) throws IOException {
     this.communicationLayer = communicationLayer;
@@ -47,14 +53,15 @@ public class Experiment {
   }
 
   private void setupLogger() throws IOException {
-    Path logFile = Paths.get(outputFolder, String.format("%d.log", nodeID));
+    experimentLogger.setLevel(Level.INFO);
+    Path logFile = Paths.get(outputFolder, filePathForEvents(nodeID).toString());
     if (logFile.toFile().exists()) {
       Files.delete(logFile);
     }
 
-    Logger root = Logger.getRootLogger();
-    FileAppender fa = new FileAppender(new PatternLayout("%d{ISO8601} - %t - %p: %m%n"),
-        Paths.get(outputFolder, String.format("%d.log", nodeID)).toString());
+    FileAppender fa = new FileAppender(new PatternLayout("%d{ISO8601} - %t - %p - %m%n"),
+        filePathForEvents(nodeID).toString(), false);
+    fa.setName(experimentAppenderName);
     fa.addFilter(new Filter() {
       @Override
       public int decide(LoggingEvent loggingEvent) {
@@ -64,22 +71,33 @@ public class Experiment {
         return DENY;
       }
     });
-    root.addAppender(fa);
+    experimentLogger.addAppender(fa);
   }
 
   private Path filePathForResults(int node) {
     return Paths.get(outputFolder, String.format("%04d.statistics", node));
   }
 
-  public boolean verify() {
+  public boolean verify() throws ParseException {
     boolean ret = true;
-    List<ChandyMisraResult> results = readResults();
+    List<ChandyMisraResult> results = readStatistics();
 
     ret &= verifyChandyMisraResult(results);
 
 
-    // TODO verify logs
+    List<Event> logs = getEvents();
+    for (Event e : logs) {
+      if (e.getLevel() == Level.ERROR || e.getLevel() == Level.WARN) {
+        System.err.println(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
+        ret = false;
+        break;
+      }
+    }
     return ret;
+  }
+
+  public SafraStatistics getSafraStatistics() throws ParseException {
+    return new SafraStatistics(nodeCount, getEvents());
   }
 
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results) {
@@ -108,7 +126,7 @@ public class Experiment {
     logger.trace(String.format("%04d output written", nodeID));
   }
 
-  private List<ChandyMisraResult> readResults() {
+  private List<ChandyMisraResult> readStatistics() {
     List<ChandyMisraResult> results = new LinkedList<>();
 
     for (int i = 0; i < nodeCount; i++) {
@@ -125,5 +143,52 @@ public class Experiment {
 
     }
     return results;
+  }
+
+  public List<Event> getEvents() throws ParseException {
+    if (events == null) {
+      events = readEvents();
+    }
+    return events;
+  }
+
+  private List<Event> readEvents() throws ParseException {
+    List<Event> events = new LinkedList<>();
+
+    for (int i = 0; i < nodeCount; i++) {
+      Path path = filePathForEvents(i);
+      logger.trace("Reading events from file path: " + path.toString());
+
+      try {
+        List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+
+        for (String e : lines) {
+          // TODO bad way of reconizing a good event ;)
+
+          if (e.startsWith("2018-")) {
+            events.add(new Event(i, e));
+          }
+        }
+      } catch (IOException e) {
+        logger.error(String.format("Could not read output file from: %d", i));
+      }
+
+    }
+    System.out.println("Event created for");
+    for (int i : Event.eventCreatedFor) {
+      System.out.print(i + ",");
+    }
+
+    return events;
+  }
+
+  private Path filePathForEvents(int node) {
+    return Paths.get(outputFolder, String.format("%04d.log", node));
+  }
+
+  public void finalizeExperimentLogger() {
+    FileAppender fa = (FileAppender) experimentLogger.getAppender(experimentAppenderName);
+    fa.close();
+    experimentLogger.removeAppender(experimentAppenderName);
   }
 }

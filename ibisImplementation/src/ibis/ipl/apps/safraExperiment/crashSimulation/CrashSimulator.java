@@ -1,6 +1,8 @@
 package ibis.ipl.apps.safraExperiment.crashSimulation;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.experiment.Event;
+import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.util.Set;
 
 public class CrashSimulator {
   private static Logger logger = Logger.getLogger(CrashSimulator.class);
+  private static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
   private boolean lateCrash;
   private CommunicationLayer communicationLayer;
@@ -56,7 +59,8 @@ public class CrashSimulator {
   }
 
   private void crash() throws IOException {
-    logger.info(String.format("Simulated crash for node %d.", communicationLayer.getID()));
+    experimentLogger.info(String.format("%s %d", Event.getNodeCrashedEvent(), communicationLayer.getID()));
+    logger.info(String.format("%s %d", Event.getNodeCrashedEvent(), communicationLayer.getID()));
     communicationLayer.broadcastCrashMessage();
     communicationLayer.crash();
   }
