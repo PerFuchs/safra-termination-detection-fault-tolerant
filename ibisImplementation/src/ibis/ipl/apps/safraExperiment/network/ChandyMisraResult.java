@@ -1,4 +1,4 @@
-package ibis.ipl.apps.safraExperiment.spanningTree;
+package ibis.ipl.apps.safraExperiment.network;
 
 public class ChandyMisraResult {
   public final int node;

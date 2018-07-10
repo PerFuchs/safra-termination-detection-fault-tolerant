@@ -4,8 +4,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
-import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
-import ibis.ipl.apps.safraExperiment.spanningTree.Network;
+import ibis.ipl.apps.safraExperiment.network.Network;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;

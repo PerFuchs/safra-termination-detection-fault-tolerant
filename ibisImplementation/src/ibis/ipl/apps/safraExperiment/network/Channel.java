@@ -1,4 +1,4 @@
-package ibis.ipl.apps.safraExperiment.spanningTree;
+package ibis.ipl.apps.safraExperiment.network;
 
 import java.util.Objects;
 

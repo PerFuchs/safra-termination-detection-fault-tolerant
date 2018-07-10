@@ -12,7 +12,8 @@ import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
-import ibis.ipl.apps.safraExperiment.spanningTree.Network;
+import ibis.ipl.apps.safraExperiment.network.Network;
+import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
 
@@ -38,9 +39,11 @@ class IbisNode {
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
-    Logger.getLogger(Experiment.class).setLevel(Level.INFO);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
+    Logger.getLogger(Experiment.class).setLevel(Level.TRACE);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.TRACE);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
+    Logger.getLogger(Network.class).setLevel(Level.INFO);
+    Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
 
     IbisCapabilities s = new IbisCapabilities(
         IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED,
@@ -67,15 +70,18 @@ class IbisNode {
     registry.waitUntilPoolClosed();
     logger.trace(String.format("%s Pool closed", ibis.identifier().toString()));
 
+    SynchronizedRandom synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
+    logger.info(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));  // To control all chose the same seed.
+
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
     BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashDetector crashDetector = new CrashDetector();
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
 
-    Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
-    network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 3000);
+    Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);
+    network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 100000);
 
     Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashDetector, communicationLayer.isRoot());
 //    Safra safraNode = new SafraFS(registry, signalHandler, communicationLayer);
@@ -104,7 +110,6 @@ class IbisNode {
     } else {
       Thread.sleep(100);
     }
-
     crashSimulator.triggerLateCrash();
     safraNode.await();
     chandyMisraNode.terminate();

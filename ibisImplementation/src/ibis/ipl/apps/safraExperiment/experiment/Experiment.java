@@ -3,9 +3,9 @@ package ibis.ipl.apps.safraExperiment.experiment;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
-import ibis.ipl.apps.safraExperiment.spanningTree.ChandyMisraResult;
-import ibis.ipl.apps.safraExperiment.spanningTree.MinimumSpanningTree;
-import ibis.ipl.apps.safraExperiment.spanningTree.Network;
+import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
+import ibis.ipl.apps.safraExperiment.network.Network;
+import ibis.ipl.apps.safraExperiment.network.Tree;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -95,13 +94,16 @@ public class Experiment {
   }
 
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results) {
-    MinimumSpanningTree tree = new MinimumSpanningTree(communicationLayer, network, results, crashDetector.getCrashedNodes());
-    MinimumSpanningTree expectedTree = network.getSpanningTree(crashDetector.getCrashedNodes());
+    Tree tree = new Tree(communicationLayer, network, results, crashDetector.getCrashedNodes());
+    Tree expectedTree = network.getSinkTree(crashDetector.getCrashedNodes());
     if (tree.equals(expectedTree)) {
       logger.info("Constructed and expected tree are equal.");
       return true;
     } else {
+      logger.info(String.format("Weights are: %d %d", tree.getWeight(), expectedTree.getWeight()));
       logger.error("Chandy Misra calculated incorrect result");
+      logger.error(String.format("Constructed tree: %s", tree.toString()));
+      logger.error(String.format("Expected tree: %s", expectedTree.toString()));
       return false;
     }
   }
