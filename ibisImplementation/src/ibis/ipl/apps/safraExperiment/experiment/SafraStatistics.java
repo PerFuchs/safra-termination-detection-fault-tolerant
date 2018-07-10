@@ -37,7 +37,7 @@ public class SafraStatistics {
 
     for (Event e : sortedEvents) {
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
-      if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isSafraSums())) {
+      if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
         logger.error(String.format("Basic event happened  on node %d after termination: %s",
             e.getNode(), e.getEvent()));
       }
@@ -46,12 +46,11 @@ public class SafraStatistics {
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
       }
       if (e.isActiveStatusChange()) {
-        logger.trace("Set status to " + e.getActiveStatus());
         nodeActiveStatus.set(e.getNode(), e.getActiveStatus());
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
       }
-      if (e.isSafraSums()) {
-        nodeSums.set(e.getNode(), e.getSafraSum());
+      if (e.isMessageCounterUpdate()) {
+        nodeSums.get(e.getNode()).set(e.getSafraMessageCounterUpdateIndex(), e.getSafraMessageCounterUpdateValue());
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
       }
       if (e.isTokenSend()) {

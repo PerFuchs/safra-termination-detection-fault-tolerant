@@ -127,7 +127,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       int count = messageCounters.get(receiver);
       count++;
       messageCounters.set(receiver, count);
-      experimentLogger.info(Event.getSafraSumsEvent(messageCounters));
+      experimentLogger.info(Event.getSafraSumsEvent(receiver, count));
     }
   }
 
@@ -142,6 +142,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       int counter = messageCounters.get(sender);
       counter--;
       messageCounters.set(sender, counter);
+      experimentLogger.info(Event.getSafraSumsEvent(sender, counter));
 
       // Only color myself black if the message overtook the token. As defined in the paper
       if ((sender < communicationLayer.getID()
@@ -149,7 +150,6 @@ public class SafraFT implements Observer, Safra, CrashHandler {
           || (sender > communicationLayer.getID() && sequenceNumber == this.sequenceNumber)) {
         isBlackUntil = furthest(isBlackUntil, sender);
       }
-      experimentLogger.info(Event.getSafraSumsEvent(messageCounters));
     }
   }
 

@@ -12,10 +12,24 @@ import java.util.regex.Pattern;
 public class Event implements Comparable<Event> {
   private final static Logger logger = Logger.getLogger(Event.class);
 
+  private final static Pattern messageCounterUpdatePattern = Pattern.compile("<<MessageCounterUpdate>(.*)>");
+  private final static Pattern activeStatusChangedPattern = Pattern.compile("<<ActiveStatus>(.*)>");
+
   private final int lineNumber;
   private final Date time;
   private final Level level;
   private final int node;
+
+  private final boolean isTokenSend;
+  private final boolean isBackupTokenSend;
+  private final boolean isNodeCrashed;
+  private final boolean isActiveStatusChange;
+  private final boolean isMessageCounterUpdate;
+
+  private final boolean activeStatus;
+  private final int messageCounterUpdateIndex;
+  private final int messageCounterUpdateValue;
+
   private final String event;
 
   /**
@@ -26,9 +40,54 @@ public class Event implements Comparable<Event> {
   private Event(int node, int lineNumber, String e, Date time, Level level) {
     this.node = node;
     this.lineNumber = lineNumber;
-    this.event = e;
     this.time = time;
     this.level = level;
+
+    this.isTokenSend = e.contains(getTokenSendEvent());
+    this.isBackupTokenSend = !isTokenSend && e.contains(getBackupTokenSendEvent());
+    this.isNodeCrashed = !isBackupTokenSend && e.contains(getNodeCrashedEvent());
+
+    boolean typeFound = isTokenSend || isBackupTokenSend || isNodeCrashed;
+
+    if (!typeFound) {
+      Matcher m = activeStatusChangedPattern.matcher(e);
+      this.isActiveStatusChange = m.find();
+      if (isActiveStatusChange) {
+        activeStatus = m.group(1).equals(true);
+      } else {
+        activeStatus = false;
+      }
+    } else {
+      isActiveStatusChange = false;
+      activeStatus = false;
+    }
+    typeFound |= isActiveStatusChange;
+
+    if (!typeFound) {
+      Matcher m = messageCounterUpdatePattern.matcher(e);
+      isMessageCounterUpdate = m.find();
+      if (isMessageCounterUpdate) {
+        String[] s = m.group(1).split(",");
+        messageCounterUpdateIndex = Integer.valueOf(s[0]);
+        messageCounterUpdateValue = Integer.valueOf(s[0]);
+      } else {
+        messageCounterUpdateIndex = -1;
+        messageCounterUpdateValue = -1;
+      }
+    } else {
+      isMessageCounterUpdate = false;
+
+      messageCounterUpdateIndex = -1;
+      messageCounterUpdateValue = -1;
+    }
+    typeFound |= isMessageCounterUpdate;
+
+    if (!typeFound) {
+      event = e;
+    } else {
+      event = null;
+    }
+
     eventCreatedFor.add(node);
   }
 
@@ -64,12 +123,8 @@ public class Event implements Comparable<Event> {
     return new Event(node, lineNumber, line, time, level);
   }
 
-  public boolean isCalledAnnounce() {
-    return event.contains(getAnnounceEvent());
-  }
-
   public boolean isTokenSend() {
-    return event.contains(getTokenSendEvent());
+    return isTokenSend;
   }
 
   public Level getLevel() {
@@ -101,47 +156,41 @@ public class Event implements Comparable<Event> {
   }
 
   public boolean isNodeCrashed() {
-    return event.contains(getNodeCrashedEvent());
+    return isNodeCrashed;
   }
 
   public boolean isActiveStatusChange() {
-    return event.contains("<ActiveStatus>");
+    return isActiveStatusChange;
   }
 
   public Boolean getActiveStatus() {
-    if (!isActiveStatusChange()) {
+    if (!isActiveStatusChange) {
       throw new IllegalStateException("Cannot get active status from this event");
     }
-    Pattern pattern = Pattern.compile("<<ActiveStatus>(.*)>");
-    Matcher m = pattern.matcher(event);
-    m.find();
-    String status = m.group(1);
-    return status.equals("true");
+    return activeStatus;
   }
 
-  public List<Integer> getSafraSum() {
-    if (!isSafraSums()) {
+
+  public int getSafraMessageCounterUpdateIndex() {
+    if (!isMessageCounterUpdate) {
       throw new IllegalStateException("Cannot get safra sum from this event");
     }
-    Pattern pattern = Pattern.compile("<<SafraSums>(.*)>");
-    Matcher matcher = pattern.matcher(event);
-    matcher.find();
-
-    String[] stringSums = matcher.group(1).split(",");
-    List<Integer> sums = new LinkedList<>();
-
-    for (String stringSum : stringSums) {
-      sums.add(Integer.valueOf(stringSum));
-    }
-    return sums;
+    return messageCounterUpdateIndex;
   }
 
-  public boolean isSafraSums() {
-    return event.contains("<SafraSums>");
+  public int getSafraMessageCounterUpdateValue() {
+    if (!isMessageCounterUpdate) {
+      throw new IllegalStateException("Cannot get safra sum from this event");
+    }
+    return messageCounterUpdateValue;
+  }
+
+  public boolean isMessageCounterUpdate() {
+    return isMessageCounterUpdate;
   }
 
   public boolean isBackupTokenSend() {
-    return event.contains(getBackupTokenSendEvent());
+    return isBackupTokenSend;
   }
 
   public static String getTokenSendEvent() {
@@ -152,12 +201,11 @@ public class Event implements Comparable<Event> {
     return "<<BackupToken>>";
   }
 
-  public static String getSafraSumsEvent(List<Integer> sums) {
-    StringBuilder sb = new StringBuilder("<<SafraSums>");
-    for (int sum : sums) {
-      sb.append(sum);
-      sb.append(',');
-    }
+  public static String getSafraSumsEvent(int index, int messageCount) {
+    StringBuilder sb = new StringBuilder("<<MessageCounterUpdate>");
+    sb.append(index);
+    sb.append(",");
+    sb.append(messageCount);
     sb.append(">");
     return sb.toString();
   }
@@ -166,7 +214,7 @@ public class Event implements Comparable<Event> {
     return String.format("<<ActiveStatus>%b>", status);
   }
 
-    public static String getAnnounceEvent() {
+  public static String getAnnounceEvent() {
     return "<<Announce>>";
   }
 

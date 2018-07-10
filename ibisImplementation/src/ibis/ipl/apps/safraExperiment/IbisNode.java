@@ -35,12 +35,12 @@ class IbisNode {
     BasicConfigurator.configure(consoleAppender);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
-    Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
+    Logger.getLogger(IbisNode.class).setLevel(Level.DEBUG);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(Experiment.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.TRACE);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
@@ -78,9 +78,10 @@ class IbisNode {
     BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashDetector crashDetector = new CrashDetector();
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, false);
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
 
-    Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);
+//    Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);
+    Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
     network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 100000);
 
     Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashDetector, communicationLayer.isRoot());
