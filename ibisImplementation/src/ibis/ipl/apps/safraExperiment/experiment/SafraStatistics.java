@@ -12,46 +12,48 @@ public class SafraStatistics {
   private int tokenSend;
 
   public SafraStatistics(int numberOfNodes, List<Event> events) {
-    List<Event> sortedEvents = new ArrayList<Event>(events);
-    Collections.sort(sortedEvents);
+    Collections.sort(events);
+    logger.trace("Events sorted");
 
     boolean terminated = false;
     tokenSend = 0;
     tokenSendAfterTermination = 0;
 
-    Set<Integer> allCrashedNodes = new HashSet<>();
-    for (Event e : sortedEvents) {
+    int numberOfNodesCrashed = 0;
+    for (Event e : events) {
       if (e.isNodeCrashed()) {
-        allCrashedNodes.add(e.getNode());
+        numberOfNodesCrashed++;
       }
     }
+    logger.trace("All crashed nodes found.");
 
-    List<List<Integer>> nodeSums = new ArrayList<>();
-    List<Boolean> nodeActiveStatus = new ArrayList<>();
+    int[][] nodeSums = new int[numberOfNodes][numberOfNodes];
+    boolean[] nodeActiveStatus = new boolean[numberOfNodes];
     for (int i = 0; i < numberOfNodes; i++) {
-      nodeSums.add(new ArrayList<Integer>(Collections.nCopies(numberOfNodes, 0)));
-      nodeActiveStatus.add(false);
+      nodeActiveStatus[i] = false;
     }
 
     Set<Integer> crashedNodes = new HashSet<>();
 
-    for (Event e : sortedEvents) {
-      logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
+    int i = 0;
+    for (Event e : events) {
+      logger.trace(i++);
+//      logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
       if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
         logger.error(String.format("Basic event happened  on node %d after termination: %s",
             e.getNode(), e.getEvent()));
       }
       if (e.isNodeCrashed()) {
         crashedNodes.add(e.getNode());
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodes);
       }
       if (e.isActiveStatusChange()) {
-        nodeActiveStatus.set(e.getNode(), e.getActiveStatus());
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
+        nodeActiveStatus[e.getNode()] = e.getActiveStatus();
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodes);
       }
       if (e.isMessageCounterUpdate()) {
-        nodeSums.get(e.getNode()).set(e.getSafraMessageCounterUpdateIndex(), e.getSafraMessageCounterUpdateValue());
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, allCrashedNodes);
+        nodeSums[e.getNode()][e.getSafraMessageCounterUpdateIndex()] = e.getSafraMessageCounterUpdateValue();
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodes);
       }
       if (e.isTokenSend()) {
         tokenSend++;
@@ -75,25 +77,27 @@ public class SafraStatistics {
    *
    * @return if the system has terminated.
    */
-  private boolean hasTerminated(List<List<Integer>> nodeSums,
-                                List<Boolean> nodeActiveStatus,
+  private boolean hasTerminated(int[][] nodeSums,
+                                boolean[] nodeActiveStatus,
                                 Set<Integer> currentlyCrashedNodes,
-                                Set<Integer> allCrashedNodes) {
-    if (!currentlyCrashedNodes.equals(allCrashedNodes)) {
+                                int numberOfNodesCrashed) {
+    if (currentlyCrashedNodes.size() != numberOfNodesCrashed) {
       return false;
+    }
+    for (boolean as : nodeActiveStatus) {
+      if (as) {
+        return false;
+      }
     }
     int sum = 0;
 
     // nodeSums and nodeActiveStatus are of the same size
-    for (int i = 0; i < nodeSums.size(); i++) {
-      if (nodeActiveStatus.get(i)) {
-        return false;
-      }
+    for (int i = 0; i < nodeSums.length; i++) {
       if (!currentlyCrashedNodes.contains(i)) {
-        List<Integer> sums = nodeSums.get(i);
-        for (int j = 0; j < sums.size(); j++) {
+        int[] sums = nodeSums[i];
+        for (int j = 0; j < sums.length; j++) {
           if (!currentlyCrashedNodes.contains(j)) {
-            sum += sums.get(j);
+            sum += sums[j];
           }
         }
       }
