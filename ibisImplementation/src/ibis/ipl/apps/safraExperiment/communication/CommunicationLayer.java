@@ -3,6 +3,8 @@ package ibis.ipl.apps.safraExperiment.communication;
 import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.network.Network;
@@ -20,6 +22,7 @@ public class CommunicationLayer {
   private Registry registry;
   private PortType portType;
   private IbisIdentifier[] ibises;
+  private CrashSimulator crashSimulator;
   private int me;
   private Map<Integer, SendPort> sendPorts = new HashMap<>();
   private Map<Integer, ReceivePort> receivePorts = new HashMap<>();
@@ -29,7 +32,7 @@ public class CommunicationLayer {
   private Network network;
   private Safra safraNode;
 
-  public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) throws IOException {
+  public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) {
     this.ibis = ibis;
     this.registry = registry;
     this.portType = portType;
@@ -115,6 +118,7 @@ public class CommunicationLayer {
 
   public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
     if (!crashed) {
+      crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       logger.trace(String.format("%d sending distance message to %d", getID(), receiver));
       safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
@@ -124,6 +128,7 @@ public class CommunicationLayer {
       m.writeInt(dm.getDistance());
       m.send();
       m.finish();
+      crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
     }
   }
 
@@ -156,6 +161,7 @@ public class CommunicationLayer {
 
   public void sendRequestMessage(int receiver) throws IOException {
     if (!crashed) {
+      crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       logger.trace(String.format("%d sending request message to %d", getID(), receiver));
       safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
@@ -164,6 +170,7 @@ public class CommunicationLayer {
       m.writeLong(safraNode.getSequenceNumber());
       m.send();
       m.finish();
+      crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
     }
   }
 
@@ -216,5 +223,9 @@ public class CommunicationLayer {
       m.send();
       m.finish();
     }
+  }
+
+  public void setCrashSimulator(CrashSimulator crashSimulator) {
+    this.crashSimulator = crashSimulator;
   }
 }

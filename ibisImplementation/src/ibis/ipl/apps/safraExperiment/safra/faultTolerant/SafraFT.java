@@ -4,6 +4,8 @@ import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
@@ -37,6 +39,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private long sequenceNumber = 0;
   private TokenFT token;
   private TokenFT backupToken;
+  private final CrashSimulator crashSimulator;
 
   private CommunicationLayer communicationLayer;
   private final Registry registry;
@@ -46,6 +49,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   public SafraFT(Registry registry,
                  SignalPollerThread signalHandler,
                  CommunicationLayer communicationLayer,
+                 CrashSimulator crashSimulator,
                  CrashDetector crashDetector,
                  boolean isBasicInitiator) throws IOException {
     this.registry = registry;
@@ -60,6 +64,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
         communicationLayer.getID(),
         0,
         new HashSet<Integer>());
+    this.crashSimulator = crashSimulator;
 
     token = null;
 
@@ -168,7 +173,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
             backupToken.sequenceNumber++;
           }
           experimentLogger.info(Event.getBackupTokenSendEvent());
+          crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
           forwardToken(this.backupToken);
+          crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
         }
       }
     }
@@ -199,6 +206,8 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     if (!(token instanceof TokenFT)) {
       throw new IllegalStateException("None TokenFT used with SafraFT");
     }
+    crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_RECEIVING_TOKEN);
+
     TokenFT t = (TokenFT) token;
     logger.debug(String.format("%d received token.", communicationLayer.getID()));
 
@@ -281,7 +290,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
         token.isBlackUntil = furthest(isBlackUntil, nextNode);
       }
 
+      crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_TOKEN);
       forwardToken(token);
+      crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_TOKEN);
       sequenceNumber++;
       isBlackUntil = me;
     }

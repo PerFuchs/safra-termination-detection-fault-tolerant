@@ -5,6 +5,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import java.util.*;
 
 public class Tree {
+  // TODO cycle detection needs to improve to detect cycles which aren't connected to the real tree and have no "bad root"z
   private LinkedList<Integer> badRoots = new LinkedList<>();
   private int root;
   private Set<Channel> channels = new TreeSet<>();

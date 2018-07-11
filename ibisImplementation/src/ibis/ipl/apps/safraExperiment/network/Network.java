@@ -77,7 +77,7 @@ public class Network {
         )).getWeight();
   }
 
-  public static Network getUndirectedRing(CommunicationLayer communicationLayer, CrashSimulator crashSimulator) {
+  public static Network getUndirectedRing(CommunicationLayer communicationLayer) {
     List<Channel> channels = new LinkedList<>();
 
     for (int i = 1; i < communicationLayer.getIbisCount(); i++) {
@@ -86,21 +86,16 @@ public class Network {
     }
     channels.add(new Channel(0, communicationLayer.getIbisCount() - 1, 1));
     channels.add(new Channel(communicationLayer.getIbisCount() - 1, 0, 1));
-    crashSimulator.scheduleLateCrash(2);
     return new Network(channels, communicationLayer);
   }
 
-  public static Network getLineNetwork(CommunicationLayer communicationLayer, CrashSimulator crashSimulator) {
+  public static Network getLineNetwork(CommunicationLayer communicationLayer) {
     List<Channel> channels = new LinkedList<>();
 
     for (int i = 0; i < communicationLayer.getIbisCount() - 1; i++) {
       channels.add(new Channel(i+1, i, 1));
       channels.add(new Channel(i, i+1, 1));
     }
-
-    crashSimulator.scheduleLateCrash(1);
-
-    // TODO not working for 2000 nodes.
 
     // Add heavyweight edges from the root to all nodes to simulate an fully connected network - because the root cannot
     // fail this guarantees the network stays connected with arbitrary failing nodes.

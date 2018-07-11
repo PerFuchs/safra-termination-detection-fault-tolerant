@@ -4,6 +4,7 @@ import ibis.ipl.ReadMessage;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.TokenFS;
@@ -46,11 +47,13 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
 
     switch (messageType) {
       case DISTANCE:
-        if (!crashed) {
-          safraNode.handleReceiveBasicMessage(origin, readMessage.readLong());
-        }
-        DistanceMessage dm = new DistanceMessage(readMessage.readInt());
+        long sequenceNumber = readMessage.readLong();
+        int distance = readMessage.readInt();
         readMessage.finish();
+        if (!crashed) {
+          safraNode.handleReceiveBasicMessage(origin, sequenceNumber);
+        }
+        DistanceMessage dm = new DistanceMessage(distance);
         if (!crashed) {
           chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
         }

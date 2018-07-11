@@ -6,6 +6,7 @@ import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
@@ -19,6 +20,8 @@ import org.apache.log4j.*;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Set;
 
 
 class IbisNode {
@@ -35,13 +38,13 @@ class IbisNode {
     BasicConfigurator.configure(consoleAppender);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
-    Logger.getLogger(IbisNode.class).setLevel(Level.DEBUG);
-    Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
+    Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
+    Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
-    Logger.getLogger(Experiment.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.TRACE);
-    Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
+    Logger.getLogger(Experiment.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
+    Logger.getLogger(CrashSimulator.class).setLevel(Level.DEBUG);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
 
@@ -78,13 +81,28 @@ class IbisNode {
     BarrierFactory barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
     CrashDetector crashDetector = new CrashDetector();
-    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, true);
+
+    Set<CrashPoint> enabledCrashPoints = new HashSet<>();
+    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
+//    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
+
+//    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
+//    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
+
+//    enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
+
+//    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
+//    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
+
+    CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom,
+        0.2,true, enabledCrashPoints);
+    communicationLayer.setCrashSimulator(crashSimulator);
 
     Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);
-//    Network network = Network.getLineNetwork(communicationLayer, crashSimulator);
-    network = network.combineWith(Network.getUndirectedRing(communicationLayer, crashSimulator), 100000);
+//    Network network = Network.getLineNetwork(communicationLayer);
+    network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
-    Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashDetector, communicationLayer.isRoot());
+    Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
 //    Safra safraNode = new SafraFS(registry, signalHandler, communicationLayer);
 
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
@@ -106,12 +124,6 @@ class IbisNode {
 
     logger.debug(String.format("%04d started algorithm", communicationLayer.getID()));
 
-    if (communicationLayer.getIbisCount() > 300) {
-      Thread.sleep(2000);
-    } else {
-      Thread.sleep(100);
-    }
-    crashSimulator.triggerLateCrash();
     safraNode.await();
     chandyMisraNode.terminate();
 
