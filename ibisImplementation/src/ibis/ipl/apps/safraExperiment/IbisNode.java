@@ -84,15 +84,15 @@ class IbisNode {
 
     Set<CrashPoint> enabledCrashPoints = new HashSet<>();
     enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
-//    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
+    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
 
-//    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
-//    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
-
-//    enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
-
-//    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
-//    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
+    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
+    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
+//
+    enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
+//
+    enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
+    enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
 
     CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom,
         0.2,true, enabledCrashPoints);
