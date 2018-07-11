@@ -112,11 +112,6 @@ class IbisNode {
     communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
     logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
 
-    if (!barrierFactory.signalBarrierWorking()) {
-      // Barrier relies on messages. Lets wait until all nodes have there channels setup.
-      Thread.sleep(10000);
-    }
-
     barrierFactory.getBarrier("Connected").await();
 
     safraNode.startAlgorithm();
