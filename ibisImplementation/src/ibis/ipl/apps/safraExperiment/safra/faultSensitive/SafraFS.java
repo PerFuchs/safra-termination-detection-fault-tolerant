@@ -58,7 +58,7 @@ public class SafraFS implements Observer, Safra {
     return j;
   }
 
-  public synchronized void setActive(boolean status) throws IOException {
+  public synchronized void setActive(boolean status, String reason) throws IOException {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
@@ -74,7 +74,7 @@ public class SafraFS implements Observer, Safra {
     token = null;
     if (communicationLayer.isRoot()) {
       token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
-      setActive(true);
+      setActive(true, "Start Safra");
     }
   }
 

@@ -20,14 +20,23 @@ public class SafraStatistics {
     tokenSendAfterTermination = 0;
 
     int numberOfNodesCrashed = 0;
+    Event lastParentCrashDetected = null;
     for (Event e : events) {
       if (e.isNodeCrashed()) {
         numberOfNodesCrashed++;
+      }
+      if (e.isParentCrashDetected()) {
+        lastParentCrashDetected = e;
       }
     }
     logger.trace("All crashed nodes found.");
 
     int[][] nodeSums = new int[numberOfNodes][numberOfNodes];
+    for (int i = 0; i < nodeSums.length; i++) {
+      for (int j = 0; j < nodeSums[i].length; j++) {
+        nodeSums[i][j] = 0;
+      }
+    }
     boolean[] nodeActiveStatus = new boolean[numberOfNodes];
     for (int i = 0; i < numberOfNodes; i++) {
       nodeActiveStatus[i] = false;
@@ -35,25 +44,31 @@ public class SafraStatistics {
 
     Set<Integer> crashedNodes = new HashSet<>();
 
+    boolean lastParentCrashDetectedEncountered = false;
+
     int i = 0;
     for (Event e : events) {
-      logger.trace(i++);
-//      logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
+//      logger.trace(i++);
+      logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
       if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
         logger.error(String.format("Basic event happened  on node %d after termination: %s",
             e.getNode(), e.getEvent()));
       }
+      if (e == lastParentCrashDetected) {
+        lastParentCrashDetectedEncountered = true;
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
+      }
       if (e.isNodeCrashed()) {
         crashedNodes.add(e.getNode());
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
       }
       if (e.isActiveStatusChange()) {
         nodeActiveStatus[e.getNode()] = e.getActiveStatus();
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
       }
       if (e.isMessageCounterUpdate()) {
         nodeSums[e.getNode()][e.getSafraMessageCounterUpdateIndex()] = e.getSafraMessageCounterUpdateValue();
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodes);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
       }
       if (e.isTokenSend()) {
         tokenSend++;
@@ -73,22 +88,33 @@ public class SafraStatistics {
    * Determines if the basic algorithm has terminated.
    *
    * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
-   * messages from and to crashed nodes. Also termination cannot be reached before final fault.
+   * messages from and to crashed nodes.
+   *
+   * Also termination cannot be reached before final fault. Furthermore, termination cannot be reached before the
+   * last event of a node detecting it's parent crashing (and repairing this)
    *
    * @return if the system has terminated.
    */
   private boolean hasTerminated(int[][] nodeSums,
                                 boolean[] nodeActiveStatus,
                                 Set<Integer> currentlyCrashedNodes,
-                                int numberOfNodesCrashed) {
+                                int numberOfNodesCrashed,
+                                boolean lastParentCrashEventEncountered) {
+    if (!lastParentCrashEventEncountered) {
+      return false;
+    }
+    logger.trace(String.format("Current crashes: %d, Total crashes: %d", currentlyCrashedNodes.size(), numberOfNodesCrashed));
     if (currentlyCrashedNodes.size() != numberOfNodesCrashed) {
       return false;
     }
-    for (boolean as : nodeActiveStatus) {
-      if (as) {
+    logger.trace("Trying active");
+    for (int i = 0; i < nodeActiveStatus.length; i++) {
+      if (nodeActiveStatus[i] && !currentlyCrashedNodes.contains(i)) {
         return false;
       }
     }
+    logger.trace("Trying sum");
+
     int sum = 0;
 
     // nodeSums and nodeActiveStatus are of the same size
@@ -102,6 +128,7 @@ public class SafraStatistics {
         }
       }
     }
+    logger.trace("Sum: " + sum);
     if (sum == 0) {
       logger.debug("Termination detected");
     }

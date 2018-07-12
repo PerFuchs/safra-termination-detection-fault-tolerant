@@ -38,13 +38,13 @@ class IbisNode {
     BasicConfigurator.configure(consoleAppender);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
-    Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
-    Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
+    Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
+    Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(Experiment.class).setLevel(Level.INFO);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
-    Logger.getLogger(CrashSimulator.class).setLevel(Level.DEBUG);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
+    Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
 
@@ -74,7 +74,7 @@ class IbisNode {
     logger.trace(String.format("%s Pool closed", ibis.identifier().toString()));
 
     SynchronizedRandom synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
-    logger.info(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));  // To control all chose the same seed.
+    logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));  // To control all chose the same seed.
 
     CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
@@ -88,9 +88,9 @@ class IbisNode {
 
     enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
     enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
-//
+
     enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
-//
+
     enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
 

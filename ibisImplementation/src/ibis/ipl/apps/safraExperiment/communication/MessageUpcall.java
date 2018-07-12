@@ -50,12 +50,12 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         long sequenceNumber = readMessage.readLong();
         int distance = readMessage.readInt();
         readMessage.finish();
-        if (!crashed) {
-          safraNode.handleReceiveBasicMessage(origin, sequenceNumber);
-        }
         DistanceMessage dm = new DistanceMessage(distance);
         if (!crashed) {
-          chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
+          synchronized (MessageUpcall.class) {
+            safraNode.handleReceiveBasicMessage(origin, sequenceNumber);
+            chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
+          }
         }
         break;
       case CRASHED:
@@ -65,12 +65,13 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         }
         break;
       case REQUEST:
-        if (!crashed) {
-          safraNode.handleReceiveBasicMessage(origin, readMessage.readLong());
-        }
+        long sn = readMessage.readLong();
         readMessage.finish();
         if (!crashed) {
-          chandyMisraNode.receiveRequestMessage(origin);
+          synchronized (MessageUpcall.class) {
+            safraNode.handleReceiveBasicMessage(origin, sn);
+            chandyMisraNode.receiveRequestMessage(origin);
+          }
         }
         break;
       case TOKEN:
@@ -78,7 +79,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         readMessage.finish();
         if (!crashed) {
           safraNode.receiveToken(token);
-        } else {
+        } else {  // TODO comment
           communicationLayer.sendCrashMessage(origin);
         }
         break;

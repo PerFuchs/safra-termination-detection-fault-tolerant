@@ -3,6 +3,7 @@ package ibis.ipl.apps.safraExperiment.experiment;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -25,6 +26,7 @@ public class Event implements Comparable<Event> {
   private final boolean isNodeCrashed;
   private final boolean isActiveStatusChange;
   private final boolean isMessageCounterUpdate;
+  private final boolean isParentCrashDetected;
 
   private final boolean activeStatus;
   private final int messageCounterUpdateIndex;
@@ -44,16 +46,19 @@ public class Event implements Comparable<Event> {
     this.level = level;
 
     this.isTokenSend = e.contains(getTokenSendEvent());
-    this.isBackupTokenSend = !isTokenSend && e.contains(getBackupTokenSendEvent());
-    this.isNodeCrashed = !isBackupTokenSend && e.contains(getNodeCrashedEvent());
-
-    boolean typeFound = isTokenSend || isBackupTokenSend || isNodeCrashed;
+    boolean typeFound = isTokenSend;  // To avoid unnecessary string operations.
+    this.isBackupTokenSend = !typeFound && e.contains(getBackupTokenSendEvent());
+    typeFound |= isBackupTokenSend;
+    this.isNodeCrashed = !typeFound && e.contains(getNodeCrashedEvent());
+    typeFound |= isNodeCrashed;
+    this.isParentCrashDetected = !typeFound && e.contains(getParentCrashEvent());
+    typeFound |= isParentCrashDetected;
 
     if (!typeFound) {
       Matcher m = activeStatusChangedPattern.matcher(e);
       this.isActiveStatusChange = m.find();
       if (isActiveStatusChange) {
-        activeStatus = m.group(1).equals(true);
+        activeStatus = m.group(1).equals("true");
       } else {
         activeStatus = false;
       }
@@ -69,7 +74,7 @@ public class Event implements Comparable<Event> {
       if (isMessageCounterUpdate) {
         String[] s = m.group(1).split(",");
         messageCounterUpdateIndex = Integer.valueOf(s[0]);
-        messageCounterUpdateValue = Integer.valueOf(s[0]);
+        messageCounterUpdateValue = Integer.valueOf(s[1]);
       } else {
         messageCounterUpdateIndex = -1;
         messageCounterUpdateValue = -1;
@@ -121,6 +126,10 @@ public class Event implements Comparable<Event> {
         logger.error("Cannot parse level: " + l);
     }
     return new Event(node, lineNumber, line, time, level);
+  }
+
+  public static String getParentCrashEvent() {
+    return "<<ParentCrashDetected>>";
   }
 
   public boolean isTokenSend() {
@@ -210,8 +219,8 @@ public class Event implements Comparable<Event> {
     return sb.toString();
   }
 
-  public static String getActiveStatusChangedEvent(boolean status) {
-    return String.format("<<ActiveStatus>%b>", status);
+  public static String getActiveStatusChangedEvent(boolean status, String reason) {
+    return String.format("<<ActiveStatus>%b>%s", status, reason);
   }
 
   public static String getAnnounceEvent() {
@@ -223,6 +232,29 @@ public class Event implements Comparable<Event> {
   }
 
   public String getEvent() {
-    return event;
+    if (event != null) {
+      return event;
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(time));
+    sb.append(": ");
+
+    if (isActiveStatusChange) {
+      sb.append("ActiveStatusChange ");
+      sb.append(activeStatus);
+    } else if (isTokenSend) {
+      sb.append("TokenSend");
+    } else if (isBackupTokenSend) {
+      sb.append("BackupTokenSend");
+    } else if (isNodeCrashed) {
+      sb.append("NodeCrashed" + node);
+    } else if (isMessageCounterUpdate) {
+      sb. append(String.format("MessageCounterUpdate on %d for %d to %d", node, messageCounterUpdateIndex, messageCounterUpdateValue));
+    }
+    return sb.toString();
+  }
+
+  public boolean isParentCrashDetected() {
+    return isParentCrashDetected;
   }
 }

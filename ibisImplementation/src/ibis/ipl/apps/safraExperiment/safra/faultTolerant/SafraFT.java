@@ -78,7 +78,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
 
     if (isBasicInitiator) {
-      setActive(true);
+      setActive(true, "Initiator");
     }
 
     signalHandler.addObserver(this);
@@ -101,12 +101,12 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     return j;
   }
 
-  public synchronized void setActive(boolean status) throws IOException {
+  public synchronized void setActive(boolean status, String reason) throws IOException {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
     if (status != basicAlgorithmIsActive) {
-      experimentLogger.info(Event.getActiveStatusChangedEvent(status));
+      experimentLogger.info(Event.getActiveStatusChangedEvent(status, reason));
     }
 
     basicAlgorithmIsActive = status;
@@ -142,7 +142,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
     if (!crashed.contains(sender)) {
       if (!report.contains(sender)) {
-        setActive(true);
+        setActive(true, "Received Basic Message");
       }
       int counter = messageCounters.get(sender);
       counter--;
