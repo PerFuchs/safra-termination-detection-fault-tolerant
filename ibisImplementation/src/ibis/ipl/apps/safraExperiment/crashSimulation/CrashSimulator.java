@@ -80,7 +80,7 @@ public class CrashSimulator {
 
   private void crash() throws IOException {
     experimentLogger.info(String.format("%s %d", Event.getNodeCrashedEvent(), communicationLayer.getID()));
-    logger.info(String.format("%s %d", Event.getNodeCrashedEvent(), communicationLayer.getID()));
+    logger.info(String.format("Node %d crashed on %s with %d repititions", communicationLayer.getID(), crashPoint.toString(), crashPointRepition));
     communicationLayer.broadcastCrashMessage();
     communicationLayer.crash();
   }

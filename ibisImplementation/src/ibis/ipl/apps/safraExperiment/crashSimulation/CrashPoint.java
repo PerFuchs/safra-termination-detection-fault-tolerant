@@ -3,6 +3,8 @@ package ibis.ipl.apps.safraExperiment.crashSimulation;
 import java.util.HashMap;
 import java.util.Map;
 
+
+// TODO do I want crash points in the basic algorithm
 public enum CrashPoint {
   BEFORE_SENDING_TOKEN,
   AFTER_SENDING_TOKEN,
@@ -18,16 +20,16 @@ public enum CrashPoint {
   private static Map<CrashPoint, Integer> maxRepitions = new HashMap<>();
 
   static {
-    maxRepitions.put(BEFORE_SENDING_TOKEN, 1);
-    maxRepitions.put(AFTER_SENDING_TOKEN, 1);
+    maxRepitions.put(BEFORE_SENDING_TOKEN, 3);
+    maxRepitions.put(AFTER_SENDING_TOKEN, 3);
 
-    maxRepitions.put(BEFORE_SENDING_BACKUP_TOKEN, 1);
-    maxRepitions.put(AFTER_SENDING_BACKUP_TOKEN, 1);
+    maxRepitions.put(BEFORE_SENDING_BACKUP_TOKEN, 2);
+    maxRepitions.put(AFTER_SENDING_BACKUP_TOKEN, 2);
 
-    maxRepitions.put(BEFORE_RECEIVING_TOKEN, 1);
+    maxRepitions.put(BEFORE_RECEIVING_TOKEN, 3);
 
-    maxRepitions.put(BEFORE_SENDING_BASIC_MESSAGE, 1);
-    maxRepitions.put(AFTER_SENDING_BASIC_MESSAGE, 1);
+    maxRepitions.put(BEFORE_SENDING_BASIC_MESSAGE, 80);
+    maxRepitions.put(AFTER_SENDING_BASIC_MESSAGE, 80);
   }
 
   public static int getMaxRepitions(CrashPoint crashPoint) {
