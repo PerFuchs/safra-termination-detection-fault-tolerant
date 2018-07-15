@@ -23,4 +23,10 @@ public class OurTimer {
     long duration = stop();
     experimentLogger.info(Event.getSafraTimeSpentEvent(duration));
   }
+
+  public void stopAndCreateTotalTimeSpentEvent() {
+    long duration = stop();
+    experimentLogger.info(Event.getTotalTimeSpentEvent(duration));
+  }
+
 }

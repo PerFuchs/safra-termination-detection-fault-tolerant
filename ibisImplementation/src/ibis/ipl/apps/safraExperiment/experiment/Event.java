@@ -3,7 +3,6 @@ package ibis.ipl.apps.safraExperiment.experiment;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -15,7 +14,8 @@ public class Event implements Comparable<Event> {
 
   private final static Pattern messageCounterUpdatePattern = Pattern.compile("<<MessageCounterUpdate>(.*)>");
   private final static Pattern activeStatusChangedPattern = Pattern.compile("<<ActiveStatus>(.*)>");
-  private final static Pattern safraTimeSpendPattern = Pattern.compile("<<SafraTimeSpentEvent>(.*)>");
+  private final static Pattern safraTimeSpentPattern = Pattern.compile("<<SafraTimeSpentEvent>(.*)>");
+  private final static Pattern totalTimeSpentPattern = Pattern.compile("<<TotalTimeSpentEvent>(.*)>");
 
   private final int lineNumber;
   private final Date time;
@@ -29,12 +29,13 @@ public class Event implements Comparable<Event> {
   private final boolean isMessageCounterUpdate;
   private final boolean isParentCrashDetected;
   private final boolean isSafraTimeSpentEvent;
+  private final boolean isTotalTimeSpentEvent;
 
   private final boolean activeStatus;
   private final int messageCounterUpdateIndex;
   private final int messageCounterUpdateValue;
 
-  private final long timeSpent;
+  private long timeSpent;
 
   private final String event;
 
@@ -92,18 +93,26 @@ public class Event implements Comparable<Event> {
     typeFound |= isMessageCounterUpdate;
 
     if (!typeFound) {
-      Matcher m = safraTimeSpendPattern.matcher(e);
+      Matcher m = safraTimeSpentPattern.matcher(e);
       this.isSafraTimeSpentEvent = m.find();
       if (isSafraTimeSpentEvent) {
         timeSpent = Long.valueOf(m.group(1));
-      } else {
-        timeSpent = 0;
       }
     } else {
       isSafraTimeSpentEvent = false;
-      timeSpent = 0;
     }
     typeFound |= isSafraTimeSpentEvent;
+
+    if (!typeFound) {
+      Matcher m = totalTimeSpentPattern.matcher(e);
+      this.isTotalTimeSpentEvent = m.find();
+      if (isTotalTimeSpentEvent) {
+        timeSpent = Long.valueOf(m.group(1));
+      }
+    } else {
+      isTotalTimeSpentEvent = false;
+    }
+    typeFound |= isTotalTimeSpentEvent;
 
     if (!typeFound) {
       event = e;
@@ -280,11 +289,19 @@ public class Event implements Comparable<Event> {
     return String.format("<<SafraTimeSpentEvent>%d>", elapsedTime);
   }
 
+  public static String getTotalTimeSpentEvent(long elapsedTime) {
+    return String.format("<<TotalTimeSpentEvent>%d>", elapsedTime);
+  }
+
   public boolean isSafraTimeSpentEvent() {
     return isSafraTimeSpentEvent;
   }
 
-  public long getSafraTimeSpent() {
+  public boolean isTotalTimeSpentEvent() {
+    return isTotalTimeSpentEvent;
+  }
+
+  public long getTimeSpent() {
     return timeSpent;
   }
 }

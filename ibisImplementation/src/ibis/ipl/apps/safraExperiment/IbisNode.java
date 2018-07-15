@@ -14,6 +14,7 @@ import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
+import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
@@ -43,7 +44,7 @@ class IbisNode {
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(Experiment.class).setLevel(Level.INFO);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
@@ -61,7 +62,7 @@ class IbisNode {
         PortType.SERIALIZATION_DATA,
         PortType.COMMUNICATION_FIFO);
 
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
 
     ibis = IbisFactory.createIbis(s, null, porttype);
     registry = ibis.registry();
@@ -114,6 +115,7 @@ class IbisNode {
 
     barrierFactory.getBarrier("Connected").await();
 
+    OurTimer totalTime = new OurTimer();
     safraNode.startAlgorithm();
     chandyMisraNode.startAlgorithm();
 
@@ -121,6 +123,7 @@ class IbisNode {
 
     safraNode.await();
     chandyMisraNode.terminate();
+    totalTime.stopAndCreateTotalTimeSpentEvent();
 
     experiment.writeChandyMisraResults(chandyMisraNode);
     experiment.finalizeExperimentLogger();
@@ -128,13 +131,13 @@ class IbisNode {
 
     if (communicationLayer.isRoot()) {
       long endTime = System.nanoTime();
-      double time = ((double) (endTime - startTime)) / 1000000.0;
+      double time = ((double) (endTime - startTime)) / 1000000000.0;
       System.out.println("ExecutionTime: " + time);
 
       experiment.verify();
 
       SafraStatistics ss = experiment.getSafraStatistics();
-      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Time Spent for Safra: %f", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getSafraTimeSpent()));
+      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Total Time: %f Time Spent for Safra: %f", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getTotalTimeSpent(), ss.getSafraTimeSpent()));
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
       System.out.println("End");
     }
