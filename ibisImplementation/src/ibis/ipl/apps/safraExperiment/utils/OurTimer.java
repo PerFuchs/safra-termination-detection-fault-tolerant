@@ -7,25 +7,34 @@ import org.apache.log4j.Logger;
 public class OurTimer {
   private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
-  private final long start;
-  private long end;
+  private long duration;
+  private long start;
 
   public OurTimer() {
+    start();
+  }
+
+  public void start() {
     start = System.nanoTime();
   }
-  
-  public long stop() {
-    end = System.nanoTime();
-    return end - start;
+
+  private void updateDuration() {
+    long end = System.nanoTime();
+    duration += end - start;
   }
-  
+
+  public long pause() {
+    updateDuration();
+    return duration;
+  }
+
   public void stopAndCreateSafraTimeSpentEvent() {
-    long duration = stop();
+    long duration = pause();
     experimentLogger.info(Event.getSafraTimeSpentEvent(duration));
   }
 
   public void stopAndCreateTotalTimeSpentEvent() {
-    long duration = stop();
+    long duration = pause();
     experimentLogger.info(Event.getTotalTimeSpentEvent(duration));
   }
 

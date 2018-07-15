@@ -31,6 +31,7 @@ public class Event implements Comparable<Event> {
   private final boolean isMessageCounterUpdate;
   private final boolean isParentCrashDetected;
   private final boolean isSafraTimeSpentEvent;
+  private final boolean isSafraReduceTime;    // TODO delete in the end
   private final boolean isTotalTimeSpentEvent;
 
   private final boolean activeStatus;
@@ -117,6 +118,8 @@ public class Event implements Comparable<Event> {
     }
     typeFound |= isSafraTimeSpentEvent;
 
+    typeFound |= isTokenSend;
+
     if (!typeFound) {
       Matcher m = totalTimeSpentPattern.matcher(e);
       this.isTotalTimeSpentEvent = m.find();
@@ -127,6 +130,19 @@ public class Event implements Comparable<Event> {
       isTotalTimeSpentEvent = false;
     }
     typeFound |= isTotalTimeSpentEvent;
+
+    if (!typeFound) {
+      Matcher m = Pattern.compile("<<TakeOff>(.*)>").matcher(e);
+      this.isSafraReduceTime = m.find();
+      if (isSafraReduceTime) {
+        timeSpent = Integer.valueOf(m.group(1));
+      } else {
+        timeSpent = 0;
+      }
+    } else {
+      isSafraReduceTime = false;
+    }
+    typeFound |= isSafraReduceTime;
 
     if (!typeFound) {
       event = e;
@@ -254,7 +270,7 @@ public class Event implements Comparable<Event> {
     return "<<BackupToken>>";
   }
 
-  public static String getSafraSumsEvent(int index, int messageCount) {
+  public static String getSafraSumsEvent(int index, long messageCount) {
     StringBuilder sb = new StringBuilder("<<MessageCounterUpdate>");
     sb.append(index);
     sb.append(",");
@@ -327,5 +343,18 @@ public class Event implements Comparable<Event> {
       throw new IllegalStateException("Cannot get token size of event: " + this.toString());
     }
     return tokenSize;
+  }
+
+  public boolean isReduceSafraTime() {
+    return isSafraReduceTime;
+  }
+
+  /**
+   * Not used during experiments but helpful to debug where Safra's time actually is spent.
+   * @param elapsedTime time by which safraSpentTime will be reduced.
+   * @return
+   */
+  public String getReduceSafraTimeEvent(long elapsedTime) {
+    return String.format("<<TakeOff>%d>", elapsedTime);
   }
 }

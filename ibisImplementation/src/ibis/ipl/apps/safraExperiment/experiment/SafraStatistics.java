@@ -89,13 +89,17 @@ public class SafraStatistics {
           tokenSendAfterTermination++;
         }
       }
-      if (e.isSafraTimeSpentEvent()) {
+      if (e.isSafraTimeSpentEvent() && !crashedNodes.contains(e.getNode())) {
         safraTimeSpent += e.getTimeSpent();
         if (terminated) {
           safratTimeSpentAfterTermination += e.getTimeSpent();
         }
       }
 
+      if (e.isReduceSafraTime()) {
+        logger.trace(String.format("Reduce Safra time: %d", e.getTimeSpent()));
+        safraTimeSpent -= e.getTimeSpent();
+      }
       if (e.isBackupTokenSend()) {
         backupTokenSend++;
         // Backup tokens can be issued after termination this behaviour is accounted for because every backupTokenSend

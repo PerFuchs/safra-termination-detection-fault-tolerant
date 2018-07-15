@@ -31,7 +31,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private boolean started = false;
   private boolean basicAlgorithmIsActive = false;
   private int isBlackUntil;
-  private List<Integer> messageCounters;
+  private long[] messageCounters;
   private Set<Integer> crashed = new HashSet<>();
   private Set<Integer> report = new HashSet<>();
 
@@ -57,7 +57,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
 
-    messageCounters = new ArrayList<>(Collections.nCopies(communicationLayer.getIbisCount(), 0));
+    messageCounters = new long[communicationLayer.getIbisCount()];
     nextNode = (communicationLayer.getID() + 1) % communicationLayer.getIbisCount();
 
     backupToken = new TokenFT(new ArrayList<Long>(
@@ -135,10 +135,8 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       logger.error(String.format("Send message while being passive %d", communicationLayer.getID()));
     }
     if (!crashed.contains(receiver) && !report.contains(receiver)) {
-      int count = messageCounters.get(receiver);
-      count++;
-      messageCounters.set(receiver, count);
-      experimentLogger.info(Event.getSafraSumsEvent(receiver, count));
+      messageCounters[receiver]++;
+      experimentLogger.info(Event.getSafraSumsEvent(receiver, messageCounters[receiver]));
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -150,12 +148,12 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
     if (!crashed.contains(sender)) {
       if (!report.contains(sender)) {
+        timer.pause();
         setActive(true, "Received Basic Message");
+        timer.start();
       }
-      int counter = messageCounters.get(sender);
-      counter--;
-      messageCounters.set(sender, counter);
-      experimentLogger.info(Event.getSafraSumsEvent(sender, counter));
+      messageCounters[sender]--;
+      experimentLogger.info(Event.getSafraSumsEvent(sender, messageCounters[sender]));
 
       // Only color myself black if the message overtook the token. As defined in the paper
       if ((sender < communicationLayer.getID()
@@ -263,9 +261,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       logger.debug(String.format("%d Crashed: %s", communicationLayer.getID(), crashedNodes.toString()));
       if (isBlackUntil == me || report.isEmpty()) {
         long mySum = 0;
-        for (int i = 0; i < messageCounters.size(); i++) {
+        for (int i = 0; i < messageCounters.length; i++) {
           if (i != me && !crashed.contains(i)) {
-            mySum += messageCounters.get(i);
+            mySum += messageCounters[i];
           }
         }
         token.messageCounters.set(me, mySum);

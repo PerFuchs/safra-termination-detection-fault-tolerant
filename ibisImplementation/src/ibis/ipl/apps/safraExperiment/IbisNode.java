@@ -44,7 +44,7 @@ class IbisNode {
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(Experiment.class).setLevel(Level.INFO);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
