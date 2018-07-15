@@ -127,14 +127,14 @@ class IbisNode {
     barrierFactory.getBarrier("ResultsWritten").await();
 
     if (communicationLayer.isRoot()) {
-      long endTime = System.currentTimeMillis();
-      double time = ((double) (endTime - startTime)) / 1000.0;
+      long endTime = System.nanoTime();
+      double time = ((double) (endTime - startTime)) / 1000000.0;
       System.out.println("ExecutionTime: " + time);
 
       experiment.verify();
 
       SafraStatistics ss = experiment.getSafraStatistics();
-      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination()));
+      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Time Spent for Safra: %f", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getSafraTimeSpent()));
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
       System.out.println("End");
     }

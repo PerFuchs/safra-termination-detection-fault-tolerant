@@ -15,6 +15,7 @@ public class Event implements Comparable<Event> {
 
   private final static Pattern messageCounterUpdatePattern = Pattern.compile("<<MessageCounterUpdate>(.*)>");
   private final static Pattern activeStatusChangedPattern = Pattern.compile("<<ActiveStatus>(.*)>");
+  private final static Pattern safraTimeSpendPattern = Pattern.compile("<<SafraTimeSpentEvent>(.*)>");
 
   private final int lineNumber;
   private final Date time;
@@ -27,10 +28,13 @@ public class Event implements Comparable<Event> {
   private final boolean isActiveStatusChange;
   private final boolean isMessageCounterUpdate;
   private final boolean isParentCrashDetected;
+  private final boolean isSafraTimeSpentEvent;
 
   private final boolean activeStatus;
   private final int messageCounterUpdateIndex;
   private final int messageCounterUpdateValue;
+
+  private final long timeSpent;
 
   private final String event;
 
@@ -86,6 +90,20 @@ public class Event implements Comparable<Event> {
       messageCounterUpdateValue = -1;
     }
     typeFound |= isMessageCounterUpdate;
+
+    if (!typeFound) {
+      Matcher m = safraTimeSpendPattern.matcher(e);
+      this.isSafraTimeSpentEvent = m.find();
+      if (isSafraTimeSpentEvent) {
+        timeSpent = Long.valueOf(m.group(1));
+      } else {
+        timeSpent = 0;
+      }
+    } else {
+      isSafraTimeSpentEvent = false;
+      timeSpent = 0;
+    }
+    typeFound |= isSafraTimeSpentEvent;
 
     if (!typeFound) {
       event = e;
@@ -256,5 +274,17 @@ public class Event implements Comparable<Event> {
 
   public boolean isParentCrashDetected() {
     return isParentCrashDetected;
+  }
+
+  public static String getSafraTimeSpentEvent(long elapsedTime) {
+    return String.format("<<SafraTimeSpentEvent>%d>", elapsedTime);
+  }
+
+  public boolean isSafraTimeSpentEvent() {
+    return isSafraTimeSpentEvent;
+  }
+
+  public long getSafraTimeSpent() {
+    return timeSpent;
   }
 }

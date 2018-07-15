@@ -7,6 +7,7 @@ import java.util.*;
 public class SafraStatistics {
   private final static Logger logger = Logger.getLogger(SafraStatistics.class);
 
+  private long safraTimeSpent;
   private int backupTokenSend;
   private int tokenSendAfterTermination;
   private int tokenSend;
@@ -21,12 +22,17 @@ public class SafraStatistics {
 
     int numberOfNodesCrashed = 0;
     Event lastParentCrashDetected = null;
+
+    safraTimeSpent = 0;
     for (Event e : events) {
       if (e.isNodeCrashed()) {
         numberOfNodesCrashed++;
       }
       if (e.isParentCrashDetected()) {
         lastParentCrashDetected = e;
+      }
+      if (e.isSafraTimeSpentEvent()) {
+        safraTimeSpent = e.getSafraTimeSpent();
       }
     }
     logger.trace("All crashed nodes found.");
@@ -147,4 +153,10 @@ public class SafraStatistics {
     return tokenSendAfterTermination;
   }
 
+  /**
+   * @return processing time spent on Safra's calculation in milliseconds.
+   */
+  public double getSafraTimeSpent() {
+    return safraTimeSpent / 1000000.0;
+  }
 }

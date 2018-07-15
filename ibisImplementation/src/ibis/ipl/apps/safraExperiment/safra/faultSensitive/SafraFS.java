@@ -8,6 +8,7 @@ import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.api.TokenFactory;
+import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -59,6 +60,7 @@ public class SafraFS implements Observer, Safra {
   }
 
   public synchronized void setActive(boolean status, String reason) throws IOException {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
@@ -66,27 +68,31 @@ public class SafraFS implements Observer, Safra {
     if (!basicAlgorithmIsActive) {
       handleToken();
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void startAlgorithm() throws InterruptedException, IOException {
     semaphore.acquire();
     started = true;
     token = null;
-    if (communicationLayer.isRoot()) {
+    if (communicationLayer.isRoot()) {  // TODO should status be set in constructor? See SafraFT then one needs to take timings here
       token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
       setActive(true, "Start Safra");
     }
   }
 
   public synchronized void handleSendingBasicMessage(int receiver) {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
     }
 
     messageCounter++;
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
     }
@@ -99,9 +105,11 @@ public class SafraFS implements Observer, Safra {
         || (sender > communicationLayer.getID() && sequenceNumber == this.sequenceNumber)) {
       isBlackUntil = furthest(isBlackUntil, sender);
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void receiveToken(Token token) throws IOException {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
     }
@@ -110,6 +118,7 @@ public class SafraFS implements Observer, Safra {
     }
     this.token = (TokenFS) token;
     handleToken();
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   @Override

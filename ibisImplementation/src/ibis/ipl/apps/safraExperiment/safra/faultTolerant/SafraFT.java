@@ -13,6 +13,7 @@ import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.api.TokenFactory;
+import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -102,6 +103,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void setActive(boolean status, String reason) throws IOException {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
@@ -113,15 +115,19 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     if (!basicAlgorithmIsActive) {
       handleToken();
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void startAlgorithm() throws InterruptedException, IOException {
+    OurTimer timer = new OurTimer();
     semaphore.acquire();
     started = true;
     handleToken();
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void handleSendingBasicMessage(int receiver) {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d sends basic message after termination.", communicationLayer.getID()));
     }
@@ -134,9 +140,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       messageCounters.set(receiver, count);
       experimentLogger.info(Event.getSafraSumsEvent(receiver, count));
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) throws IOException {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
     }
@@ -156,9 +164,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
         isBlackUntil = furthest(isBlackUntil, sender);
       }
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d notfified crash after termination.", communicationLayer.getID()));
     }
@@ -179,6 +189,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
         }
       }
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   private void newSuccessor() throws IOException {
@@ -200,6 +211,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   public synchronized void receiveToken(Token token) throws IOException {
+    OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
     }
@@ -226,6 +238,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     } else {
       logger.debug(String.format("%d ignored because of sequence number.", communicationLayer.getID()));
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   private synchronized void handleToken() throws IOException {
