@@ -9,6 +9,7 @@ public class SafraStatistics {
 
   private long totalTime;
   private long safraTimeSpent;
+  private long safratTimeSpentAfterTermination;
   private int backupTokenSend;
   private int tokenSendAfterTermination;
   private int tokenSend;
@@ -25,17 +26,12 @@ public class SafraStatistics {
     Event lastParentCrashDetected = null;
 
     totalTime = 0;
-    safraTimeSpent = 0;
     for (Event e : events) {
       if (e.isNodeCrashed()) {
         numberOfNodesCrashed++;
       }
       if (e.isParentCrashDetected()) {
         lastParentCrashDetected = e;
-      }
-      if (e.isSafraTimeSpentEvent()) {
-        logger.trace(String.format("Safra time spent: %d", e.getTimeSpent()));
-        safraTimeSpent += e.getTimeSpent();
       }
       if (e.isTotalTimeSpentEvent()) {
         totalTime += e.getTimeSpent();
@@ -59,6 +55,8 @@ public class SafraStatistics {
     boolean lastParentCrashDetectedEncountered = false;
 
     int i = 0;
+    safraTimeSpent = 0;
+    safratTimeSpentAfterTermination = 0;
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
@@ -88,6 +86,13 @@ public class SafraStatistics {
           tokenSendAfterTermination++;
         }
       }
+      if (e.isSafraTimeSpentEvent()) {
+        safraTimeSpent += e.getTimeSpent();
+        if (terminated) {
+          safratTimeSpentAfterTermination += e.getTimeSpent();
+        }
+      }
+
       if (e.isBackupTokenSend()) {
         backupTokenSend++;
         // Backup tokens can be issued after termination this behaviour is accounted for because every backupTokenSend
@@ -164,6 +169,10 @@ public class SafraStatistics {
    */
   public double getSafraTimeSpent() {
     return safraTimeSpent / 1000000000.0;
+  }
+
+  public double getSafraTimeSpentAfterTermination() {
+    return safratTimeSpentAfterTermination / 1000000000.0;
   }
 
   public double getTotalTimeSpent() {
