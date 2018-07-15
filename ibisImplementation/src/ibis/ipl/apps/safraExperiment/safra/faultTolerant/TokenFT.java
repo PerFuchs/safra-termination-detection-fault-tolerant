@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TokenFT implements Token {
+public class TokenFT extends Token {
   public int isBlackUntil;
   public List<Long> messageCounters;
   public long sequenceNumber;
@@ -25,7 +25,6 @@ public class TokenFT implements Token {
     this.crashed = crashed;
   }
 
-  @Override
   public void writeToMessage(WriteMessage m) throws IOException {
     m.writeInt(isBlackUntil);
     m.writeLong(sequenceNumber);
@@ -39,5 +38,10 @@ public class TokenFT implements Token {
     for (long mc : messageCounters) {
       m.writeLong(mc);
     }
+  }
+
+  public int getSize() {
+    // isBlackUntil + sequenceNumber + + messageCounters and crashed size + messageCounters  + crashed
+    return INT_SIZE + LONG_SIZE + INT_SIZE * 2 + LONG_SIZE * messageCounters.size() + INT_SIZE * crashed.size();
   }
 }

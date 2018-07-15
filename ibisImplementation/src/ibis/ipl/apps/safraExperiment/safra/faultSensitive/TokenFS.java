@@ -6,7 +6,7 @@ import ibis.ipl.apps.safraExperiment.safra.api.Token;
 
 import java.io.IOException;
 
-public class TokenFS implements Token {
+public class TokenFS extends Token {
   public int isBlackUntil;
   public long messageCounter;
 
@@ -20,4 +20,10 @@ public class TokenFS implements Token {
     m.writeLong(messageCounter);
     m.writeInt(isBlackUntil);
   }
+
+  public int getSize() {
+    return INT_SIZE + LONG_SIZE;
+  }
+
+  // TODO getSize
 }

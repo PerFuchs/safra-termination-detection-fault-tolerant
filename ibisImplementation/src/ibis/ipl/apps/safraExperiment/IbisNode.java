@@ -133,8 +133,10 @@ class IbisNode {
       experiment.verify();
 
       SafraStatistics ss = experiment.getSafraStatistics();
-      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Total Time: %f Time Spent for Safra: %f Time Spent for Safra after termination: %f",
-          ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getTotalTimeSpent(), ss.getSafraTimeSpent(), ss.getSafraTimeSpentAfterTermination()));
+      // TODO do I want to know CM time because Safra time compared to total time is quite strange. To big of a difference because of communication time in total time
+      // TODO time spent after termination is really low. That's most likely because of dynamic port creation. No dynamic port creation?
+      System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Total Time: %f Time Spent for Safra: %f Time Spent for Safra after termination: %f Token size: %d",
+          ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getTotalTimeSpent(), ss.getSafraTimeSpent(), ss.getSafraTimeSpentAfterTermination(), ss.getTokenBytes()));
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
 
       long endTime = System.nanoTime();

@@ -16,6 +16,7 @@ public class Event implements Comparable<Event> {
   private final static Pattern activeStatusChangedPattern = Pattern.compile("<<ActiveStatus>(.*)>");
   private final static Pattern safraTimeSpentPattern = Pattern.compile("<<SafraTimeSpentEvent>(.*)>");
   private final static Pattern totalTimeSpentPattern = Pattern.compile("<<TotalTimeSpentEvent>(.*)>");
+  private final static Pattern tokenSentPattern = Pattern.compile("<<TokenSend>(.*)>");
 
   private final int lineNumber;
   private final Date time;
@@ -23,6 +24,7 @@ public class Event implements Comparable<Event> {
   private final int node;
 
   private final boolean isTokenSend;
+  private final int tokenSize;
   private final boolean isBackupTokenSend;
   private final boolean isNodeCrashed;
   private final boolean isActiveStatusChange;
@@ -50,10 +52,8 @@ public class Event implements Comparable<Event> {
     this.time = time;
     this.level = level;
 
-    this.isTokenSend = e.contains(getTokenSendEvent());
-    boolean typeFound = isTokenSend;  // To avoid unnecessary string operations.
-    this.isBackupTokenSend = !typeFound && e.contains(getBackupTokenSendEvent());
-    typeFound |= isBackupTokenSend;
+    this.isBackupTokenSend = e.contains(getBackupTokenSendEvent());
+    boolean typeFound = isBackupTokenSend;  // To avoid unnecessary string operations.
     this.isNodeCrashed = !typeFound && e.contains(getNodeCrashedEvent());
     typeFound |= isNodeCrashed;
     this.isParentCrashDetected = !typeFound && e.contains(getParentCrashEvent());
@@ -72,6 +72,20 @@ public class Event implements Comparable<Event> {
       activeStatus = false;
     }
     typeFound |= isActiveStatusChange;
+
+    if (!typeFound) {
+      Matcher m = tokenSentPattern.matcher(e);
+      this.isTokenSend = m.find();
+      if (isTokenSend) {
+        tokenSize = Integer.valueOf(m.group(1));
+      } else {
+        tokenSize = 0;
+      }
+    } else {
+      isTokenSend = false;
+      tokenSize = 0;
+    }
+    typeFound |= isTokenSend;
 
     if (!typeFound) {
       Matcher m = messageCounterUpdatePattern.matcher(e);
@@ -229,8 +243,11 @@ public class Event implements Comparable<Event> {
     return isBackupTokenSend;
   }
 
-  public static String getTokenSendEvent() {
-    return "<<TokenSend>>";
+  /**
+   * @param tokenSize token size in bytes
+   */
+  public static String getTokenSendEvent(int tokenSize) {
+    return String.format("<<TokenSend>%d>", tokenSize);
   }
 
   public static String getBackupTokenSendEvent() {
@@ -303,5 +320,12 @@ public class Event implements Comparable<Event> {
 
   public long getTimeSpent() {
     return timeSpent;
+  }
+
+  public int getTokenSize()  {
+    if (!isTokenSend) {
+      throw new IllegalStateException("Cannot get token size of event: " + this.toString());
+    }
+    return tokenSize;
   }
 }

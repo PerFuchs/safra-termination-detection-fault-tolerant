@@ -13,6 +13,7 @@ public class SafraStatistics {
   private int backupTokenSend;
   private int tokenSendAfterTermination;
   private int tokenSend;
+  private long tokenBytes;
 
   public SafraStatistics(int numberOfNodes, List<Event> events) {
     Collections.sort(events);
@@ -57,6 +58,7 @@ public class SafraStatistics {
     int i = 0;
     safraTimeSpent = 0;
     safratTimeSpentAfterTermination = 0;
+    tokenBytes = 0;
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
@@ -82,6 +84,7 @@ public class SafraStatistics {
       }
       if (e.isTokenSend()) {
         tokenSend++;
+        tokenBytes += e.getTokenSize();
         if (terminated) {
           tokenSendAfterTermination++;
         }
@@ -177,5 +180,9 @@ public class SafraStatistics {
 
   public double getTotalTimeSpent() {
     return totalTime / 1000000000.0;
+  }
+
+  public long getTokenBytes() {
+    return tokenBytes;
   }
 }

@@ -324,7 +324,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   }
 
   private synchronized void forwardToken(TokenFT token) throws IOException {
-    experimentLogger.info(Event.getTokenSendEvent());
+    experimentLogger.info(Event.getTokenSendEvent(token.getSize()));
 
     logger.debug(String.format("%d Forwarding token to %d", communicationLayer.getID(), nextNode));
     logger.debug(String.format("%d Token has %d crash reports", communicationLayer.getID(), token.crashed.size()));
