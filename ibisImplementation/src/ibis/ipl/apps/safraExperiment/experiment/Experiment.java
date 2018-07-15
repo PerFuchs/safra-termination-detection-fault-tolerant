@@ -26,9 +26,10 @@ public class Experiment {
   public final static String experimentLoggerName = "safraExperimentLogger";
 
   private final static String experimentAppenderName = "experimentAppenderName";
-  private final static String outputFolder = "/var/scratch/pfs250/safraExperiment/";
 
   private Logger experimentLogger = Logger.getLogger(experimentLoggerName);
+
+  private final Path outputFolder;
 
   private final CommunicationLayer communicationLayer;
   private final Network network;
@@ -39,14 +40,15 @@ public class Experiment {
 
   private List<Event> events;
 
-  public Experiment(CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector) throws IOException {
+  public Experiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector) throws IOException {
+    this.outputFolder = outputFolder;
     this.communicationLayer = communicationLayer;
     this.network = network;
     this.nodeID = communicationLayer.getID();
     this.nodeCount = communicationLayer.getIbisCount();
     this.crashDetector = crashDetector;
-    if (!new File(outputFolder).exists()) {
-      Files.createDirectories(Paths.get(outputFolder));
+    if (!outputFolder.toFile().exists()) {
+      Files.createDirectories(outputFolder);
     }
 
     setupLogger();
@@ -56,7 +58,7 @@ public class Experiment {
     experimentLogger.setLevel(Level.INFO);
     experimentLogger.setAdditivity(false);
 
-    Path logFile = Paths.get(outputFolder, filePathForEvents(nodeID).toString());
+    Path logFile = Paths.get(outputFolder.toString(), filePathForEvents(nodeID).toString());
     if (logFile.toFile().exists()) {
       Files.delete(logFile);
     }
@@ -68,7 +70,7 @@ public class Experiment {
   }
 
   private Path filePathForChandyMisraResults(int node) {
-    return Paths.get(outputFolder, String.format("%04d.chandyMisra", node));
+    return Paths.get(outputFolder.toString(), String.format("%04d.chandyMisra", node));
   }
 
   public boolean verify() throws IOException {
@@ -169,7 +171,7 @@ public class Experiment {
   }
 
   private Path filePathForEvents(int node) {
-    return Paths.get(outputFolder, String.format("%04d.log", node));
+    return Paths.get(outputFolder.toString(), String.format("%04d.log", node));
   }
 
   /**

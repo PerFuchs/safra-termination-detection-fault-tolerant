@@ -20,6 +20,8 @@ import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +39,8 @@ class IbisNode {
 
     ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("[%t] - %m%n"));
     BasicConfigurator.configure(consoleAppender);
+
+    Path outputFolder = Paths.get(args[0]);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
     Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
@@ -108,7 +112,7 @@ class IbisNode {
 
     ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
 
-    Experiment experiment = new Experiment(communicationLayer, network, crashDetector);
+    Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector);
 
     communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
     logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
@@ -134,7 +138,6 @@ class IbisNode {
 
       SafraStatistics ss = experiment.getSafraStatistics();
       // TODO do I want to know CM time because Safra time compared to total time is quite strange. To big of a difference because of communication time in total time
-      // TODO time spent after termination is really low. That's most likely because of dynamic port creation. No dynamic port creation?
       System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Total Time: %f Time Spent for Safra: %f Time Spent for Safra after termination: %f Token size: %d",
           ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getTotalTimeSpent(), ss.getSafraTimeSpent(), ss.getSafraTimeSpentAfterTermination(), ss.getTokenBytes()));
       System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
