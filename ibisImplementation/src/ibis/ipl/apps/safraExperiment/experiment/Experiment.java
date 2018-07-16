@@ -39,6 +39,7 @@ public class Experiment {
   private int nodeCount;
 
   private List<Event> events;
+  private SafraStatistics safraStatistics;
 
   public Experiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector) throws IOException {
     this.outputFolder = outputFolder;
@@ -92,7 +93,10 @@ public class Experiment {
   }
 
   public SafraStatistics getSafraStatistics() throws IOException {
-    return new SafraStatistics(nodeCount, getEvents());
+    if (safraStatistics == null) {
+      safraStatistics = new SafraStatistics(nodeCount, getEvents());
+    }
+    return safraStatistics;
   }
 
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results) {
@@ -184,5 +188,9 @@ public class Experiment {
     FileAppender fa = (FileAppender) experimentLogger.getAppender(experimentAppenderName);
     fa.close();
     experimentLogger.removeAppender(experimentAppenderName);
+  }
+
+  public void writeSafraStatitistics() throws IOException {
+    getSafraStatistics().writeToCSVFile(Paths.get(outputFolder.toString(), "safraStatistics.csv"));
   }
 }

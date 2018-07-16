@@ -2,6 +2,10 @@ package ibis.ipl.apps.safraExperiment.experiment;
 
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.util.*;
 
 public class SafraStatistics {
@@ -188,5 +192,28 @@ public class SafraStatistics {
 
   public long getTokenBytes() {
     return tokenBytes;
+  }
+
+  public void writeToCSVFile(Path filePath) throws IOException {
+    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;\n";
+
+    StringBuilder contentLine = new StringBuilder();
+    contentLine.append(getTokenSend());
+    contentLine.append(";");
+    contentLine.append(getTokenSendAfterTermination());
+    contentLine.append(";");
+    contentLine.append(getBackupTokenSend());
+    contentLine.append(";");
+    contentLine.append(getTokenBytes());
+    contentLine.append(";");
+    contentLine.append(getSafraTimeSpent());
+    contentLine.append(";");
+    contentLine.append(getSafraTimeSpentAfterTermination());
+    contentLine.append(";");
+    contentLine.append(getTotalTimeSpent());
+    contentLine.append("\n");
+
+
+    Files.write(filePath, (headerLine + contentLine.toString()).getBytes());
   }
 }

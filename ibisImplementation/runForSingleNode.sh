@@ -22,6 +22,7 @@ for j in $(seq 1 $3)
     for pid in ${pids[*]}; do
         wait $pid
     done
+    sleep 5
     echo "Done repetition ${j}"
 done
 
