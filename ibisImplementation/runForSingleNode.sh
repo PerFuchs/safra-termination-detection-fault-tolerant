@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-
-# TODO add output folder to arguments
 startChandyMisraInstance () {
   local networkSize=$1
-  local repetitionNumber=$2
+  local outputFolder=$2
   $IPL_HOME/scripts/ipl-run \
     -Xmx2g \
     -Dibis.server.address=10.100.255.254 \
     -Dibis.pool.name=chandyMisra \
     -Dibis.pool.size=${networkSize} \
-    ibis.ipl.apps.safraExperiment.IbisNode /var/scratch/pfs250/safraExperiment${repetitionNumber}
+    ibis.ipl.apps.safraExperiment.IbisNode ${outputFolder}
 }
 
 for j in $(seq 1 $3)
@@ -17,7 +15,7 @@ for j in $(seq 1 $3)
     echo "Starting repetition ${j}"
     for i in $(seq 1 $1)
     do
-       startChandyMisraInstance $2 ${j} &
+       startChandyMisraInstance $2 "$4/${j}" &
        pids[${i}]=$!
     done
 
