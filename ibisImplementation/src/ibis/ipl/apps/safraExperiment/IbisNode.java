@@ -20,6 +20,7 @@ import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -136,6 +137,10 @@ class IbisNode {
         System.out.println("ExecutionTime: " + time);
 
         System.out.println("End");
+
+        // TODO dirty
+        // Copy the output log file
+        Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"));
       }
 
       barrierFactory.getBarrier("Done").await();
