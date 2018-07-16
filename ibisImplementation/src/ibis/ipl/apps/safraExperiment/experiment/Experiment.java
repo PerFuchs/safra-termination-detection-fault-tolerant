@@ -11,12 +11,12 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -80,11 +80,11 @@ public class Experiment {
 
     ret &= verifyChandyMisraResult(results);
 
-
     List<Event> events = getEvents();
     for (Event e : events) {
       if (e.getLevel() == Level.ERROR || e.getLevel() == Level.WARN) {
         logger.error(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
+        writeToErrorFile(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
         ret = false;
         break;
       }
@@ -94,12 +94,28 @@ public class Experiment {
 
   public SafraStatistics getSafraStatistics() throws IOException {
     if (safraStatistics == null) {
-      safraStatistics = new SafraStatistics(nodeCount, getEvents());
+      safraStatistics = new SafraStatistics(this, nodeCount, getEvents());
     }
     return safraStatistics;
   }
 
-  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results) {
+  static void writeToFile(Path filePath, String line) throws IOException {
+    if (!line.endsWith("\n")) {
+      line += "\n";
+    }
+    Files.write(filePath, line.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+  }
+
+  void writeToWarnFile(String line) throws IOException {
+    writeToFile(Paths.get(outputFolder.toString(), ".warn"), line);
+  }
+
+  void writeToErrorFile(String line)  throws  IOException {
+    writeToFile(Paths.get(outputFolder.toString(), ".error"), line);
+  }
+
+
+  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results) throws IOException {
     Tree tree = new Tree(communicationLayer, network, results, crashDetector.getCrashedNodes());
     Tree expectedTree = network.getSinkTree(crashDetector.getCrashedNodes());
     if (tree.equals(expectedTree)) {
@@ -110,6 +126,9 @@ public class Experiment {
       logger.error("Chandy Misra calculated incorrect result");
       logger.error(String.format("Constructed tree: %s", tree.toString()));
       logger.error(String.format("Expected tree: %s", expectedTree.toString()));
+
+      writeToErrorFile(String.format("Weights are: %d %d", tree.getWeight(), expectedTree.getWeight()));
+      writeToErrorFile("Chandy Misra calculated incorrect result");
       return false;
     }
   }
@@ -155,11 +174,12 @@ public class Experiment {
 
       List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
       if (lines.isEmpty()) {
-        logger.warn(String.format("No events logged on node %d", i));
+        logger.error(String.format("No events logged on node %d", i));
+        writeToErrorFile(String.format("No events logged on node %d", i));
       }
       int lineNumber = 0;
       for (String e : lines) {
-        events.add(Event.createEventFromLogLine(i, lineNumber, e));
+        events.add(Event.createEventFromLogLine(this, i, lineNumber, e));
         lineNumber++;
       }
     }

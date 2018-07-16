@@ -3,6 +3,7 @@ package ibis.ipl.apps.safraExperiment.experiment;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -153,7 +154,7 @@ public class Event implements Comparable<Event> {
     eventCreatedFor.add(node);
   }
 
-  public static Event createEventFromLogLine(int node, int lineNumber, String line) {
+  public static Event createEventFromLogLine(Experiment experiment, int node, int lineNumber, String line) throws IOException {
     String[] parts = line.split(" - ");
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
@@ -162,6 +163,7 @@ public class Event implements Comparable<Event> {
       time = format.parse(parts[0].trim());
     } catch (ParseException e) {
       logger.debug(String.format("Could not parse event: %s", line));
+      experiment.writeToWarnFile(String.format("Could not parse event: %s", line));
       return null;
     }
 

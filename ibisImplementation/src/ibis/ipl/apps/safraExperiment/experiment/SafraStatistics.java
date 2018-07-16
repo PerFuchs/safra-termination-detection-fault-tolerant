@@ -19,7 +19,7 @@ public class SafraStatistics {
   private int tokenSend;
   private long tokenBytes;
 
-  public SafraStatistics(int numberOfNodes, List<Event> events) {
+  public SafraStatistics(Experiment experiment, int numberOfNodes, List<Event> events) throws IOException {
     Collections.sort(events);
     logger.trace("Events sorted");
 
@@ -68,6 +68,8 @@ public class SafraStatistics {
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
       if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
         logger.error(String.format("Basic event happened  on node %d after termination: %s",
+            e.getNode(), e.getEvent()));
+        experiment.writeToErrorFile(String.format("Basic event happened  on node %d after termination: %s",
             e.getNode(), e.getEvent()));
       }
       if (e == lastParentCrashDetected) {

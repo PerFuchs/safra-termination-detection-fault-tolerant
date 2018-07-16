@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+# TODO add output folder to arguments
 startChandyMisraInstance () {
   local networkSize=$1
   local repetitionNumber=$2
@@ -22,7 +24,7 @@ for j in $(seq 1 $3)
     for pid in ${pids[*]}; do
         wait $pid
     done
-    sleep 5
+    sleep 2
     echo "Done repetition ${j}"
 done
 
