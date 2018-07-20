@@ -11,6 +11,7 @@ import java.util.*;
 public class SafraStatistics {
   private final static Logger logger = Logger.getLogger(SafraStatistics.class);
 
+  private int numberOfNodesCrashed;
   private long totalTime;
   private long safraTimeSpent;
   private long safratTimeSpentAfterTermination;
@@ -27,7 +28,7 @@ public class SafraStatistics {
     tokenSend = 0;
     tokenSendAfterTermination = 0;
 
-    int numberOfNodesCrashed = 0;
+    numberOfNodesCrashed = 0;
     Event lastParentCrashDetected = null;
 
     totalTime = 0;
@@ -197,7 +198,7 @@ public class SafraStatistics {
   }
 
   public void writeToCSVFile(Path filePath) throws IOException {
-    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;\n";
+    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;numberOfNodesCrashed\n";
 
     StringBuilder contentLine = new StringBuilder();
     contentLine.append(getTokenSend());
@@ -213,9 +214,15 @@ public class SafraStatistics {
     contentLine.append(getSafraTimeSpentAfterTermination());
     contentLine.append(";");
     contentLine.append(getTotalTimeSpent());
+    contentLine.append(";");
+    contentLine.append(getNumberOfNodesCrashed());
     contentLine.append("\n");
 
 
     Files.write(filePath, (headerLine + contentLine.toString()).getBytes());
+  }
+
+  public int getNumberOfNodesCrashed() {
+    return numberOfNodesCrashed;
   }
 }

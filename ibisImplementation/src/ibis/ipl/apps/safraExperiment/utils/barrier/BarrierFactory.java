@@ -6,6 +6,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 
+import java.io.IOException;
 import java.util.*;
 
 public class BarrierFactory implements Observer {
@@ -33,7 +34,7 @@ public class BarrierFactory implements Observer {
     return barriers.get(name);
   }
 
-  public synchronized void handleBarrierMessage(String name) {
+  public synchronized void handleBarrierMessage(String name) throws IOException {
     MessageBarrier barrier = (MessageBarrier) getBarrier(name);
     barrier.countDown();
   }

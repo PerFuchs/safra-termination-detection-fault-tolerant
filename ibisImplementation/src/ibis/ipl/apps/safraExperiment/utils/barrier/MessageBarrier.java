@@ -44,16 +44,24 @@ public class MessageBarrier implements Barrier {
     }
     barrier.await();
     barrier = new CountDownLatch(getBarrierSize());
+    lock.lock();
+    try {
+      waiting = false;
+    } finally {
+      lock.unlock();
+    }
   }
 
-  void countDown() {
+  void countDown() throws IOException {
     lock.lock();
     try {
       if (waiting) {
         try {
+          logger.debug(String.format("Next node is: %d for barrier %s", getNextNode(), name));
           communicationLayer.sendBarrierMessage(getNextNode(), name);
         } catch (IOException e) {
           logger.error("Could not message next node.");
+          throw e;
         }
       }
     } finally {

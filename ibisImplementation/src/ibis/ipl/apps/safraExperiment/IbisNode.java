@@ -17,12 +17,11 @@ import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
+import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
 import org.apache.log4j.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,6 +51,7 @@ class IbisNode {
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
+      Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
 
@@ -140,7 +140,8 @@ class IbisNode {
 
         // TODO dirty
         // Copy the output log file
-        Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"));
+        Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"),
+            StandardCopyOption.REPLACE_EXISTING);
       }
 
       barrierFactory.getBarrier("Done").await();
