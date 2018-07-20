@@ -40,6 +40,7 @@ class IbisNode {
       BasicConfigurator.configure(consoleAppender);
 
       Path outputFolder = Paths.get(args[0]);
+      float crashPercentage = Float.valueOf(args[1]);
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
       Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
@@ -47,8 +48,8 @@ class IbisNode {
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
       Logger.getLogger(Experiment.class).setLevel(Level.INFO);
-      Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
-      Logger.getLogger(CrashSimulator.class).setLevel(Level.TRACE);
+      Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
+      Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
@@ -90,7 +91,8 @@ class IbisNode {
       enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
 
-      CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, 0.2, true, enabledCrashPoints);
+      CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, crashPercentage,
+          true, enabledCrashPoints);
       communicationLayer.setCrashSimulator(crashSimulator);
 
       Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);

@@ -49,7 +49,7 @@ public class CrashSimulator {
       nodesToCrash.add(crash);
       nodesToCrashString.append(String.format("%d ,", crash));
     }
-    logger.trace(String.format("Crashing nodes (%d(: %s", nodesToCrash.size(), nodesToCrashString.toString()));
+    logger.trace(String.format("Crashing nodes (%d): %s", nodesToCrash.size(), nodesToCrashString.toString()));
 
     // Nodes choose their crash point and crash point repetition to crash locally at random.
     Random r = new Random();

@@ -2,12 +2,13 @@
 startChandyMisraInstance () {
   local networkSize=$1
   local outputFolder=$2
+  local crashPercentage=$3
   $IPL_HOME/scripts/ipl-run \
     -Xmx2g \
     -Dibis.server.address=10.100.255.254 \
     -Dibis.pool.name=chandyMisra \
     -Dibis.pool.size=${networkSize} \
-    ibis.ipl.apps.safraExperiment.IbisNode ${outputFolder}
+    ibis.ipl.apps.safraExperiment.IbisNode ${outputFolder} ${crashPercentage}
 }
 
 for j in $(seq 1 $3)
@@ -15,7 +16,7 @@ for j in $(seq 1 $3)
     echo "Starting repetition ${j}"
     for i in $(seq 1 $1)
     do
-       startChandyMisraInstance $2 "$4/${j}" &
+       startChandyMisraInstance $2 "$4/${j}" $5 &
        pids[${i}]=$!
     done
 
