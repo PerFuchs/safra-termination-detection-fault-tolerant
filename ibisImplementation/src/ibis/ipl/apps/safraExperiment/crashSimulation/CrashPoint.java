@@ -28,8 +28,8 @@ public enum CrashPoint {
 
     maxRepitions.put(BEFORE_RECEIVING_TOKEN, 3);
 
-    maxRepitions.put(BEFORE_SENDING_BASIC_MESSAGE, 80);
-    maxRepitions.put(AFTER_SENDING_BASIC_MESSAGE, 80);
+    maxRepitions.put(BEFORE_SENDING_BASIC_MESSAGE, 5);
+    maxRepitions.put(AFTER_SENDING_BASIC_MESSAGE, 5);
   }
 
   public static int getMaxRepitions(CrashPoint crashPoint) {

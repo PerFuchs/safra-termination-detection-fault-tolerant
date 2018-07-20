@@ -48,7 +48,7 @@ class IbisNode {
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
       Logger.getLogger(Experiment.class).setLevel(Level.INFO);
       Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
-      Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
+      Logger.getLogger(CrashSimulator.class).setLevel(Level.TRACE);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
@@ -130,7 +130,7 @@ class IbisNode {
         SafraStatistics ss = experiment.getSafraStatistics();
         // TODO do I want to know CM time because Safra time compared to total time is quite strange. To big of a difference because of communication time in total time
         System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Total Time: %f Time Spent for Safra: %f Time Spent for Safra after termination: %f Token size: %d", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getTotalTimeSpent(), ss.getSafraTimeSpent(), ss.getSafraTimeSpentAfterTermination(), ss.getTokenBytes()));
-        System.out.println(String.format("Crashed nodes: %s", crashDetector.getCrashedNodesString()));
+        System.out.println(String.format("Crashed nodes (%d): %s", crashDetector.getCrashedNodes().size(), crashDetector.getCrashedNodesString()));
 
         long endTime = System.nanoTime();
         double time = ((double) (endTime - startTime)) / 1000000000.0;
