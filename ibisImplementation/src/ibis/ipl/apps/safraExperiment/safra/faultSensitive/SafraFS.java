@@ -2,6 +2,7 @@ package ibis.ipl.apps.safraExperiment.safra.faultSensitive;
 
 import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
@@ -16,7 +17,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Semaphore;
 
-// TODO add logging for events
 public class SafraFS implements Observer, Safra {
   private final static Logger logger = Logger.getLogger(SafraFS.class);
   private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
@@ -64,6 +64,10 @@ public class SafraFS implements Observer, Safra {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
+    if (status != basicAlgorithmIsActive) {
+      experimentLogger.info(Event.getActiveStatusChangedEvent(status, reason));
+    }
+
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
       handleToken();
@@ -88,6 +92,7 @@ public class SafraFS implements Observer, Safra {
     }
 
     messageCounter++;
+    experimentLogger.info(Event.getSafraSumsEvent(receiver, messageCounter));
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
@@ -98,6 +103,7 @@ public class SafraFS implements Observer, Safra {
     }
     basicAlgorithmIsActive = true;
     messageCounter--;
+    experimentLogger.info(Event.getSafraSumsEvent(sender, messageCounter));
 
     // Only color myself black if the message overtook the token. As defined in the paper
     if ((sender < communicationLayer.getID()
@@ -143,7 +149,7 @@ public class SafraFS implements Observer, Safra {
   }
 
   private synchronized void announce() throws IOException {
-    logger.info(String.format("%d called announce", communicationLayer.getID()));
+    experimentLogger.info(String.format("%s %d", Event.getAnnounceEvent(), communicationLayer.getID()));
     IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
   }
 
@@ -155,6 +161,8 @@ public class SafraFS implements Observer, Safra {
   }
 
   private synchronized void forwardToken(TokenFS token) throws IOException {
+    experimentLogger.info(Event.getTokenSendEvent(token.getSize()));
+
     this.token = null;
     sequenceNumber++;
 

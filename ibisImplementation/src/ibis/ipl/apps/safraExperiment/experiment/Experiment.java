@@ -34,6 +34,7 @@ public class Experiment {
   private final CommunicationLayer communicationLayer;
   private final Network network;
   private CrashDetector crashDetector;
+  private boolean isFaultTolerant;
 
   private int nodeID;
   private int nodeCount;
@@ -41,13 +42,14 @@ public class Experiment {
   private List<Event> events;
   private SafraStatistics safraStatistics;
 
-  public Experiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector) throws IOException {
+  public Experiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector, boolean isFaultTolerant) throws IOException {
     this.outputFolder = outputFolder;
     this.communicationLayer = communicationLayer;
     this.network = network;
     this.nodeID = communicationLayer.getID();
     this.nodeCount = communicationLayer.getIbisCount();
     this.crashDetector = crashDetector;
+    this.isFaultTolerant = isFaultTolerant;
     if (!outputFolder.toFile().exists()) {
       Files.createDirectories(outputFolder);
     }
@@ -212,5 +214,9 @@ public class Experiment {
 
   public void writeSafraStatitistics() throws IOException {
     getSafraStatistics().writeToCSVFile(Paths.get(outputFolder.toString(), "safraStatistics.csv"));
+  }
+
+  public boolean isFaultTolerant() {
+    return isFaultTolerant;
   }
 }

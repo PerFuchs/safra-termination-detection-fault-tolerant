@@ -45,6 +45,7 @@ public class SafraStatistics {
     }
     logger.trace("All crashed nodes found.");
 
+    // For the fault tolerant variant only the 0th inner index is used.
     int[][] nodeSums = new int[numberOfNodes][numberOfNodes];
     for (int i = 0; i < nodeSums.length; i++) {
       for (int j = 0; j < nodeSums[i].length; j++) {
@@ -86,7 +87,11 @@ public class SafraStatistics {
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
       }
       if (e.isMessageCounterUpdate()) {
-        nodeSums[e.getNode()][e.getSafraMessageCounterUpdateIndex()] = e.getSafraMessageCounterUpdateValue();
+        int index = 0;
+        if (experiment.isFaultTolerant()) {
+          index = e.getSafraMessageCounterUpdateIndex();
+        }
+        nodeSums[e.getNode()][index] = e.getSafraMessageCounterUpdateValue();
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
       }
       if (e.isTokenSend()) {
@@ -152,7 +157,7 @@ public class SafraStatistics {
     for (int i = 0; i < nodeSums.length; i++) {
       if (!currentlyCrashedNodes.contains(i)) {
         int[] sums = nodeSums[i];
-        for (int j = 0; j < sums.length; j++) {
+        for (int j = 0; j < sums.length; j++) {  // The fault sensitive version uses only the 0th index but that's fine as all the others are initialized to 0
           if (!currentlyCrashedNodes.contains(j)) {
             sum += sums[j];
           }

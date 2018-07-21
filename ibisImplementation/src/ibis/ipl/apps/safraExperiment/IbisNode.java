@@ -12,6 +12,7 @@ import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
@@ -41,6 +42,7 @@ class IbisNode {
 
       Path outputFolder = Paths.get(args[0]);
       float crashPercentage = Float.valueOf(args[1]);
+      boolean faultTolerant = args[2].equals("ft");
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
       Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
@@ -91,20 +93,25 @@ class IbisNode {
       enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
 
-      CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, crashPercentage,
-          true, enabledCrashPoints);
+      CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, crashPercentage, faultTolerant, enabledCrashPoints);
       communicationLayer.setCrashSimulator(crashSimulator);
 
+      // TODO control resulting networks for variety
       Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);
 //    Network network = Network.getLineNetwork(communicationLayer);
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
-      Safra safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
-//    Safra safraNode = new SafraFS(registry, signalHandler, communicationLayer);
+      Safra safraNode;
+      if (faultTolerant) {
+        safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
+      } else {
+        safraNode = new SafraFS(registry, signalHandler, communicationLayer);
+      }
+
 
       ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
 
-      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector);
+      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector, faultTolerant);
 
       communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
       logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
@@ -142,8 +149,7 @@ class IbisNode {
 
         // TODO dirty
         // Copy the output log file
-        Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"),
-            StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
       }
 
       barrierFactory.getBarrier("Done").await();
