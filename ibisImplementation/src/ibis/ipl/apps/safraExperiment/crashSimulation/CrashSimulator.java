@@ -26,6 +26,7 @@ public class CrashSimulator {
   private CommunicationLayer communicationLayer;
   private boolean simulateCrashes;
   private final Set<CrashPoint> enabledCrashPoints;
+  private Set<Integer> crashingNodes = new HashSet<>();
 
   public CrashSimulator(CommunicationLayer communicationLayer, SynchronizedRandom synchronizedRandom, double crashPercentage, boolean simulateCrashes,
                         Set<CrashPoint> enabledCrashPoints) {
@@ -37,25 +38,24 @@ public class CrashSimulator {
     int numberOfNodes = communicationLayer.getIbisCount();
 
     long numberOfNodesToCrash = Math.round(numberOfNodes * crashPercentage);
-    Set<Integer> nodesToCrash = new HashSet<>();
     StringBuilder nodesToCrashString = new StringBuilder();
 
     // All nodes agree on which nodes to crash.
     for (int i = 0; i < numberOfNodesToCrash; i++) {
       int crash = synchronizedRandom.getInt(numberOfNodes);
-      while (nodesToCrash.contains(crash) || crash == communicationLayer.getRoot()) {  // Do not crash the root node. Otherwise Chandy-Misra is senseless
+      while (crashingNodes.contains(crash) || crash == communicationLayer.getRoot()) {  // Do not crash the root node. Otherwise Chandy-Misra is senseless
         crash = synchronizedRandom.getInt(numberOfNodes);
       }
-      nodesToCrash.add(crash);
+      crashingNodes.add(crash);
       nodesToCrashString.append(String.format("%d ,", crash));
     }
-    logger.trace(String.format("Crashing nodes (%d): %s", nodesToCrash.size(), nodesToCrashString.toString()));
+    logger.trace(String.format("Crashing nodes (%d): %s", crashingNodes.size(), nodesToCrashString.toString()));
 
     // Nodes choose their crash point and crash point repetition to crash locally at random.
     Random r = new Random();
     CrashPoint[] crashPoints = CrashPoint.values();
     this.crashPoints = new HashMap<>();
-    if (nodesToCrash.contains(me)) {
+    if (crashingNodes.contains(me)) {
       CrashPoint crashPoint = crashPoints[r.nextInt(crashPoints.length)];
 
       // Do not choose backup token related crash points as single crash point as the happend to seldom.
@@ -69,7 +69,7 @@ public class CrashSimulator {
 
     // Let each node that is scheduled to crash also crash on backup token related points as these happen to seldom
     // to get sufficient coverage otherwise
-    if (nodesToCrash.contains(me)) {
+    if (crashingNodes.contains(me)) {
       // 50% on BEFORE_SENDING_BACKUP_TOKEN and on AFTER_SENDING_BACKUP_TOKEN
       if (r.nextInt(1) == 1) {
         this.crashPoints.put(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN, r.nextInt(CrashPoint.getMaxRepitions(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN) + 1));
@@ -102,4 +102,7 @@ public class CrashSimulator {
     communicationLayer.crash();
   }
 
+  public Set<Integer> getCrashingNodes() {
+    return crashingNodes;
+  }
 }

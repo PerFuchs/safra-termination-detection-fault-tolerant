@@ -1,10 +1,13 @@
 package ibis.ipl.apps.safraExperiment.network;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
 public class Tree {
+  private final static Logger logger = Logger.getLogger(Tree.class);
+
   // TODO cycle detection needs to improve to detect cycles which aren't connected to the real tree and have no "bad root"z
   private LinkedList<Integer> badRoots = new LinkedList<>();
   private int root;
@@ -150,7 +153,7 @@ public class Tree {
 
     /**
      * Sort by priority.
-     *
+     * <p>
      * This function is not consistent with the equals of the same class.
      */
     @Override
@@ -160,8 +163,9 @@ public class Tree {
 
     /**
      * Equality defined by represented node.
-     *
+     * <p>
      * This function is not consistent with compareTo of the same class.
+     *
      * @param o
      * @return
      */
@@ -180,13 +184,14 @@ public class Tree {
   /**
    * Uses Dijkstra shortest path algorithm to compute a sink tree.
    *
-   * @param channels All available channels
-   * @param root Root node of the sink tree
-   * @param vertices The node ID's. These do not have to be consecutive
-   *
-   * @return A shortest path sink tree to root.
+   * @param channels          All available channels
+   * @param root              Root node of the sink tree
+   * @param vertices          The node ID's. These do not have to be consecutive
+   * @param unreachableVertices Output parameter if this methods returns null unreachableVertices will contain
+   *                          all vertices that aren't reachable from root.
+   * @return A shortest path sink tree to root or NULL if the graph is not connected.
    */
-  public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices) {
+  public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices, Set<Integer> unreachableVertices) {
     PriorityQueue<NodeDistancePair> unvisitedVertices = new PriorityQueue<>();  // Used to find the node with lowest distance to root.
     Map<Integer, Integer> distances = new HashMap<>();  // Used to find distance of a node
     for (int v : vertices) {
@@ -202,7 +207,7 @@ public class Tree {
     while (!unvisitedVertices.isEmpty()) {
       NodeDistancePair v = unvisitedVertices.poll();
 
-      for (Channel c: channelsFrom(channels, v.node)) {
+      for (Channel c : channelsFrom(channels, v.node)) {
         int alternativeDistance = distances.get(v.node) + c.getWeight();
         if (alternativeDistance < distances.get(c.dest) && alternativeDistance > 0) {  // Bigger 0 because of overflows
           distances.put(c.dest, alternativeDistance);
@@ -211,6 +216,16 @@ public class Tree {
           parents.put(c.dest, v.node);
         }
       }
+    }
+
+    if (distances.values().contains(Integer.MAX_VALUE)) {
+      for (int node : distances.keySet()) {
+        if (distances.get(node) == Integer.MAX_VALUE) {
+          unreachableVertices.add(node);
+        }
+      }
+      logger.debug("Could not construct sink tree because some nodes are not connected to root.");
+      return null;
     }
 
     Set<Channel> treeChannels = new TreeSet<>();

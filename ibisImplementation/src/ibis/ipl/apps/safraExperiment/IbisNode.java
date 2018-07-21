@@ -11,6 +11,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
+import ibis.ipl.apps.safraExperiment.network.Tree;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
@@ -55,6 +56,7 @@ class IbisNode {
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
+      Logger.getLogger(Tree.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
 
@@ -97,7 +99,7 @@ class IbisNode {
       communicationLayer.setCrashSimulator(crashSimulator);
 
       // TODO control resulting networks for variety
-      Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom);
+      Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
 //    Network network = Network.getLineNetwork(communicationLayer);
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
