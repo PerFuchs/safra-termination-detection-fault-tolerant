@@ -141,7 +141,7 @@ class IbisNode {
         SafraStatistics ss = experiment.getSafraStatistics();
         // TODO do I want to know CM time because Safra time compared to total time is quite strange. To big of a difference because of communication time in total time
         System.out.println(String.format("Tokens: %d Backuptokens: %d Tokens after: %d Total Time: %f Time Spent for Safra: %f Time Spent for Safra after termination: %f Token size: %d", ss.getTokenSend(), ss.getBackupTokenSend(), ss.getTokenSendAfterTermination(), ss.getTotalTimeSpent(), ss.getSafraTimeSpent(), ss.getSafraTimeSpentAfterTermination(), ss.getTokenBytes()));
-        System.out.println(String.format("Crashed nodes (%d): %s", crashDetector.getCrashedNodes().size(), crashDetector.getCrashedNodesString()));
+        System.out.println(String.format("Crashed nodes (%d): %s", ss.getNumberOfNodesCrashed(), ss.getCrashNodeString()));
 
         long endTime = System.nanoTime();
         double time = ((double) (endTime - startTime)) / 1000000000.0;

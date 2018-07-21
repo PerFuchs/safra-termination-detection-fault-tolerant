@@ -11,7 +11,6 @@ import java.util.*;
 public class SafraStatistics {
   private final static Logger logger = Logger.getLogger(SafraStatistics.class);
 
-  private int numberOfNodesCrashed;
   private long totalTime;
   private long safraTimeSpent;
   private long safratTimeSpentAfterTermination;
@@ -19,6 +18,7 @@ public class SafraStatistics {
   private int tokenSendAfterTermination;
   private int tokenSend;
   private long tokenBytes;
+  private Set<Integer> crashedNodes = new HashSet<>();
 
   public SafraStatistics(Experiment experiment, int numberOfNodes, List<Event> events) throws IOException {
     Collections.sort(events);
@@ -28,13 +28,12 @@ public class SafraStatistics {
     tokenSend = 0;
     tokenSendAfterTermination = 0;
 
-    numberOfNodesCrashed = 0;
     Event lastParentCrashDetected = null;
 
     totalTime = 0;
     for (Event e : events) {
       if (e.isNodeCrashed()) {
-        numberOfNodesCrashed++;
+        crashedNodes.add(e.getNode());
       }
       if (e.isParentCrashDetected()) {
         lastParentCrashDetected = e;
@@ -43,6 +42,7 @@ public class SafraStatistics {
         totalTime += e.getTimeSpent();
       }
     }
+    int numberOfNodesCrashed = crashedNodes.size();
     logger.trace("All crashed nodes found.");
 
     // For the fault tolerant variant only the 0th inner index is used.
@@ -228,6 +228,19 @@ public class SafraStatistics {
   }
 
   public int getNumberOfNodesCrashed() {
-    return numberOfNodesCrashed;
+    return crashedNodes.size();
+  }
+
+  public String getCrashNodeString() {
+    StringBuilder sb = new StringBuilder();
+    for (int cn : crashedNodes) {
+      sb.append(cn);
+      sb.append(", ");
+    }
+    return sb.toString();
+  }
+
+  public Set<Integer> getCrashedNodes() {
+    return crashedNodes;
   }
 }

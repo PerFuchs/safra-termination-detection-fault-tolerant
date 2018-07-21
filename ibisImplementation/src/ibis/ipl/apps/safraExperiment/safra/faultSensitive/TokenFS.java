@@ -24,6 +24,4 @@ public class TokenFS extends Token {
   public int getSize() {
     return INT_SIZE + LONG_SIZE;
   }
-
-  // TODO getSize
 }

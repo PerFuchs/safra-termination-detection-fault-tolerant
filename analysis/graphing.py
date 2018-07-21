@@ -5,8 +5,8 @@ import plotly
 
 def get_scatter_graph_with_mean_and_confidence_interval(x_axis, values, name):
     mean = np.mean(values)
-    low_confidence, high_confidence = st.t.interval(0.95, len(values) - 1, loc=mean,
-                                                    scale=st.sem(values))
+    # low_confidence, high_confidence = st.t.interval(0.95, len(values) - 1, loc=mean,
+    #                                                 scale=st.sem(values))
     values_trace = go.Scatter(
         x=x_axis,
         y=values,

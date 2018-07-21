@@ -19,6 +19,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class Experiment {
   private static Logger logger = Logger.getLogger(Experiment.class);
@@ -78,9 +79,10 @@ public class Experiment {
 
   public boolean verify() throws IOException {
     boolean ret = true;
+    SafraStatistics safraStatistics = getSafraStatistics();
     List<ChandyMisraResult> results = readChandyMisraResults();
 
-    ret &= verifyChandyMisraResult(results);
+    ret &= verifyChandyMisraResult(results, safraStatistics.getCrashedNodes());
 
     List<Event> events = getEvents();
     for (Event e : events) {
@@ -117,9 +119,9 @@ public class Experiment {
   }
 
 
-  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results) throws IOException {
-    Tree tree = new Tree(communicationLayer, network, results, crashDetector.getCrashedNodes());
-    Tree expectedTree = network.getSinkTree(crashDetector.getCrashedNodes());
+  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes) throws IOException {
+    Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
+    Tree expectedTree = network.getSinkTree(crashedNodes);
     if (tree.equals(expectedTree)) {
       logger.info("Constructed and expected tree are equal.");
       return true;

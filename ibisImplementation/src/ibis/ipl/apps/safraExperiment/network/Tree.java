@@ -18,7 +18,7 @@ public class Tree {
     this.channels = channels;
   }
 
-  public Tree(CommunicationLayer communicationLayer, Network network, List<ChandyMisraResult> results, List<Integer> crashedNodes) {
+  public Tree(CommunicationLayer communicationLayer, Network network, List<ChandyMisraResult> results, Set<Integer> crashedNodes) {
     this.root = communicationLayer.getRoot();
 
     for (ChandyMisraResult r : results) {

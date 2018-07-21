@@ -26,15 +26,6 @@ public class CrashDetector {
     return crashedNodes;
   }
 
-  public String getCrashedNodesString() {
-    StringBuilder sb = new StringBuilder();
-    for (int cn : crashedNodes) {
-      sb.append(cn);
-      sb.append(", ");
-    }
-    return sb.toString();
-  }
-
   public boolean hasCrashed(int node) {
     return crashedNodes.contains(node);
   }

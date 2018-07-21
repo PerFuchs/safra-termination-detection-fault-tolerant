@@ -37,7 +37,7 @@ class Repetition:
             return open(errorFileName).readlines()
         return []
 
-    def __init__(self, folder, number_of_nodes):
+    def __init__(self, folder, number_of_nodes, fault_percentage):
         self.folder = folder
         self.number = int(basename(self.folder))
         self.errors = self.read_error_file()
@@ -57,9 +57,11 @@ class Repetition:
                 self.total_time = float(statistics['totalTime'])
                 if 'numberOfNodesCrashed' in statistics:
                     self.number_of_nodes_crashed = int(statistics['numberOfNodesCrashed'])
-                else:
-                    self.number_of_nodes_crashed = -1
-                break
+                    real_fault_percentage = self.number_of_nodes_crashed / number_of_nodes
+                    if real_fault_percentage < fault_percentage - 0.1:
+                        self.valid = False
+                        self.errors.append("Fault percentage of %f but aimed for %f" % (real_fault_percentage, fault_percentage))
+                break  # There should be only one line
 
         logs = len(list(filter(lambda f: f.endswith('.log'), listdir(folder))))
         chandy_misra_results = len(list(filter(lambda f: f.endswith('.chandyMisra'), listdir(folder))))
@@ -73,13 +75,18 @@ class Configuration:
         configuration_name = basename(folder)
         number_of_nodes, fault_percentage, _ = configuration_name.split('-')
         self.number_of_nodes = int(number_of_nodes)
-        self.fault_percentage = int(fault_percentage) / 100
+        if fault_percentage == "fs":
+            self.fault_sensitive = True
+            self.fault_percentage = 0.0
+        else:
+            self.fault_sensitive = False
+            self.fault_percentage = int(fault_percentage) / 100
 
         self.repetitions = []
         self.invalid_repetitions = []
         for fileName in listdir(folder):
             if isdir('/'.join((folder, fileName))):
-                r = Repetition('/'.join((folder, fileName)), self.number_of_nodes)
+                r = Repetition('/'.join((folder, fileName)), self.number_of_nodes, self.fault_percentage)
                 if r.valid:
                     self.repetitions.append(r)
                 else:
@@ -107,36 +114,43 @@ for file_name in listdir(experiment_folder):
     configuration_folder = '/'.join((experiment_folder, file_name))
     if isdir(configuration_folder) and configuration_folder.endswith('.run'):
         configuration = Configuration(configuration_folder)
-        configurations.append(configuration)
+        if (configuration.number_of_nodes == 200 and configuration.fault_sensitive== True):
+            configurations.append(configuration)
 
-        print("Repetitions: %i Invalid Repetitions: %i" % (len(configuration.repetitions), len(configuration.invalid_repetitions)))
+configurations = sorted(configurations, key=lambda c: c.fault_percentage)
+configurations = sorted(configurations, key=lambda c: c.number_of_nodes)
 
-        print("Errors:")
-        for r in configuration.invalid_repetitions:
-            print("Repetition: %i" % r.number)
-            for e in r.errors:
-                print("  " + e)
-        print("")
-        print("")
+for c in configurations:
+    print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+    print("Nodes: %i Fault Percentage: %f" % (c.number_of_nodes, c.fault_percentage))
+    print("Repetitions: %i \nInvalid Repetitions: %i" % (len(c.repetitions), len(c.invalid_repetitions)))
+
+    print("Errors:")
+    for r in c.invalid_repetitions:
+        print("Repetition: %i" % r.number)
+        for e in r.errors:
+            print("  " + e)
+    print("")
+    print("")
 
 fields = ['tokens', 'tokens_after_termination', 'backup_tokens', 'number_of_nodes_crashed']
 data = defaultdict(lambda: list())
 
 for f in fields:
     for c in configurations:
-        print(dir(c))
-        data[f].append(get_box_trace(getattr(c, 'get_'+f)(), c.number_of_nodes))
+        data[f].append(get_box_trace(getattr(c, 'get_'+f)(), c.fault_percentage))
 
 for plot_name, plot_data in data.items():
-    plotly.offline.plot(plot_data, filename='%s.html' % plot_name)
+    plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
 
 
-# data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")
-#
-#
-# data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_number_of_node_crashed(), "faults")
-# data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_backup_tokens(), "backup")
-# data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens_after_termination(), "afterTermination")
-# data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_safra_times(), "times")
-# plotly.offline.plot(data, filename='graph.html')
+for configuration in configurations:
+    data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")
+    #
+    #
+    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_number_of_nodes_crashed(), "faults")
+    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_backup_tokens(), "backup")
+    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens_after_termination(), "afterTermination")
+    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_safra_times(), "times")
+    plotly.offline.plot(data, filename='../graphs/graph.html')
 

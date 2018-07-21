@@ -27,6 +27,7 @@ public class Network {
     return aliveNodes;
   }
 
+  // TODO remove unused parameter
   private static List<Channel> getAliveChannel(CommunicationLayer communicationLayer, List<Channel> channels, Set<Integer> crashedNodes) {
     List<Channel> aliveChannels = new LinkedList<>(channels);
     for (Channel c : channels) {
@@ -37,14 +38,14 @@ public class Network {
     return aliveChannels;
   }
 
-  public Tree getMinimumSpanningTree(List<Integer> crashedNodes) {
+  public Tree getMinimumSpanningTree(Set<Integer> crashedNodes) {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
     Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
     List<Channel> aliveChannels = getAliveChannel(communicationLayer, channels, crashedNodeNumbers);
     return Tree.getMinimumSpanningTree(aliveChannels, communicationLayer.getRoot(), aliveNodes);
   }
 
-  public Tree getSinkTree(List<Integer> crashedNodes) {
+  public Tree getSinkTree(Set<Integer> crashedNodes) {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
     Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
     List<Channel> aliveChannels = getAliveChannel(communicationLayer, channels, crashedNodeNumbers);
