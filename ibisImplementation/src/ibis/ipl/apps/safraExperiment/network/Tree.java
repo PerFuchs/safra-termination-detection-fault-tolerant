@@ -14,6 +14,16 @@ public class Tree {
   private Set<Channel> channels = new TreeSet<>();
   private final Set<Integer> vertices;
 
+  /**
+   * Used to indicate that this tree was constructed from CM results with invalid calculated weights.
+   *
+   * This will not be visible in the weights of its channel as these are initialized according to the correct weights.
+   * This is because the CM result does not allow to recover weights for individual channels.
+   *
+   * This field is not used in compareTo or equal. It is up to the user to check it accordingly.
+   */
+  private boolean invalidWeights = false;
+
   Tree(int root, Set<Channel> channels, Set<Integer> vertices) {
     this.root = root;
     this.channels = channels;
@@ -36,7 +46,16 @@ public class Tree {
       }
     }
 
-    // TODO should I control weight calculation of Chandy misra?
+    for (ChandyMisraResult r : results) {
+      if (!crashedNodes.contains(r.node)) {
+        int expectedDistance = getDistance(r.node);
+        if (expectedDistance != r.dist) {
+          invalidWeights = true;
+          System.out.println(String.format("Node %d has incorrect distance %d should be %d", r.node, r.dist, expectedDistance));
+        }
+      }
+    }
+
   }
 
   public int getWeight() {
@@ -145,6 +164,10 @@ public class Tree {
 
   public Set<Channel> getChannels() {
     return channels;
+  }
+
+  public boolean hasValidWeights() {
+    return !invalidWeights;
   }
 
   /**
@@ -271,6 +294,25 @@ public class Tree {
       int l = getLevel(c.dest, node, level + 1);
       if (l != -1) {
         return l;
+      }
+    }
+    return -1;
+  }
+
+  private int getDistance(int node) {
+    return getDistance(root, node, 0);
+  }
+
+  private int getDistance(int currentNode, int node, int distance) {
+    if (currentNode == node) {
+      return distance;
+    }
+
+    List<Channel> outChannels = channelsFrom(currentNode);
+    for (Channel c : outChannels) {
+      int d = getDistance(c.dest, node, distance + c.getWeight());
+      if (d != -1) {
+        return d;
       }
     }
     return -1;

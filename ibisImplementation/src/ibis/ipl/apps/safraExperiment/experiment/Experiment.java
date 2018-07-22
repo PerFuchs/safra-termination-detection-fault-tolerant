@@ -119,11 +119,15 @@ public class Experiment {
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes) throws IOException {
     Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
     Tree expectedTree = network.getSinkTree(crashedNodes);
-    if (tree.equals(expectedTree)) {
+    if (tree.equals(expectedTree) && tree.hasValidWeights()) {
       logger.info("Constructed and expected tree are equal.");
       return true;
     } else {
       logger.info(String.format("Weights are: %d %d", tree.getWeight(), expectedTree.getWeight()));
+      if (!tree.hasValidWeights()) {
+        logger.error("Chandy Misra calculated invalid weights.");
+        writeToErrorFile("Chandy Misra calculated invalid weights.");
+      }
       logger.error("Chandy Misra calculated incorrect result");
       logger.error(String.format("Constructed tree: %s", tree.toString()));
       logger.error(String.format("Expected tree: %s", expectedTree.toString()));
