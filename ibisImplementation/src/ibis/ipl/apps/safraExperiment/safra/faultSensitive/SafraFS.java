@@ -26,6 +26,7 @@ public class SafraFS implements Observer, Safra {
   private boolean started = false;
   private boolean basicAlgorithmIsActive = false;
   private int isBlackUntil;
+  private final boolean isInitiator;
   private long messageCounter = 0;
   private long sequenceNumber = 0;
   private TokenFS token;
@@ -35,10 +36,16 @@ public class SafraFS implements Observer, Safra {
 
   private boolean terminationDetected = false;
 
-  public SafraFS(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
+  public SafraFS(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer, boolean isInitiator) throws IOException {
     this.registry = registry;
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
+    this.isInitiator = isInitiator;
+
+    if (isInitiator) {
+      token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
+      setActive(true, "Initiator");
+    }
 
     signalHandler.addObserver(this);
   }
@@ -76,13 +83,13 @@ public class SafraFS implements Observer, Safra {
   }
 
   public synchronized void startAlgorithm() throws InterruptedException, IOException {
+    OurTimer timer = new OurTimer();
     semaphore.acquire();
     started = true;
-    token = null;
-    if (communicationLayer.isRoot()) {  // TODO should status be set in constructor? See SafraFT then one needs to take timings here
-      token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
-      setActive(true, "Start Safra");
+    if (isInitiator) {
+      handleToken();
     }
+    timer.stopAndCreateSafraTimeSpentEvent();
   }
 
   public synchronized void handleSendingBasicMessage(int receiver) {
@@ -92,18 +99,18 @@ public class SafraFS implements Observer, Safra {
     }
 
     messageCounter++;
-    experimentLogger.info(Event.getSafraSumsEvent(receiver, messageCounter));
+    experimentLogger.info(Event.getSafraSumsEvent(receiver, 1));
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
-  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) {
+  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) throws IOException {
     OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
     }
-    basicAlgorithmIsActive = true;
+    setActive(true, "Received Basic message");
     messageCounter--;
-    experimentLogger.info(Event.getSafraSumsEvent(sender, messageCounter));
+    experimentLogger.info(Event.getSafraSumsEvent(sender, -1));
 
     // Only color myself black if the message overtook the token. As defined in the paper
     if ((sender < communicationLayer.getID()

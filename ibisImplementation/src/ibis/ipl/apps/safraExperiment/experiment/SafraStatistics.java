@@ -27,25 +27,16 @@ public class SafraStatistics {
     boolean terminated = false;
     tokenSend = 0;
     tokenSendAfterTermination = 0;
+    tokenBytes = 0;
 
     Event lastParentCrashDetected = null;
+    boolean lastParentCrashDetectedEncountered = false;
 
     totalTime = 0;
-    for (Event e : events) {
-      if (e.isNodeCrashed()) {
-        crashedNodes.add(e.getNode());
-      }
-      if (e.isParentCrashDetected()) {
-        lastParentCrashDetected = e;
-      }
-      if (e.isTotalTimeSpentEvent()) {
-        totalTime += e.getTimeSpent();
-      }
-    }
-    int numberOfNodesCrashed = crashedNodes.size();
-    logger.trace("All crashed nodes found.");
+    safraTimeSpent = 0;
+    safratTimeSpentAfterTermination = 0;
 
-    // For the fault tolerant variant only the 0th inner index is used.
+    // For the fault sensitive variant only the 0th inner index is used.
     int[][] nodeSums = new int[numberOfNodes][numberOfNodes];
     for (int i = 0; i < nodeSums.length; i++) {
       for (int j = 0; j < nodeSums[i].length; j++) {
@@ -57,14 +48,25 @@ public class SafraStatistics {
       nodeActiveStatus[i] = false;
     }
 
-    Set<Integer> crashedNodes = new HashSet<>();
+    for (Event e : events) {
+      if (e.isNodeCrashed()) {
+        crashedNodes.add(e.getNode());
+      }
+      if (e.isParentCrashDetected()) {
+        lastParentCrashDetected = e;
+      }
+      if (e.isTotalTimeSpentEvent()) {
+        totalTime += e.getTimeSpent();
+      }
+    }
 
-    boolean lastParentCrashDetectedEncountered = false;
+    Set<Integer> currentlyCrashedNodes = new HashSet<>();
+
+    if (lastParentCrashDetected == null) {  // This can be the case if no nodes crashes
+      lastParentCrashDetectedEncountered = true;
+    }
 
     int i = 0;
-    safraTimeSpent = 0;
-    safratTimeSpentAfterTermination = 0;
-    tokenBytes = 0;
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
@@ -76,23 +78,24 @@ public class SafraStatistics {
       }
       if (e == lastParentCrashDetected) {
         lastParentCrashDetectedEncountered = true;
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);
       }
       if (e.isNodeCrashed()) {
-        crashedNodes.add(e.getNode());
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
+        currentlyCrashedNodes.add(e.getNode());
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);
       }
       if (e.isActiveStatusChange()) {
         nodeActiveStatus[e.getNode()] = e.getActiveStatus();
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);
       }
       if (e.isMessageCounterUpdate()) {
-        int index = 0;
         if (experiment.isFaultTolerant()) {
-          index = e.getSafraMessageCounterUpdateIndex();
+          nodeSums[e.getNode()][e.getSafraMessageCounterUpdateIndex()] = e.getSafraMessageCounterUpdateValue();
+        } else {
+          nodeSums[e.getNode()][0] += e.getSafraMessageCounterUpdateValue();
         }
-        nodeSums[e.getNode()][index] = e.getSafraMessageCounterUpdateValue();
-        terminated |= hasTerminated(nodeSums, nodeActiveStatus, crashedNodes, numberOfNodesCrashed, lastParentCrashDetectedEncountered);
+
+        terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);
       }
       if (e.isTokenSend()) {
         tokenSend++;
@@ -101,7 +104,7 @@ public class SafraStatistics {
           tokenSendAfterTermination++;
         }
       }
-      if (e.isSafraTimeSpentEvent() && !crashedNodes.contains(e.getNode())) {
+      if (e.isSafraTimeSpentEvent() && !currentlyCrashedNodes.contains(e.getNode())) {
         safraTimeSpent += e.getTimeSpent();
         if (terminated) {
           safratTimeSpentAfterTermination += e.getTimeSpent();
@@ -134,13 +137,8 @@ public class SafraStatistics {
   private boolean hasTerminated(int[][] nodeSums,
                                 boolean[] nodeActiveStatus,
                                 Set<Integer> currentlyCrashedNodes,
-                                int numberOfNodesCrashed,
                                 boolean lastParentCrashEventEncountered) {
     if (!lastParentCrashEventEncountered) {
-      return false;
-    }
-    logger.trace(String.format("Current crashes: %d, Total crashes: %d", currentlyCrashedNodes.size(), numberOfNodesCrashed));
-    if (currentlyCrashedNodes.size() != numberOfNodesCrashed) {
       return false;
     }
     logger.trace("Trying active");

@@ -57,6 +57,7 @@ class IbisNode {
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
+      Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
 
@@ -103,17 +104,18 @@ class IbisNode {
 //    Network network = Network.getLineNetwork(communicationLayer);
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
+      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector, faultTolerant);
+
       Safra safraNode;
       if (faultTolerant) {
         safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
       } else {
-        safraNode = new SafraFS(registry, signalHandler, communicationLayer);
+        safraNode = new SafraFS(registry, signalHandler, communicationLayer, communicationLayer.isRoot());
       }
 
 
       ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
 
-      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector, faultTolerant);
 
       communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
       logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));

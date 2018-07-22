@@ -311,7 +311,11 @@ public class Event implements Comparable<Event> {
     } else if (isNodeCrashed) {
       sb.append("NodeCrashed" + node);
     } else if (isMessageCounterUpdate) {
-      sb. append(String.format("MessageCounterUpdate on %d for %d to %d", node, messageCounterUpdateIndex, messageCounterUpdateValue));
+      sb.append(String.format("MessageCounterUpdate on %d for %d to %d", node, messageCounterUpdateIndex, messageCounterUpdateValue));
+    } else if (isSafraTimeSpentEvent) {
+      sb.append(String.format("Total time spent: %d", timeSpent));
+    } else if (isTotalTimeSpentEvent) {
+      sb.append(String.format("Total time spent: %d", timeSpent));
     }
     return sb.toString();
   }
@@ -340,7 +344,7 @@ public class Event implements Comparable<Event> {
     return timeSpent;
   }
 
-  public int getTokenSize()  {
+  public int getTokenSize() {
     if (!isTokenSend) {
       throw new IllegalStateException("Cannot get token size of event: " + this.toString());
     }
@@ -353,6 +357,7 @@ public class Event implements Comparable<Event> {
 
   /**
    * Not used during experiments but helpful to debug where Safra's time actually is spent.
+   *
    * @param elapsedTime time by which safraSpentTime will be reduced.
    * @return
    */
