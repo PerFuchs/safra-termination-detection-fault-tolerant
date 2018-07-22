@@ -133,7 +133,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     if (!basicAlgorithmIsActive) {
       logger.error(String.format("Send message while being passive %d", communicationLayer.getID()));
     }
-    if (!crashed.contains(receiver) && !report.contains(receiver)) {  // TODO check against report, is that correct?
+    if (!crashed.contains(receiver) && !report.contains(receiver)) {
       messageCounters[receiver]++;
       experimentLogger.info(Event.getSafraSumsEvent(receiver, messageCounters[receiver]));
     }

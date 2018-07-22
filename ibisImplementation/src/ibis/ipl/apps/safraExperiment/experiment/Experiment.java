@@ -33,7 +33,6 @@ public class Experiment {
 
   private final CommunicationLayer communicationLayer;
   private final Network network;
-  private CrashDetector crashDetector;
   private boolean isFaultTolerant;
 
   private int nodeID;
@@ -48,7 +47,6 @@ public class Experiment {
     this.network = network;
     this.nodeID = communicationLayer.getID();
     this.nodeCount = communicationLayer.getIbisCount();
-    this.crashDetector = crashDetector;
     this.isFaultTolerant = isFaultTolerant;
     if (!outputFolder.toFile().exists()) {
       Files.createDirectories(outputFolder);

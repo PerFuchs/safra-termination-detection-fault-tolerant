@@ -99,9 +99,7 @@ class IbisNode {
       CrashSimulator crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, crashPercentage, faultTolerant, enabledCrashPoints);
       communicationLayer.setCrashSimulator(crashSimulator);
 
-      // TODO control resulting networks for variety
       Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
-//    Network network = Network.getLineNetwork(communicationLayer);
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
       Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector, faultTolerant);
@@ -152,7 +150,6 @@ class IbisNode {
 
         System.out.println("End");
 
-        // TODO dirty
         // Copy the output log file
         Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
       }

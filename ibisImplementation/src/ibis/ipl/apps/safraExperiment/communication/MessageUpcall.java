@@ -38,8 +38,6 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
     this.barrierFactory = barrierFactory;
   }
 
-  // TODO clean up synchronization.
-
   @Override
   public synchronized void upcall(ReadMessage readMessage) throws IOException {
     int origin = communicationLayer.getIbises().indexOf(readMessage.origin().ibisIdentifier());
@@ -79,7 +77,11 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         readMessage.finish();
         if (!crashed) {
           safraNode.receiveToken(token);
-        } else {  // TODO comment
+        } else {
+          // This is to inform the predecessor in the ring that its sucessor crashed as it is obviously not aware.
+          // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
+          // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
+          // crash happens but only will become so on receive of the token.
           communicationLayer.sendCrashMessage(origin);
         }
         break;

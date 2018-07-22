@@ -3,8 +3,6 @@ package ibis.ipl.apps.safraExperiment.crashSimulation;
 import java.util.HashMap;
 import java.util.Map;
 
-
-// TODO do I want crash points in the basic algorithm
 public enum CrashPoint {
   BEFORE_SENDING_TOKEN,
   AFTER_SENDING_TOKEN,

@@ -1,7 +1,6 @@
 package ibis.ipl.apps.safraExperiment.network;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import org.apache.log4j.Logger;
 
@@ -27,8 +26,7 @@ public class Network {
     return aliveNodes;
   }
 
-  // TODO remove unused parameter
-  private static List<Channel> getAliveChannel(CommunicationLayer communicationLayer, List<Channel> channels, Set<Integer> crashedNodes) {
+  private static List<Channel> getAliveChannel(List<Channel> channels, Set<Integer> crashedNodes) {
     List<Channel> aliveChannels = new LinkedList<>(channels);
     for (Channel c : channels) {
       if (crashedNodes.contains(c.src) || crashedNodes.contains(c.dest)) {
@@ -41,14 +39,14 @@ public class Network {
   public Tree getMinimumSpanningTree(Set<Integer> crashedNodes) {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
     Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
-    List<Channel> aliveChannels = getAliveChannel(communicationLayer, channels, crashedNodeNumbers);
+    List<Channel> aliveChannels = getAliveChannel(channels, crashedNodeNumbers);
     return Tree.getMinimumSpanningTree(aliveChannels, communicationLayer.getRoot(), aliveNodes);
   }
 
   public Tree getSinkTree(Set<Integer> crashedNodes) {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
     Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
-    List<Channel> aliveChannels = getAliveChannel(communicationLayer, channels, crashedNodeNumbers);
+    List<Channel> aliveChannels = getAliveChannel(channels, crashedNodeNumbers);
     return Tree.getSinkTree(aliveChannels, communicationLayer.getRoot(), aliveNodes, new HashSet<Integer>());
   }
 
@@ -130,13 +128,12 @@ public class Network {
       }
 
       Set<Integer> connectedTo = connectedWith(channels, i);
-      connectedTo.add(i);  // TODO add as an or to the while loop
 
       Set<Integer> usedWeights = new HashSet<>();
       usedWeights.add(0);
       while (connectedTo.size() <= outdeegree) {
         int to = synchronizedRandom.getInt(communicationLayer.getIbisCount());
-        while (connectedTo.contains(to)) {
+        while (connectedTo.contains(to) || to == i) {
           to = synchronizedRandom.getInt(communicationLayer.getIbisCount());
         }
         int weight = synchronizedRandom.getInt(50000);
@@ -155,7 +152,7 @@ public class Network {
     // Add heavyweight edges from the root to nodes that are unreachable when other nodes crash - because the root cannot
     // fail this guarantees the network stays connected with arbitrary failing nodes.
     Set<Integer> unreachableVertices = new HashSet<>();  // Output parameter from getSinkTree
-    Tree sinkTree = Tree.getSinkTree(getAliveChannel(communicationLayer,channels, nodesExpectedToCrash),
+    Tree sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
         root,
         getAliveNodes(communicationLayer, nodesExpectedToCrash),
         unreachableVertices);
@@ -170,7 +167,7 @@ public class Network {
       channels.add(new Channel(node, root, 400000));
 
       unreachableVertices = new HashSet<>();
-      sinkTree = Tree.getSinkTree(getAliveChannel(communicationLayer, channels, nodesExpectedToCrash),
+      sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
           communicationLayer.getRoot(),
           getAliveNodes(communicationLayer, nodesExpectedToCrash),
           unreachableVertices);
