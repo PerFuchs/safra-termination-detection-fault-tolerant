@@ -4,6 +4,7 @@ import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
+import ibis.ipl.apps.safraExperiment.network.Channel;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.network.Tree;
 import org.apache.log4j.FileAppender;
@@ -17,9 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Experiment {
   private static Logger logger = Logger.getLogger(Experiment.class);
@@ -216,6 +215,30 @@ public class Experiment {
 
   public void writeSafraStatitistics() throws IOException {
     getSafraStatistics().writeToCSVFile(Paths.get(outputFolder.toString(), "safraStatistics.csv"));
+  }
+
+  public void writeNetworkStatistics(Network network) throws IOException {
+    Tree sinkTree = network.getSinkTree(getSafraStatistics().getCrashedNodes());
+
+    Set<Channel> networkChannels = network.getChannels();
+    Set<Channel> sinkTreeChannels = sinkTree.getChannels();
+
+    Set<Channel> noneSinkTreeChannels = new HashSet<>(networkChannels);
+    noneSinkTreeChannels.removeAll(sinkTreeChannels);
+
+    StringBuilder networkStatistics = new StringBuilder();
+    logger.info(String.format("Network Statistics: Channels: %d InTree: %d Other: %d", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
+    networkStatistics.append(String.format("%d;%d;%d\n", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
+
+    Map<Integer, Set<Integer>> levels = sinkTree.getLevels();
+    logger.info(String.format("Tree Statistics: Has %d levels", levels.size()));
+    networkStatistics.append(String.format("%d\n", levels.size()));
+    for (int level : levels.keySet()) {
+      logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
+      networkStatistics.append(String.format("%d;%d\n", level, levels.get(level).size()));
+    }
+
+    Files.write(Paths.get(outputFolder.toString(), "network.csv"), networkStatistics.toString().getBytes());
   }
 
   public boolean isFaultTolerant() {

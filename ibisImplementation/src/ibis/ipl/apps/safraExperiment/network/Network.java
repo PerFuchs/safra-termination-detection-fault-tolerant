@@ -181,6 +181,10 @@ public class Network {
 
     return new Network(channels, communicationLayer);
   }
+
+  public Set<Channel> getChannels() {
+    return new HashSet<>(channels);
+  }
 }
 
 

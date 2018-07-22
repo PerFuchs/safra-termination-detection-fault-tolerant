@@ -12,17 +12,21 @@ public class Tree {
   private LinkedList<Integer> badRoots = new LinkedList<>();
   private int root;
   private Set<Channel> channels = new TreeSet<>();
+  private final Set<Integer> vertices;
 
-  Tree(int root, Set<Channel> channels) {
+  Tree(int root, Set<Channel> channels, Set<Integer> vertices) {
     this.root = root;
     this.channels = channels;
+    this.vertices = vertices;
   }
 
   public Tree(CommunicationLayer communicationLayer, Network network, List<ChandyMisraResult> results, Set<Integer> crashedNodes) {
     this.root = communicationLayer.getRoot();
+    this.vertices = new HashSet<>();
 
     for (ChandyMisraResult r : results) {
       if (r.parent != -1 && !crashedNodes.contains(r.node)) {
+        vertices.add(r.node);
         channels.add(new Channel(r.parent, r.node, network.getWeight(r.parent, r.node)));
         if (crashedNodes.contains(r.parent)) {
           badRoots.add(r.parent);
@@ -126,7 +130,7 @@ public class Tree {
       treeChannels.add(lowestOutgoing);
       visited.add(lowestOutgoing.dest);
     }
-    return new Tree(root, treeChannels);
+    return new Tree(root, treeChannels, vertices);
   }
 
   private static List<Channel> channelsFrom(List<Channel> channels, int src) {
@@ -137,6 +141,10 @@ public class Tree {
       }
     }
     return ret;
+  }
+
+  public Set<Channel> getChannels() {
+    return channels;
   }
 
   /**
@@ -184,11 +192,11 @@ public class Tree {
   /**
    * Uses Dijkstra shortest path algorithm to compute a sink tree.
    *
-   * @param channels          All available channels
-   * @param root              Root node of the sink tree
-   * @param vertices          The node ID's. These do not have to be consecutive
+   * @param channels            All available channels
+   * @param root                Root node of the sink tree
+   * @param vertices            The node ID's. These do not have to be consecutive
    * @param unreachableVertices Output parameter if this methods returns null unreachableVertices will contain
-   *                          all vertices that aren't reachable from root.
+   *                            all vertices that aren't reachable from root.
    * @return A shortest path sink tree to root or NULL if the graph is not connected.
    */
   public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices, Set<Integer> unreachableVertices) {
@@ -238,6 +246,33 @@ public class Tree {
       treeChannels.add(channels.get(channels.indexOf(new Channel(parent, v, -1))));
     }
 
-    return new Tree(root, treeChannels);
+    return new Tree(root, treeChannels, vertices);
+  }
+
+  public Map<Integer, Set<Integer>> getLevels() {
+    Map<Integer, Set<Integer>> levels = new HashMap<>();
+    for (int v : vertices) {
+      int level = getLevel(root, v, 0);
+      if (!levels.containsKey(level)) {
+        levels.put(level, new HashSet<Integer>());
+      }
+      levels.get(level).add(v);
+    }
+    return levels;
+  }
+
+  private int getLevel(int currentNode, int node, int level) {
+    if (currentNode == node) {
+      return level;
+    }
+
+    List<Channel> outChannels = channelsFrom(currentNode);
+    for (Channel c : outChannels) {
+      int l = getLevel(c.dest, node, level + 1);
+      if (l != -1) {
+        return l;
+      }
+    }
+    return -1;
   }
 }
