@@ -94,9 +94,10 @@ public class ChandyMisraNode implements CrashHandler {
       logger.trace(String.format("%d Detected parent %d", me, parent));
       handleRequestMessage(crashedNode, timer);
 
+      // Do not move this timer down the events below should not be timed
+      timer.stopAndCreateBasicTimeSpentEvent();
       // Do not move this event up; it should happen after necessary handling events.
       experimentLogger.info(Event.getParentCrashEvent());
-      timer.stopAndCreateBasicTimeSpentEvent();
       safraNode.setActive(false, "End processing crash");
     }
   }

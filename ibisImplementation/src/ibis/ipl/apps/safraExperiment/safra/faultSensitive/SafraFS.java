@@ -77,7 +77,7 @@ public class SafraFS implements Observer, Safra {
 
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
-      handleToken();
+      handleToken(timer);
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -87,7 +87,7 @@ public class SafraFS implements Observer, Safra {
     semaphore.acquire();
     started = true;
     if (isInitiator) {
-      handleToken();
+      handleToken(timer);
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -99,7 +99,9 @@ public class SafraFS implements Observer, Safra {
     }
 
     messageCounter++;
+    timer.pause();
     experimentLogger.info(Event.getSafraSumsEvent(receiver, 1));
+    timer.start();
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
@@ -110,7 +112,10 @@ public class SafraFS implements Observer, Safra {
     }
     setActive(true, "Received Basic message");
     messageCounter--;
+
+    timer.pause();
     experimentLogger.info(Event.getSafraSumsEvent(sender, -1));
+    timer.start();
 
     // Only color myself black if the message overtook the token. As defined in the paper
     if ((sender < communicationLayer.getID()
@@ -130,7 +135,7 @@ public class SafraFS implements Observer, Safra {
       throw new IllegalStateException("None FS token used with FS safra");
     }
     this.token = (TokenFS) token;
-    handleToken();
+    handleToken(timer);
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
@@ -139,7 +144,7 @@ public class SafraFS implements Observer, Safra {
     return new TokenFactoryFS();
   }
 
-  private synchronized void handleToken() throws IOException {
+  private synchronized void handleToken(OurTimer timer) throws IOException {
     if (!basicAlgorithmIsActive && this.token != null) {
       int me = communicationLayer.getID();
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
@@ -148,7 +153,7 @@ public class SafraFS implements Observer, Safra {
       if (token.messageCounter == 0 && isBlackUntil == me) {
         announce();
       } else {
-        forwardToken(new TokenFS(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())));
+        forwardToken(new TokenFS(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())), timer);
         isBlackUntil = me;
         messageCounter = 0;
       }
@@ -167,8 +172,10 @@ public class SafraFS implements Observer, Safra {
     semaphore.acquire();
   }
 
-  private synchronized void forwardToken(TokenFS token) throws IOException {
+  private synchronized void forwardToken(TokenFS token, OurTimer timer) throws IOException {
+    timer.pause();
     experimentLogger.info(Event.getTokenSendEvent(token.getSize()));
+    timer.start();
 
     this.token = null;
     sequenceNumber++;

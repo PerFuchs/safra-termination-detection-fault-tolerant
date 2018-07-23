@@ -107,12 +107,14 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
     if (status != basicAlgorithmIsActive) {
+      timer.pause();
       experimentLogger.info(Event.getActiveStatusChangedEvent(status, reason));
+      timer.start();
     }
 
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
-      handleToken();
+      handleToken(timer);
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -121,7 +123,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     OurTimer timer = new OurTimer();
     semaphore.acquire();
     started = true;
-    handleToken();
+    handleToken(timer);
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
@@ -135,7 +137,10 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
     if (!crashed.contains(receiver) && !report.contains(receiver)) {
       messageCounters[receiver]++;
+
+      timer.pause();
       experimentLogger.info(Event.getSafraSumsEvent(receiver, messageCounters[receiver]));
+      timer.start();
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -152,7 +157,10 @@ public class SafraFT implements Observer, Safra, CrashHandler {
         timer.start();
       }
       messageCounters[sender]--;
+
+      timer.pause();
       experimentLogger.info(Event.getSafraSumsEvent(sender, messageCounters[sender]));
+      timer.start();
 
       // Only color myself black if the message overtook the token. As defined in the paper
       if ((sender < communicationLayer.getID()
@@ -179,9 +187,13 @@ public class SafraFT implements Observer, Safra, CrashHandler {
           if (nextNode < communicationLayer.getID()) {
             backupToken.sequenceNumber++;
           }
+
+          timer.pause();
           experimentLogger.info(Event.getBackupTokenSendEvent());
+          timer.start();
+
           crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
-          forwardToken(this.backupToken);
+          forwardToken(this.backupToken, timer);
           crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
         }
       }
@@ -231,14 +243,14 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);
       this.token = t;
-      handleToken();
+      handleToken(timer);
     } else {
       logger.debug(String.format("%d ignored because of sequence number.", communicationLayer.getID()));
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
-  private synchronized void handleToken() throws IOException {
+  private synchronized void handleToken(OurTimer timer) throws IOException {
     if (!basicAlgorithmIsActive && this.token != null) {
       int me = communicationLayer.getID();
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
@@ -301,7 +313,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       }
 
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_TOKEN);
-      forwardToken(token);
+      forwardToken(token, timer);
       crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_TOKEN);
       sequenceNumber++;
       isBlackUntil = me;
@@ -320,8 +332,10 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     semaphore.acquire();
   }
 
-  private synchronized void forwardToken(TokenFT token) throws IOException {
+  private synchronized void forwardToken(TokenFT token, OurTimer timer) throws IOException {
+    timer.pause();
     experimentLogger.info(Event.getTokenSendEvent(token.getSize()));
+    timer.start();
 
     logger.debug(String.format("%d Forwarding token to %d", communicationLayer.getID(), nextNode));
     logger.debug(String.format("%d Token has %d crash reports", communicationLayer.getID(), token.crashed.size()));
