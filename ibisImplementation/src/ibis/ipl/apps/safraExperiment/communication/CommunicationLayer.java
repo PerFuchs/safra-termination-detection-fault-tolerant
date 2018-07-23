@@ -118,11 +118,22 @@ public class CommunicationLayer {
     return getID() == getRoot();
   }
 
-  public void sendDistanceMessage(DistanceMessage dm, int receiver) throws IOException {
+  /**
+   *
+   * @param dm
+   * @param receiver
+   * @param basicTimer used to time the basic algorithm. Is stopped while Safra processes the send event.
+   * * @throws IOException
+   */
+  public void sendDistanceMessage(DistanceMessage dm, int receiver, OurTimer basicTimer) throws IOException {
     if (!crashed) {
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       logger.trace(String.format("%d sending distance message to %d", getID(), receiver));
+
+      basicTimer.pause();
       safraNode.handleSendingBasicMessage(receiver);
+      basicTimer.start();
+
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.DISTANCE.ordinal());

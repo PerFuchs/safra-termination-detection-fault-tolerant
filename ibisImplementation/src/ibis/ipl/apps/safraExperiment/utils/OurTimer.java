@@ -38,4 +38,8 @@ public class OurTimer {
     experimentLogger.info(Event.getTotalTimeSpentEvent(duration));
   }
 
+  public void stopAndCreateBasicTimeSpentEvent() {
+    long duration = pause();
+    experimentLogger.info(Event.getBasicTimeSpentEvent(duration));
+  }
 }

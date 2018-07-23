@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
+import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -16,6 +17,7 @@ public class Event implements Comparable<Event> {
   private final static Pattern messageCounterUpdatePattern = Pattern.compile("<<MessageCounterUpdate>(.*)>");
   private final static Pattern activeStatusChangedPattern = Pattern.compile("<<ActiveStatus>(.*)>");
   private final static Pattern safraTimeSpentPattern = Pattern.compile("<<SafraTimeSpentEvent>(.*)>");
+  private final static Pattern basicAlgorithmTimeSpentPattern = Pattern.compile("<<BasicTimeSpent>(.*)>");
   private final static Pattern totalTimeSpentPattern = Pattern.compile("<<TotalTimeSpentEvent>(.*)>");
   private final static Pattern tokenSentPattern = Pattern.compile("<<TokenSend>(.*)>");
 
@@ -33,6 +35,7 @@ public class Event implements Comparable<Event> {
   private final boolean isParentCrashDetected;
   private final boolean isSafraTimeSpentEvent;
   private final boolean isSafraReduceTime;    // TODO delete in the end
+  private final boolean isBasicTimeSpent;
   private final boolean isTotalTimeSpentEvent;
 
   private final boolean activeStatus;
@@ -47,6 +50,7 @@ public class Event implements Comparable<Event> {
    * Set of all nodes an event has been created for ever. To debug some early problems of logging.
    */
   public static Set<Integer> eventCreatedFor = new HashSet<>();
+  private boolean basicTimeSpentEvent;
 
   private Event(int node, int lineNumber, String e, Date time, Level level) {
     this.node = node;
@@ -119,7 +123,16 @@ public class Event implements Comparable<Event> {
     }
     typeFound |= isSafraTimeSpentEvent;
 
-    typeFound |= isTokenSend;
+    if (!typeFound) {
+      Matcher m = basicAlgorithmTimeSpentPattern.matcher(e);
+      this.isBasicTimeSpent= m.find();
+      if (isBasicTimeSpent) {
+        timeSpent = Long.valueOf(m.group(1));
+      }
+    } else {
+      isBasicTimeSpent = false;
+    }
+    typeFound |= isBasicTimeSpent;
 
     if (!typeFound) {
       Matcher m = totalTimeSpentPattern.matcher(e);
@@ -189,6 +202,10 @@ public class Event implements Comparable<Event> {
 
   public static String getParentCrashEvent() {
     return "<<ParentCrashDetected>>";
+  }
+
+  public static String getBasicTimeSpentEvent(long duration) {
+    return String.format("<<BasicTimeSpent>%d>", duration);
   }
 
   public boolean isTokenSend() {
@@ -363,5 +380,9 @@ public class Event implements Comparable<Event> {
    */
   public String getReduceSafraTimeEvent(long elapsedTime) {
     return String.format("<<TakeOff>%d>", elapsedTime);
+  }
+
+  public boolean isBasicTimeSpentEvent() {
+    return isBasicTimeSpent;
   }
 }

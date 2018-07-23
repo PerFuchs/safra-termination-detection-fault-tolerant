@@ -7,6 +7,7 @@ import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.network.Network;
+import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -37,12 +38,14 @@ public class ChandyMisraNode implements CrashHandler {
 
   public synchronized void startAlgorithm() throws IOException {
     safraNode.setActive(true, "Start basic");
+    OurTimer timer = new OurTimer();
     if (communicationLayer.isRoot()) {
       this.dist = 0;
       this.parent = -1;
 
-      sendDistanceMessagesToAllNeighbours(0);
+      sendDistanceMessagesToAllNeighbours(0, timer);
     }
+    timer.stopAndCreateBasicTimeSpentEvent();
     safraNode.setActive(false, "End basic");
   }
 
@@ -52,26 +55,28 @@ public class ChandyMisraNode implements CrashHandler {
     }
     if (!crashDetector.hasCrashed(origin)) {
       safraNode.setActive(true, "Processing Distance Message");
+      OurTimer timer = new OurTimer();
       int newDistance = dm.getDistance() + network.getWeight(origin, me);
       if ((dist == -1 || newDistance < dist) && newDistance > 0) {  // > 0 for overflows
         dist = newDistance;
         parent = origin;
-        sendDistanceMessagesToAllNeighbours(dist);
+        sendDistanceMessagesToAllNeighbours(dist, timer);
       }
+      timer.stopAndCreateBasicTimeSpentEvent();
+      safraNode.setActive(false, "End Processing Distance Message");
     }
-    safraNode.setActive(false, "End Processing Distance Message");
   }
 
-  private void sendDistanceMessagesToAllNeighbours(int distance) throws IOException {
+  private void sendDistanceMessagesToAllNeighbours(int distance, OurTimer timer) throws IOException {
     for (int neighbour : network.getNeighbours(me)) {
       if (neighbour != parent) {
-        sendDistanceMessage(distance, neighbour);
+        sendDistanceMessage(distance, neighbour, timer);
       }
     }
   }
 
-  private void sendDistanceMessage(int distance, int receiver) throws IOException {
-    communicationLayer.sendDistanceMessage(new DistanceMessage(distance), receiver);
+  private void sendDistanceMessage(int distance, int receiver, OurTimer timer) throws IOException {
+    communicationLayer.sendDistanceMessage(new DistanceMessage(distance), receiver, timer);
   }
 
   public int getParent() {
@@ -80,32 +85,36 @@ public class ChandyMisraNode implements CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     if (crashedNode == parent) {
+      safraNode.setActive(true, "Processing crash");
+      OurTimer timer = new OurTimer();
       if (terminated) {  // No node triggering activity can fail after termination has been detected
         logger.error(String.format("%d notified crash after termination.", communicationLayer.getID()));
       }
 
-      safraNode.setActive(true, "Processing crash");
       logger.trace(String.format("%d Detected parent %d", me, parent));
-      handleRequestMessage(crashedNode);
+      handleRequestMessage(crashedNode, timer);
 
       // Do not move this event up; it should happen after necessary handling events.
       experimentLogger.info(Event.getParentCrashEvent());
+      timer.stopAndCreateBasicTimeSpentEvent();
       safraNode.setActive(false, "End processing crash");
     }
   }
 
   public synchronized void receiveRequestMessage(int origin) throws IOException {
     safraNode.setActive(true, "Processing Request Message");
+    OurTimer timer = new OurTimer();
     if (terminated) {
       logger.error(String.format("%d received request message after termination.", communicationLayer.getID()));
     }
     if (!crashDetector.hasCrashed(origin)) {
-      handleRequestMessage(origin);
+      handleRequestMessage(origin, timer);
     }
+    timer.stopAndCreateBasicTimeSpentEvent();
     safraNode.setActive(false, "End processing Request Message");
   }
 
-  private void handleRequestMessage(int origin) throws IOException {
+  private void handleRequestMessage(int origin, OurTimer timer) throws IOException {
     if (origin == parent) {
       logger.trace(String.format("%d got request message from parent %d", communicationLayer.getID(), origin));
       int oldParent = parent;
@@ -118,7 +127,7 @@ public class ChandyMisraNode implements CrashHandler {
       }
     } else {
       if (dist != -1) {
-        sendDistanceMessage(dist, origin);
+        sendDistanceMessage(dist, origin, timer);
       }
     }
   }

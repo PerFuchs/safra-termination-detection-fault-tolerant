@@ -13,6 +13,7 @@ public class SafraStatistics {
 
   private long totalTime;
   private long safraTimeSpent;
+  private long basicTimeSpent;
   private long safratTimeSpentAfterTermination;
   private int backupTokenSend;
   private int tokenSendAfterTermination;
@@ -34,6 +35,7 @@ public class SafraStatistics {
 
     totalTime = 0;
     safraTimeSpent = 0;
+    basicTimeSpent = 0;
     safratTimeSpentAfterTermination = 0;
 
     // For the fault sensitive variant only the 0th inner index is used.
@@ -57,6 +59,9 @@ public class SafraStatistics {
       }
       if (e.isTotalTimeSpentEvent()) {
         totalTime += e.getTimeSpent();
+      }
+      if (e.isBasicTimeSpentEvent()) {
+        basicTimeSpent += e.getTimeSpent();
       }
     }
 
@@ -201,7 +206,7 @@ public class SafraStatistics {
   }
 
   public void writeToCSVFile(Path filePath) throws IOException {
-    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;numberOfNodesCrashed\n";
+    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;numberOfNodesCrashed;basicTime\n";
 
     StringBuilder contentLine = new StringBuilder();
     contentLine.append(getTokenSend());
@@ -219,6 +224,8 @@ public class SafraStatistics {
     contentLine.append(getTotalTimeSpent());
     contentLine.append(";");
     contentLine.append(getNumberOfNodesCrashed());
+    contentLine.append(";");
+    contentLine.append(getBasicTimeSpent());
     contentLine.append("\n");
 
 
@@ -240,5 +247,9 @@ public class SafraStatistics {
 
   public Set<Integer> getCrashedNodes() {
     return crashedNodes;
+  }
+
+  public double getBasicTimeSpent() {
+    return basicTimeSpent / 1000000000.0;
   }
 }

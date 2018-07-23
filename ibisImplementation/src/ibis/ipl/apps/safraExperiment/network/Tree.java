@@ -8,7 +8,6 @@ import java.util.*;
 public class Tree {
   private final static Logger logger = Logger.getLogger(Tree.class);
 
-  // TODO cycle detection needs to improve to detect cycles which aren't connected to the real tree and have no "bad root"z
   private LinkedList<Integer> badRoots = new LinkedList<>();
   private int root;
   private Set<Channel> channels = new TreeSet<>();
@@ -31,6 +30,7 @@ public class Tree {
   }
 
   public Tree(CommunicationLayer communicationLayer, Network network, List<ChandyMisraResult> results, Set<Integer> crashedNodes) {
+    // TODO does not detect unconnected vertices which are in a cycle. This does not influence detection of bad CM results but makes it harder to see why they are wrong.
     this.root = communicationLayer.getRoot();
     this.vertices = new HashSet<>();
 
