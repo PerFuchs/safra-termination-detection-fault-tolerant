@@ -232,13 +232,13 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     TokenFT t = (TokenFT) token;
     logger.debug(String.format("%d received token.", communicationLayer.getID()));
 
-    StringBuilder crashedNodes = new StringBuilder();
-    for (int c : ((TokenFT) token).crashed) {
-      crashedNodes.append(c);
-      crashedNodes.append(", ");
-    }
+//    StringBuilder crashedNodes = new StringBuilder();
+//    for (int c : ((TokenFT) token).crashed) {
+//      crashedNodes.append(c);
+//      crashedNodes.append(", ");
+//    }
 
-    logger.debug(String.format("%d Token crashed nodes: %s", communicationLayer.getID(), crashedNodes.toString()));
+//    logger.debug(String.format("%d Token crashed nodes: %s", communicationLayer.getID(), crashedNodes.toString()));
     if (t.sequenceNumber == getSequenceNumber() + 1) {
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);

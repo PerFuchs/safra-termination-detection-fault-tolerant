@@ -96,9 +96,10 @@ public class ChandyMisraNode implements CrashHandler {
 
       // Do not move this timer down the events below should not be timed
       timer.stopAndCreateBasicTimeSpentEvent();
+      safraNode.setActive(false, "End processing crash");
+
       // Do not move this event up; it should happen after necessary handling events.
       experimentLogger.info(Event.getParentCrashEvent());
-      safraNode.setActive(false, "End processing crash");
     }
   }
 

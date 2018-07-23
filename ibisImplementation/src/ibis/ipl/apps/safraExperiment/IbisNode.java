@@ -47,15 +47,15 @@ class IbisNode {
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
       Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
-      Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
+      Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
-      Logger.getLogger(Experiment.class).setLevel(Level.INFO);
-      Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
+      Logger.getLogger(Experiment.class).setLevel(Level.TRACE);
+      Logger.getLogger(SafraStatistics.class).setLevel(Level.TRACE);
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
-      Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
+      Logger.getLogger(MessageBarrier.class).setLevel(Level.TRACE);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
 

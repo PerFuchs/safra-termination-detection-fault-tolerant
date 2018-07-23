@@ -26,11 +26,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
   private BarrierFactory barrierFactory;
   private boolean crashed = false;
 
-  public MessageUpcall(CommunicationLayer communicationLayer,
-                       ChandyMisraNode chandyMisraNode,
-                       Safra safraNode,
-                       CrashDetector crashDetector,
-                       BarrierFactory barrierFactory) {
+  public MessageUpcall(CommunicationLayer communicationLayer, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) {
     this.communicationLayer = communicationLayer;
     this.chandyMisraNode = chandyMisraNode;
     this.safraNode = safraNode;
@@ -48,9 +44,9 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         long sequenceNumber = readMessage.readLong();
         int distance = readMessage.readInt();
         readMessage.finish();
-        DistanceMessage dm = new DistanceMessage(distance);
-        if (!crashed) {
-          synchronized (MessageUpcall.class) {
+        synchronized (MessageUpcall.class) {
+          if (!crashed) {
+            DistanceMessage dm = new DistanceMessage(distance);
             safraNode.handleReceiveBasicMessage(origin, sequenceNumber);
             chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
           }
@@ -65,8 +61,8 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
       case REQUEST:
         long sn = readMessage.readLong();
         readMessage.finish();
-        if (!crashed) {
-          synchronized (MessageUpcall.class) {
+        synchronized (MessageUpcall.class) {
+          if (!crashed) {
             safraNode.handleReceiveBasicMessage(origin, sn);
             chandyMisraNode.receiveRequestMessage(origin);
           }
@@ -75,14 +71,16 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
       case TOKEN:
         Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
         readMessage.finish();
-        if (!crashed) {
-          safraNode.receiveToken(token);
-        } else {
-          // This is to inform the predecessor in the ring that its sucessor crashed as it is obviously not aware.
-          // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
-          // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
-          // crash happens but only will become so on receive of the token.
-          communicationLayer.sendCrashMessage(origin);
+        synchronized (MessageUpcall.class) {
+          if (!crashed) {
+            safraNode.receiveToken(token);
+          } else {
+            // This is to inform the predecessor in the ring that its successor crashed as it is obviously not aware.
+            // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
+            // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
+            // crash happens but only will become so on receive of the token.
+            communicationLayer.sendCrashMessage(origin);
+          }
         }
         break;
       case BARRIER:

@@ -12,8 +12,10 @@ public class CrashDetector {
   }
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
-    crashedNodes.add(crashedNode);
-    notifyCrashHandlers(crashedNode);
+    if (!crashedNodes.contains(crashedNode)) {
+      crashedNodes.add(crashedNode);
+      notifyCrashHandlers(crashedNode);
+    }
   }
 
   private void notifyCrashHandlers(int crashedNode) throws IOException {

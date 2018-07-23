@@ -75,7 +75,7 @@ public class SafraStatistics {
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
-      if (terminated && (e.isNodeCrashed() || e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
+      if (terminated && (e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
         logger.error(String.format("Basic event happened  on node %d after termination: %s",
             e.getNode(), e.getEvent()));
         experiment.writeToErrorFile(String.format("Basic event happened  on node %d after termination: %s",

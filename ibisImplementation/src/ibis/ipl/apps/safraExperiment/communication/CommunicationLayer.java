@@ -126,8 +126,8 @@ public class CommunicationLayer {
    * * @throws IOException
    */
   public void sendDistanceMessage(DistanceMessage dm, int receiver, OurTimer basicTimer) throws IOException {
+    crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     if (!crashed) {
-      crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       logger.trace(String.format("%d sending distance message to %d", getID(), receiver));
 
       basicTimer.pause();
@@ -141,8 +141,8 @@ public class CommunicationLayer {
       m.writeInt(dm.getDistance());
       m.send();
       m.finish();
-      crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
     }
+    crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
   }
 
   public void crash() {
@@ -180,9 +180,11 @@ public class CommunicationLayer {
     m.finish();
   }
 
+  // TODO exclude safrat time
+
   public void sendRequestMessage(int receiver) throws IOException {
+    crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     if (!crashed) {
-      crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       logger.trace(String.format("%d sending request message to %d", getID(), receiver));
       safraNode.handleSendingBasicMessage(receiver);
       SendPort sendPort = sendPorts.get(receiver);
@@ -191,8 +193,8 @@ public class CommunicationLayer {
       m.writeLong(safraNode.getSequenceNumber());
       m.send();
       m.finish();
-      crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
     }
+    crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
   }
 
   public void sendBarrierMessage(int receiver, String name) throws IOException {
