@@ -16,7 +16,6 @@ public class ChandyMisraNode implements CrashHandler {
   private final static Logger logger = Logger.getLogger(ChandyMisraNode.class);
   private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
-  private CrashDetector crashDetector;
   private Safra safraNode;
   private CommunicationLayer communicationLayer;
   private Network network;
@@ -31,7 +30,6 @@ public class ChandyMisraNode implements CrashHandler {
     this.communicationLayer = communicationLayer;
     this.network = network;
     this.me = communicationLayer.getID();
-    this.crashDetector = crashDetector;
     this.safraNode = safraNode;
     crashDetector.addHandler(this);
   }
@@ -53,8 +51,9 @@ public class ChandyMisraNode implements CrashHandler {
     if (terminated) {
       logger.error(String.format("%d received distance message after termination.", communicationLayer.getID()));
     }
-    if (!crashDetector.hasCrashed(origin)) {
+    if (!safraNode.crashDetected(origin)) {
       safraNode.setActive(true, "Processing Distance Message");
+
       OurTimer timer = new OurTimer();
       int newDistance = dm.getDistance() + network.getWeight(origin, me);
       if ((dist == -1 || newDistance < dist) && newDistance > 0) {  // > 0 for overflows
@@ -63,6 +62,7 @@ public class ChandyMisraNode implements CrashHandler {
         sendDistanceMessagesToAllNeighbours(dist, timer);
       }
       timer.stopAndCreateBasicTimeSpentEvent();
+
       safraNode.setActive(false, "End Processing Distance Message");
     }
   }
@@ -109,7 +109,7 @@ public class ChandyMisraNode implements CrashHandler {
     if (terminated) {
       logger.error(String.format("%d received request message after termination.", communicationLayer.getID()));
     }
-    if (!crashDetector.hasCrashed(origin)) {
+    if (!safraNode.crashDetected(origin)) {
       handleRequestMessage(origin, timer);
     }
     timer.stopAndCreateBasicTimeSpentEvent();

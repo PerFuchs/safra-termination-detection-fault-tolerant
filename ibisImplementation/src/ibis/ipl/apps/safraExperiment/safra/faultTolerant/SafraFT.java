@@ -375,4 +375,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   public TokenFactory getTokenFactory() {
     return new TokenFactoryFT();
   }
+
+  @Override
+  public boolean crashDetected(int origin) {
+    return crashed.contains(origin) || report.contains(origin);
+  }
 }

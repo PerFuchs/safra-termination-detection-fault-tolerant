@@ -16,4 +16,6 @@ public interface Safra {
   void receiveToken(Token token) throws IOException;
 
   TokenFactory getTokenFactory();
+
+  boolean crashDetected(int origin);
 }

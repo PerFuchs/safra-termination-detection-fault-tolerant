@@ -144,6 +144,11 @@ public class SafraFS implements Observer, Safra {
     return new TokenFactoryFS();
   }
 
+  @Override
+  public boolean crashDetected(int origin) {
+    return false;
+  }
+
   private synchronized void handleToken(OurTimer timer) throws IOException {
     if (!basicAlgorithmIsActive && this.token != null) {
       int me = communicationLayer.getID();
