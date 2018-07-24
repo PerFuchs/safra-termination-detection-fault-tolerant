@@ -127,6 +127,7 @@ public class Experiment {
       tree = new Tree(communicationLayer, network, results, nodesExpectedToCrash);
       expectedTree = network.getSinkTree(nodesExpectedToCrash);
       logger.info("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
+      writeToWarnFile("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
     }
     if (tree.equals(expectedTree) && tree.hasValidWeights()) {
       logger.info("Constructed and expected tree are equal.");
@@ -253,6 +254,7 @@ public class Experiment {
     } else {
       if (!getSafraStatistics().getCrashedNodes().equals(crashSimulator.getCrashingNodes())) {
         logger.info("Could not construct sink tree because some nodes were expected to crash but did not.");
+        writeToWarnFile("Could not construct sink tree because some nodes were expected to crash but did not. No networks statistics were written.");
       } else {
         throw new IllegalStateException("Could not construct sink tree");
       }

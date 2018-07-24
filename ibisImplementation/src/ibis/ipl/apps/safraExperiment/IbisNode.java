@@ -111,9 +111,7 @@ class IbisNode {
         safraNode = new SafraFS(registry, signalHandler, communicationLayer, communicationLayer.isRoot());
       }
 
-
       ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
-
 
       communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
       logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
