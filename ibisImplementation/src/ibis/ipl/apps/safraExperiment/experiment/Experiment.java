@@ -122,13 +122,15 @@ public class Experiment {
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes, Set<Integer> nodesExpectedToCrash) throws IOException {
     Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
     Tree expectedTree = network.getSinkTree(crashedNodes);
-    // Some nodes were expected to crash but did not. Now these have no connection to root
+
     if (expectedTree == null && !nodesExpectedToCrash.equals(crashedNodes)) {
+      // Some nodes were expected to crash but did not. Now these have no connection to root
       tree = new Tree(communicationLayer, network, results, nodesExpectedToCrash);
       expectedTree = network.getSinkTree(nodesExpectedToCrash);
       logger.info("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
       writeToWarnFile("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
     }
+
     if (tree.equals(expectedTree) && tree.hasValidWeights()) {
       logger.info("Constructed and expected tree are equal.");
       return true;
