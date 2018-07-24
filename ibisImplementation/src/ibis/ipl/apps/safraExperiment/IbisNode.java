@@ -135,7 +135,7 @@ class IbisNode {
       barrierFactory.getBarrier("ResultsWritten").await();
 
       if (communicationLayer.isRoot()) {
-        experiment.writeNetworkStatistics(network);
+//        experiment.writeNetworkStatistics(network);
         experiment.verify();
 
         experiment.writeSafraStatitistics();
