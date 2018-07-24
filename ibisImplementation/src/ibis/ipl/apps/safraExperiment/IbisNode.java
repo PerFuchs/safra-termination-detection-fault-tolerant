@@ -102,7 +102,7 @@ class IbisNode {
       Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
-      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashDetector, faultTolerant);
+      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
 
       Safra safraNode;
       if (faultTolerant) {

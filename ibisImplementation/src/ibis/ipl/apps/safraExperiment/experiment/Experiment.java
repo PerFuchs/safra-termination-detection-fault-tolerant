@@ -3,6 +3,7 @@ package ibis.ipl.apps.safraExperiment.experiment;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
 import ibis.ipl.apps.safraExperiment.network.Channel;
 import ibis.ipl.apps.safraExperiment.network.Network;
@@ -33,6 +34,7 @@ public class Experiment {
 
   private final CommunicationLayer communicationLayer;
   private final Network network;
+  private CrashSimulator crashSimulator;
   private boolean isFaultTolerant;
 
   private int nodeID;
@@ -41,12 +43,13 @@ public class Experiment {
   private List<Event> events;
   private SafraStatistics safraStatistics;
 
-  public Experiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashDetector crashDetector, boolean isFaultTolerant) throws IOException {
+  public Experiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashSimulator crashSimulator, boolean isFaultTolerant) throws IOException {
     this.outputFolder = outputFolder;
     this.communicationLayer = communicationLayer;
     this.network = network;
     this.nodeID = communicationLayer.getID();
     this.nodeCount = communicationLayer.getIbisCount();
+    this.crashSimulator = crashSimulator;
     this.isFaultTolerant = isFaultTolerant;
     if (!outputFolder.toFile().exists()) {
       Files.createDirectories(outputFolder);
@@ -79,7 +82,7 @@ public class Experiment {
     SafraStatistics safraStatistics = getSafraStatistics();
     List<ChandyMisraResult> results = readChandyMisraResults();
 
-    ret &= verifyChandyMisraResult(results, safraStatistics.getCrashedNodes());
+    ret &= verifyChandyMisraResult(results, safraStatistics.getCrashedNodes(), crashSimulator.getCrashingNodes());
 
     List<Event> events = getEvents();
     for (Event e : events) {
@@ -116,9 +119,15 @@ public class Experiment {
   }
 
 
-  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes) throws IOException {
+  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes, Set<Integer> nodesExpectedToCrash) throws IOException {
     Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
     Tree expectedTree = network.getSinkTree(crashedNodes);
+    // Some nodes were expected to crash but did not. Now these have no connection to root
+    if (expectedTree == null && !nodesExpectedToCrash.equals(crashedNodes)) {
+      tree = new Tree(communicationLayer, network, results, nodesExpectedToCrash);
+      expectedTree = network.getSinkTree(nodesExpectedToCrash);
+      logger.info("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
+    }
     if (tree.equals(expectedTree) && tree.hasValidWeights()) {
       logger.info("Constructed and expected tree are equal.");
       return true;
@@ -221,26 +230,34 @@ public class Experiment {
 
   public void writeNetworkStatistics(Network network) throws IOException {
     Tree sinkTree = network.getSinkTree(getSafraStatistics().getCrashedNodes());
+    if (sinkTree != null) {
+      Set<Channel> networkChannels = network.getChannels();
+      Set<Channel> sinkTreeChannels = sinkTree.getChannels();
 
-    Set<Channel> networkChannels = network.getChannels();
-    Set<Channel> sinkTreeChannels = sinkTree.getChannels();
+      Set<Channel> noneSinkTreeChannels = new HashSet<>(networkChannels);
+      noneSinkTreeChannels.removeAll(sinkTreeChannels);
 
-    Set<Channel> noneSinkTreeChannels = new HashSet<>(networkChannels);
-    noneSinkTreeChannels.removeAll(sinkTreeChannels);
+      StringBuilder networkStatistics = new StringBuilder();
+      logger.info(String.format("Network Statistics: Channels: %d InTree: %d Other: %d", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
+      networkStatistics.append(String.format("%d;%d;%d\n", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
 
-    StringBuilder networkStatistics = new StringBuilder();
-    logger.info(String.format("Network Statistics: Channels: %d InTree: %d Other: %d", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
-    networkStatistics.append(String.format("%d;%d;%d\n", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
+      Map<Integer, Set<Integer>> levels = sinkTree.getLevels();
+      logger.info(String.format("Tree Statistics: Has %d levels", levels.size()));
+      networkStatistics.append(String.format("%d\n", levels.size()));
+      for (int level : levels.keySet()) {
+        logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
+        networkStatistics.append(String.format("%d;%d\n", level, levels.get(level).size()));
+      }
 
-    Map<Integer, Set<Integer>> levels = sinkTree.getLevels();
-    logger.info(String.format("Tree Statistics: Has %d levels", levels.size()));
-    networkStatistics.append(String.format("%d\n", levels.size()));
-    for (int level : levels.keySet()) {
-      logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
-      networkStatistics.append(String.format("%d;%d\n", level, levels.get(level).size()));
+      Files.write(Paths.get(outputFolder.toString(), "network.csv"), networkStatistics.toString().getBytes());
+    } else {
+      if (!getSafraStatistics().getCrashedNodes().equals(crashSimulator.getCrashingNodes())) {
+        logger.info("Could not construct sink tree because some nodes were expected to crash but did not.");
+      } else {
+        throw new IllegalStateException("Could not construct sink tree");
+      }
     }
 
-    Files.write(Paths.get(outputFolder.toString(), "network.csv"), networkStatistics.toString().getBytes());
   }
 
   public boolean isFaultTolerant() {
