@@ -47,16 +47,16 @@ class IbisNode {
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
       Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
-      Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
+      Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
-      Logger.getLogger(Experiment.class).setLevel(Level.TRACE);
+      Logger.getLogger(Experiment.class).setLevel(Level.INFO);
       Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
-      Logger.getLogger(Tree.class).setLevel(Level.TRACE);
+      Logger.getLogger(Tree.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
