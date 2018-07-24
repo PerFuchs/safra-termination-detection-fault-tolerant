@@ -56,7 +56,7 @@ class IbisNode {
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
-      Logger.getLogger(Tree.class).setLevel(Level.INFO);
+      Logger.getLogger(Tree.class).setLevel(Level.TRACE);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);

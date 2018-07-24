@@ -35,16 +35,16 @@ public class ChandyMisraNode implements CrashHandler {
   }
 
   public synchronized void startAlgorithm() throws IOException {
-    safraNode.setActive(true, "Start basic");
-    OurTimer timer = new OurTimer();
     if (communicationLayer.isRoot()) {
+      safraNode.setActive(true, "Start basic");
+      OurTimer timer = new OurTimer();
       this.dist = 0;
       this.parent = -1;
 
       sendDistanceMessagesToAllNeighbours(0, timer);
+      timer.stopAndCreateBasicTimeSpentEvent();
+      safraNode.setActive(false, "End basic");
     }
-    timer.stopAndCreateBasicTimeSpentEvent();
-    safraNode.setActive(false, "End basic");
   }
 
   public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException {
