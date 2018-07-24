@@ -46,12 +46,15 @@ public class Tree {
       }
     }
 
-    for (ChandyMisraResult r : results) {
-      if (!crashedNodes.contains(r.node)) {
-        int expectedDistance = getDistance(r.node);
-        if (expectedDistance != r.dist) {
-          invalidWeights = true;
-          System.out.println(String.format("Node %d has incorrect distance %d should be %d", r.node, r.dist, expectedDistance));
+    // This takes a long time for big networks -> Skip it for them
+    if (communicationLayer.getIbisCount() <= 500) {
+      for (ChandyMisraResult r : results) {
+        if (!crashedNodes.contains(r.node)) {
+          int expectedDistance = getDistance(r.node);
+          if (expectedDistance != r.dist) {
+            invalidWeights = true;
+            System.out.println(String.format("Node %d has incorrect distance %d should be %d", r.node, r.dist, expectedDistance));
+          }
         }
       }
     }
@@ -223,6 +226,14 @@ public class Tree {
    * @return A shortest path sink tree to root or NULL if the graph is not connected.
    */
   public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices, Set<Integer> unreachableVertices) {
+    Map<Integer, List<Channel>> adjacencyGraph = new HashMap<>();
+    for (int v : vertices) {
+      adjacencyGraph.put(v, new LinkedList<Channel>());
+    }
+    for (Channel c : channels) {
+      adjacencyGraph.get(c.src).add(c);
+    }
+
     PriorityQueue<NodeDistancePair> unvisitedVertices = new PriorityQueue<>();  // Used to find the node with lowest distance to root.
     Map<Integer, Integer> distances = new HashMap<>();  // Used to find distance of a node
     for (int v : vertices) {
@@ -238,7 +249,7 @@ public class Tree {
     while (!unvisitedVertices.isEmpty()) {
       NodeDistancePair v = unvisitedVertices.poll();
 
-      for (Channel c : channelsFrom(channels, v.node)) {
+      for (Channel c : adjacencyGraph.get(v.node)) {
         int alternativeDistance = distances.get(v.node) + c.getWeight();
         if (alternativeDistance < distances.get(c.dest) && alternativeDistance > 0) {  // Bigger 0 because of overflows
           distances.put(c.dest, alternativeDistance);
@@ -260,6 +271,7 @@ public class Tree {
     }
 
     Set<Channel> treeChannels = new TreeSet<>();
+
     // Select the channels based on parent relationship calculated by Dijkstra.
     for (int v : vertices) {
       if (v == root) {

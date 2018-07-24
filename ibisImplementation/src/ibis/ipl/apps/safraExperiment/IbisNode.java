@@ -57,7 +57,6 @@ class IbisNode {
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
-      Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
 
@@ -101,6 +100,7 @@ class IbisNode {
 
       Network network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
+      logger.trace("Constructed network");
 
       Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
 
@@ -133,7 +133,10 @@ class IbisNode {
       barrierFactory.getBarrier("ResultsWritten").await();
 
       if (communicationLayer.isRoot()) {
-        experiment.writeNetworkStatistics(network);
+        // Takes a long time for big networks skip it for them
+        if (communicationLayer.getIbisCount() <= 500) {
+          experiment.writeNetworkStatistics(network);
+        }
         experiment.verify();
 
         experiment.writeSafraStatitistics();

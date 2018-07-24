@@ -330,7 +330,7 @@ public class Event implements Comparable<Event> {
     } else if (isMessageCounterUpdate) {
       sb.append(String.format("MessageCounterUpdate on %d for %d to %d", node, messageCounterUpdateIndex, messageCounterUpdateValue));
     } else if (isSafraTimeSpentEvent) {
-      sb.append(String.format("Total time spent: %d", timeSpent));
+      sb.append(String.format("Safra time spent: %d", timeSpent));
     } else if (isTotalTimeSpentEvent) {
       sb.append(String.format("Total time spent: %d", timeSpent));
     }
