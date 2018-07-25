@@ -52,6 +52,7 @@ class Repetition:
                 self.safra_time = float(statistics['safraTime (seconds)'])
                 self.safra_time_after_termination = float(statistics['safraTimeAfterTermination'])
                 self.total_time = float(statistics['totalTime'])
+                self.basic_time = float(statistics['basicTime'])
                 if 'numberOfNodesCrashed' in statistics:
                     self.number_of_nodes_crashed = int(statistics['numberOfNodesCrashed'])
                     real_fault_percentage = self.number_of_nodes_crashed / number_of_nodes
@@ -113,6 +114,9 @@ class Configuration:
     def get_tokens_after_termination(self):
         return list(map(lambda r: r.tokens_after_termination, self.repetitions))
 
+    def get_basic_time(self):
+        return list(map(lambda r: r.basic_time, self.repetitions))
+
 
 configurations = []
 
@@ -120,8 +124,8 @@ for file_name in listdir(experiment_folder):
     configuration_folder = '/'.join((experiment_folder, file_name))
     if isdir(configuration_folder) and configuration_folder.endswith('.run'):
         configuration = Configuration(configuration_folder)
-        # if (configuration.number_of_nodes == 200 and configuration.fault_percentage == 0.0):
-        configurations.append(configuration)
+        if (configuration.number_of_nodes == 50):
+            configurations.append(configuration)
 
 configurations = sorted(configurations, key=lambda c: c.fault_percentage)
 configurations = sorted(configurations, key=lambda c: c.number_of_nodes)
@@ -139,24 +143,24 @@ for c in configurations:
     print("")
     print("")
 
-fields = ['tokens', 'tokens_after_termination', 'backup_tokens', 'number_of_nodes_crashed', 'safra_time', 'safra_time_after_termination', 'total_time', 'token_bytes']
+fields = ['tokens', 'tokens_after_termination', 'backup_tokens', 'number_of_nodes_crashed', 'safra_time', 'basic_time', 'safra_time_after_termination', 'total_time', 'token_bytes']
 data = defaultdict(lambda: list())
 
 for f in fields:
     for c in configurations:
-        data[f].append(get_box_trace(getattr(c, 'get_'+f)(), c.fault_sensitive))
+        data[f].append(get_box_trace(getattr(c, 'get_'+f)(), "%i-%f-%r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive)))
 
-# for plot_name, plot_data in data.items():
-    # plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
+for plot_name, plot_data in data.items():
+    plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
 
 
-for configuration in configurations:
-    data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")
-    #
-    #
-    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_number_of_nodes_crashed(), "faults")
-    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_backup_tokens(), "backup")
-    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens_after_termination(), "afterTermination")
-    data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_safra_time(), "times")
-    plotly.offline.plot(data, filename='../graphs/graph.html')
+# for configuration in configurations:
+#     data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")
+
+
+    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_number_of_nodes_crashed(), "faults")
+    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_backup_tokens(), "backup")
+    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens_after_termination(), "afterTermination")
+    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_safra_time(), "times")
+    # plotly.offline.plot(data, filename='../graphs/graph.html')
 

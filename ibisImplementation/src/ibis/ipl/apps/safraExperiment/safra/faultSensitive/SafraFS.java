@@ -71,9 +71,11 @@ public class SafraFS implements Observer, Safra {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
     }
+    timer.pause();
     if (status != basicAlgorithmIsActive) {
       experimentLogger.info(Event.getActiveStatusChangedEvent(status, reason));
     }
+    timer.start();
 
     basicAlgorithmIsActive = status;
     if (!basicAlgorithmIsActive) {
@@ -99,10 +101,8 @@ public class SafraFS implements Observer, Safra {
     }
 
     messageCounter++;
-    timer.pause();
-    experimentLogger.info(Event.getSafraSumsEvent(receiver, 1));
-    timer.start();
     timer.stopAndCreateSafraTimeSpentEvent();
+    experimentLogger.info(Event.getSafraSumsEvent(receiver, 1));
   }
 
   public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) throws IOException {
@@ -110,12 +110,11 @@ public class SafraFS implements Observer, Safra {
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
     }
-    setActive(true, "Received Basic message");
-    messageCounter--;
-
     timer.pause();
+    setActive(true, "Received Basic message");
     experimentLogger.info(Event.getSafraSumsEvent(sender, -1));
     timer.start();
+    messageCounter--;
 
     // Only color myself black if the message overtook the token. As defined in the paper
     if ((sender < communicationLayer.getID()
