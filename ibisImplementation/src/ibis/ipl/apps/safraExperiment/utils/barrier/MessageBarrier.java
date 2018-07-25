@@ -34,6 +34,7 @@ public class MessageBarrier implements Barrier {
 
   public void await() throws InterruptedException, IOException {
     lock.lock();
+    logger.trace(String.format("%04d waiting at %s", communicationLayer.getID(), name));
     try {
       waiting = true;
       if (communicationLayer.isRoot() || barrier.getCount() == 1) {
@@ -43,6 +44,7 @@ public class MessageBarrier implements Barrier {
       lock.unlock();
     }
     barrier.await();
+    logger.trace(String.format("%04d passed %d", communicationLayer.getID(), name));
     barrier = new CountDownLatch(getBarrierSize());
     lock.lock();
     try {
@@ -54,6 +56,7 @@ public class MessageBarrier implements Barrier {
 
   void countDown() throws IOException {
     lock.lock();
+    logger.trace(String.format("%04d counting down %s", communicationLayer.getID(), name));
     try {
       if (waiting) {
         try {

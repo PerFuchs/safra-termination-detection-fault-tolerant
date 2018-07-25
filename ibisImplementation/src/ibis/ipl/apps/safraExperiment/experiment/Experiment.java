@@ -225,6 +225,7 @@ public class Experiment {
     FileAppender fa = (FileAppender) experimentLogger.getAppender(experimentAppenderName);
     fa.close();
     experimentLogger.removeAppender(experimentAppenderName);
+    logger.trace(String.format("%04d finalized experiment logger.", communicationLayer.getID()));
   }
 
   public void writeSafraStatitistics() throws IOException {
