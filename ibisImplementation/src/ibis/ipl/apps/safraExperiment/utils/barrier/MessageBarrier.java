@@ -44,7 +44,7 @@ public class MessageBarrier implements Barrier {
       lock.unlock();
     }
     barrier.await();
-    logger.trace(String.format("%04d passed %d", communicationLayer.getID(), name));
+    logger.trace(String.format("%04d passed %s", communicationLayer.getID(), name));
     barrier = new CountDownLatch(getBarrierSize());
     lock.lock();
     try {
