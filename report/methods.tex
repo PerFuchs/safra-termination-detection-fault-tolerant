@@ -9,21 +9,21 @@
   Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
   
   As far as Chandy-Misra is concerned nodes are only interested in crashes of their parents and other ancessor on their path to the root node.
-  If a node \c{X} detects a crash of its parent, it sends a \c{REQUEST} message to each neighbour. 
-  If a neighbour \c{Y} of \c{X} receives a \c{REQUEST} message, it answers with a \c{DIST d} messages where \c{d} is its own distance. 
-  To save message \c{DIST d} is only send if $d < \infty $.
-  If \c{Y} happens to be a child of \c{X}, it resets its own \c{dist} and \c{parent} value to $\infty$ respectively $\bot$ and sends a \c{REQUEST} message to all its neighbours.
+  If a node \co{X} detects a crash of its parent, it sends a \co{REQUEST} message to each neighbour. 
+  If a neighbour \co{Y} of \co{X} receives a \co{REQUEST} message, it answers with a \co{DIST d} messages where \co{d} is its own distance. 
+  To save message \co{DIST d} is only send if $d < \infty $.
+  If \co{Y} happens to be a child of \co{X}, it resets its own \co{dist} and \co{parent} value to $\infty$ respectively $\bot$ and sends a \co{REQUEST} message to all its neighbours.
   
   I argue that this augmented Chandy Misra algorithm constructs correct sink trees in presence of fail-safe failures. 
   Each failure only affects nodes that see themselves as children, grandchildren and so on; that is, it only affects subtrees.
-  Because the perfect failure detector guarantees that each node failure will eventually be detected at the children of the failed node, they eventually send \c{REQUEST} message to all their neighbours.
-  The neighbours send \c{REQUEST} message to all their neighbours if they receive a \c{REQUEST} message from their parent. 
-  Therefore, eventually all nodes in the subtrees of a failing node are reached by \c{REQUEST} message and reset their \c{dist} and \c{parent} values.
-  Also all neighbours that receive a \c{REQUEST} message of a node that is not their parent, answer the \c{REQUEST} message with their current \c{dist} value.
+  Because the perfect failure detector guarantees that each node failure will eventually be detected at the children of the failed node, they eventually send \co{REQUEST} message to all their neighbours.
+  The neighbours send \co{REQUEST} message to all their neighbours if they receive a \co{REQUEST} message from their parent. 
+  Therefore, eventually all nodes in the subtrees of a failing node are reached by \co{REQUEST} message and reset their \co{dist} and \co{parent} values.
+  Also all neighbours that receive a \co{REQUEST} message of a node that is not their parent, answer the \co{REQUEST} message with their current \co{dist} value.
   This allows nodes in the affected subtree to rebuild new paths toward the root node.
   These new paths are correct when the answering node is not part of any affected subtree.
-  However, if they are part of an affected subtree (e.g. grand children of the crashed nodes), invalid paths are introduced - as these nodes might not be reached by any \c{REQUEST} message and therefore still believe they have a valid path towards root.
-  These invalid paths are corrected when the grandchildren are reached by the \c{REQUEST} message of their parent because on receipt they send \c{REQUEST} messages which reset all nodes considering them
+  However, if they are part of an affected subtree (e.g. grand children of the crashed nodes), invalid paths are introduced - as these nodes might not be reached by any \co{REQUEST} message and therefore still believe they have a valid path towards root.
+  These invalid paths are corrected when the grandchildren are reached by the \co{REQUEST} message of their parent because on receipt they send \co{REQUEST} messages which reset all nodes considering them
   parents. 
   This possible behaviour of introducing invalid paths that are corrected later, might lead to a bad theoretical message complexity but did not hinder the experiments.
   This indicates that this behaviour is not often triggered in praxis.
@@ -37,7 +37,9 @@
  %TODO Provide pseudo code?
   
 \subsection{Fault Simulation}
-	I simulate faults by stopping all Safra and basic algorithm processing, as well as, Safra or basic message sending in the faulty instance. Faults are triggered before and after interesting events e.g. directly before or after sending a basic message or token. 
+	I simulate faults by stopping Safra and the basic algorithm on the failing isntance.
+	In particular, a crashed node does not send or reacts to tokens or basic messages.
+	Faults are triggered before and after interesting events e.g. directly before or after sending a basic message or token. 
 	Before every experiment run it is determined at random which node is going to fail, on which event it is going to fail and after how many repetitions of this event e.g. after the 3rd time it forwards a token.
 	
 	In particular, I selected the following events to trigger a crash if not specified differently the crash is triggered before or after the event:
@@ -49,6 +51,7 @@
 	\end{itemize}
 	The range of repetitions is limited to maximize the chance that a node meant to fail actually does so. 
 	However, a node that is planned to fail is not guaranteed to do so.
+	For example, this leads to runs where 90\% of the nodes should fail but only 88\% do so.
 	I verify for every experiment that a reasonable amount of nodes have failed with regard to the planned amount.
 	
 	Alternatively, to the chosen approach to trigger failures, I considered the more random mechanism of running a thread that kills an instance after a random amount of time.
@@ -60,8 +63,29 @@
 	Hence, I have chosen a fault mechanism that focusses on these distinguishable scenarios.
 	As one might notices, the failure points are chosen to give raise to many different situations for our Safra versio to deal with. 
 	I deliberately decided against chosing special failure points with regard to the basic algorithm because this would be lead to less focussed testing of the fault tolerance of Safra.
-
+	
 \subsection{Fault Detection}
+Our Safra version assumes the presence of a perfect fault detector.
+This kind of fault detection is easy to implement and integrate with the system e.g.
+\cite{fokkink:2018} on page 113 describes a straightforward implementation.
+
+% TODO do I want a second reference e.g. a paper that shows an implementation
+As building a perfect fault detector is a well known and solved problem, but nonetheless time consuming, I decided to avoid implementing one.
+For this experiment fault detection is simulated by sending \co{CRASH} messages from crashing nodes to its neighbours. 
+This leads to a realistic fault detection model because these messages are sent asynchronlously through the same channels as all other messages. 
+Hence, closely imitating a perfect failure detector based on heartbeats. 
+In particular, a fault is detected \textit{eventually after} it happened as with every failure detector.
+\co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.
+
+After running the experiments, I noticed a limitation due to my fault detection mechanism:
+configurations in which a message is received from a node after its crash was detected, do not arise because I use FIFO channels for all messages.  %TODO connect to the argumentation for these channels.
+This could be easily fixed by using dedicated channels for crash messages - in IBIS this would manifest in dedicated "crash message" ports on each node.
+Then receiving crash messages would be out-of-band with regular message and the order of receiption would depend on sending time, the Linux scheduler and IBIS implementation details.
+The last two points are the reason why I decided against that approach at first.
+
+% TODO fix and run a few goes to provide evidence this does not matter
+  
+
 \subsection{Offline Analysis}
 
 \subsection{Enviroment}
