@@ -2,48 +2,44 @@
 
 \subsection{Chandy Misra}
  - src Distributed algorithms by Fokking
+ - either write and connec this ro just reference this in the next chapter
 \subsection {Fault tolerant Chandy Misra}
+  The fault tolerant Chandy Misra version used for our experiments constructs a sink tree in an undirected network under the assumption that a perfect failure detector is present at each node (a detector that does not suspect nodes that haven't actually failed and also will detect each failure eventually). 
+  Other than, the original Chandy Misra algorithm this version requires FIFO-channels.
+  Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
   
-   
-  - Setting:
-    - undirected network
-    - FIFO channels
-    - perfect failure detector "We moreover assume the
-    presence of a perfect failure detector at each node, meaning
-    that no spurious crash detections can happen and each node
-    crash is eventually detected at all other (alive) nodes."
-    
+  As far as Chandy-Misra is concerned nodes are only interested in crashes of their parents and other ancessor on their path to the root node.
+  If a node \c{X} detects a crash of its parent, it sends a \c{REQUEST} message to each neighbour. 
+  If a neighbour \c{Y} of \c{X} receives a \c{REQUEST} message, it answers with a \c{DIST d} messages where \c{d} is its own distance. 
+  To save message \c{DIST d} is only send if $d < \infty $.
+  If \c{Y} happens to be a child of \c{X}, it resets its own \c{dist} and \c{parent} value to $\infty$ respectively $\bot$ and sends a \c{REQUEST} message to all its neighbours.
   
-  - <request> message
-    - if a node detects crash of a parent it sends a request messeag to all neigbhours
-      - if the neighbour is a child, it sends request messages to all neigbours again
-      - else it answers with a dist message which is handled as every other
+  I argue that this augmented Chandy Misra algorithm constructs correct sink trees in presence of fail-safe failures. 
+  Each failure only affects nodes that see themselves as children, grandchildren and so on; that is, it only affects subtrees.
+  Because the perfect failure detector guarantees that each node failure will eventually be detected at the children of the failed node, they eventually send \c{REQUEST} message to all their neighbours.
+  The neighbours send \c{REQUEST} message to all their neighbours if they receive a \c{REQUEST} message from their parent. 
+  Therefore, eventually all nodes in the subtrees of a failing node are reached by \c{REQUEST} message and reset their \c{dist} and \c{parent} values.
+  Also all neighbours that receive a \c{REQUEST} message of a node that is not their parent, answer the \c{REQUEST} message with their current \c{dist} value.
+  This allows nodes in the affected subtree to rebuild new paths toward the root node.
+  These new paths are correct when the answering node is not part of any affected subtree.
+  However, if they are part of an affected subtree (e.g. grand children of the crashed nodes), invalid paths are introduced - as these nodes might not be reached by any \c{REQUEST} message and therefore still believe they have a valid path towards root.
+  These invalid paths are corrected when the grandchildren are reached by the \c{REQUEST} message of their parent because on receipt they send \c{REQUEST} messages which reset all nodes considering them
+  parents. 
+  This possible behaviour of introducing invalid paths that are corrected later, might lead to a bad theoretical message complexity but did not hinder the experiments.
+  This indicates that this behaviour is not often triggered in praxis.
   
-  - Correctness argument
-    - crash only interesting if any ancessor fails.
-    - by assumption of a perfect failure detector each node will eventually detect
-      if it's current parents crash 
-    - then it sends request message to all neighbours
-      - especially children
-        - which then do the same
-        - until eventually all nodes in the subtree are reached
-      - all none children answer with their dist
-        - outside of the subtree perfect, like normal node
-        - inside of the subtree (e.g. grandchildren) and is shorter, will be corrected
-          when they send out request messages.
-            - However, bad for complexity
-            
-        
-  - Further work
-    - no FIFO channels
-    - Complexity analysis
-    - formal proof
-    
-  - Experimental verification is done by us
+  The presented fault tolerant Chandy Misra algorithm could be improved by relieving the necessity for FIFO-channels, a more formal proof of correctness and a thourough complexity analysis.
+
+  Anyhow, my work suggests that the Chandy Misra version is correct because I ran it more than % TODO 
+  times and compared the constructed trees to the expected trees which where determined offline. The algorithm yielded the correct sink tree every time.
   
-  - Provide pseudo code 
+  
+ %TODO Provide pseudo code?
   
 \subsection{Fault Simulation}
+
+  
+ 
 \subsection{Fault Detection}
 \subsection{Offline Analysis}
 
