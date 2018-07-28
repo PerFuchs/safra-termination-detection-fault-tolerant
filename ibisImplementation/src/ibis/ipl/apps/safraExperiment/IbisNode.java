@@ -46,7 +46,7 @@ class IbisNode {
       boolean faultTolerant = args[2].equals("ft");
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
-      Logger.getLogger(IbisNode.class).setLevel(Level.INFO);
+      Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
       Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
@@ -130,9 +130,12 @@ class IbisNode {
 
       experiment.writeChandyMisraResults(chandyMisraNode);
       experiment.finalizeExperimentLogger();
+
+      logger.debug(String.format("%04d Finished writting results", communicationLayer.getID()));
       barrierFactory.getBarrier("ResultsWritten").await();
 
       if (communicationLayer.isRoot()) {
+        logger.debug("Starting verfication and output processing.");
         // Takes a long time for big networks skip it for them
         if (communicationLayer.getIbisCount() <= 500) {
           experiment.writeNetworkStatistics(network);

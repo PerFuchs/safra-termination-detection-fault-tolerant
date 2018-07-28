@@ -23,7 +23,7 @@ public class BarrierFactory implements Observer {
     }
   }
 
-  public Barrier getBarrier(String name) {
+  public synchronized Barrier getBarrier(String name) {
     if (!barriers.containsKey(name)) {
       if (signalBarrierWorking()) {
         barriers.put(name, new SignalledBarrier(name, communicationLayer, registry));
