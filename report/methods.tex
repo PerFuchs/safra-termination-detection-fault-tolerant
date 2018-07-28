@@ -1,0 +1,53 @@
+\section{Methods}  % TODO good title?
+
+\subsection{Chandy Misra}
+ - src Distributed algorithms by Fokking
+\subsection {Fault tolerant Chandy Misra}
+  
+   
+  - Setting:
+    - undirected network
+    - FIFO channels
+    - perfect failure detector "We moreover assume the
+    presence of a perfect failure detector at each node, meaning
+    that no spurious crash detections can happen and each node
+    crash is eventually detected at all other (alive) nodes."
+    
+  
+  - <request> message
+    - if a node detects crash of a parent it sends a request messeag to all neigbhours
+      - if the neighbour is a child, it sends request messages to all neigbours again
+      - else it answers with a dist message which is handled as every other
+  
+  - Correctness argument
+    - crash only interesting if any ancessor fails.
+    - by assumption of a perfect failure detector each node will eventually detect
+      if it's current parents crash 
+    - then it sends request message to all neighbours
+      - especially children
+        - which then do the same
+        - until eventually all nodes in the subtree are reached
+      - all none children answer with their dist
+        - outside of the subtree perfect, like normal node
+        - inside of the subtree (e.g. grandchildren) and is shorter, will be corrected
+          when they send out request messages.
+            - However, bad for complexity
+            
+        
+  - Further work
+    - no FIFO channels
+    - Complexity analysis
+    - formal proof
+    
+  - Experimental verification is done by us
+  
+  - Provide pseudo code 
+  
+\subsection{Fault Simulation}
+\subsection{Fault Detection}
+\subsection{Offline Analysis}
+
+\subsection{Enviroment}
+\subsubsection{IBIS}
+\subsubsection{DAS 4}
+\subsubsection{Network Topology}
