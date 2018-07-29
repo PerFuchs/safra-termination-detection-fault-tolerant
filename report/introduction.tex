@@ -1,1 +1,85 @@
-\section{Introduction}
+\section{Introduction} 
+This technical report presents an experiment using our fault tolerant Safra version (short SafraFT) \cite{ourpaper}
+  to detect termination of a fault tolerant Chandy Misra routing algorithm.
+ The fault tolerant Chandy Misra version is developed for this project as an extension of the fault sensitive Chandy Misra algorithm described in \cite{fokkink,2018} on page 57.
+ The extension and further important implementation decissions can be found in \cref{sec:methods}.
+ 
+The experiment aims to
+\begin{itemize}
+	\item backup our claim that SafraFT is correct by using it in a realistic setting and verifying that termination is detected in a timely manner after actual termination occured
+	\item compare the performance of SafraFT to the fault sensitive Safra implementation (abbriviated SafraFS) from \cite{safraPaper}
+	\item demonstrate the ability of SafraFT to handle networks with 25 and up to 2000 nodes in a fault free, 1 to 5 faults and highly faulty (90\% node failure) environment
+\end{itemize}
+
+Towards this aim, I measure the following dependent variables
+\begin{itemize}
+	\item total number of tokens send
+	\item number of tokens send after the basic algorithm terminated
+	\item number of backup tokens send
+	\item average token size in bytes
+	\item time spent processing Safra's procedures
+	\item time spent processing the basic algorithm's procedures
+	\item total time spent for the complete computation until termination has been detected
+\end{itemize} 
+
+All these metrics are measured within the following enviroments:
+\begin{itemize}
+	\item network size of 25, 250, 500, 1000 and 2000 nodes
+	\item using SafraFS and SafraFT
+	\item in a fault free enviroment
+	\item for SafraFT additionally with 1 - 5 and up 90\% node failures (simulating nearly fault free networks and highly faulty enviroment)
+\end{itemize}
+
+I do not aim to show the exact relationships between the dependent variables and the indepent variables e.g. the relationship between backup tokens send and the amount of faults.
+This is because the exact relationship depends heavily on the basic algorithm, the network and even the hardware the system is running on.
+Therefore, detailing the dependence would not be helpful to anyone considering to apply our algorithm to his system.
+However, this experiment should enable the reader to judge if SafraFT can be used in practice and convince him that SafraFT does not perform worse than SafraFS in a fault free environment (except for its higher bit complexity).
+As well as, giving a good feeling for the trends of the relationships between environment and the measured metrics.
+
+
+ % TODO include scaling information in the results
+
+\begin{comment}
+Hypothesis
+  Safra compares to safra without signficant changes in with no failures on all network sizes
+    tokens
+    tokens after termination
+    
+      no signifcant change in token forwarding
+    time ??
+      no hard, complicated computations
+    time after termination
+      no hard, complicated computations and no change in token forwarding
+  
+  our Safra has higher bit complexity 
+   increases linearly with network size network size of 1 == then upwards linearly
+
+  %TODO    
+  Influence from faults
+    backup tokens == number of faults - not correct
+      difference caused by backup tokens / network size under same fault conditions?
+      reason:  // Not to write here
+        node gets to know about failing node because of token
+          e.g. if its a bit further out and it gets the crashed message later
+        node crash behind each other in the ring and only one backup token is send?
+    Token count increases for a low level of faults as it colors nodes black and incurs in further rounds when node detects crash or when nodes gets to know of crash of successor	x
+      These are mostly done during computation because CM is not processing heavy and gets passive a lot
+      -> No change on tokens after termination
+    Token count and time decrease for a high level of fault as network size is reduced. 
+    Same for time spent
+    
+    Average token size grows as the crashes are propagated by the token each of them takes one round so impact on average token size depends on network size and the signficance also on number of rounds
+      more noticable for many faults but than there are also less tokens also in that round
+  \end{comment}
+  
+  
+ 
+Before performing this experiment George applied SafraFT to a simulated, random basic algorithm in a multi threaded enviroment emulating a distributed system.
+These experiments showed strong evidence towards correctness and scalabilty of SafraFT.
+The implementation, technical report and results can be found here: \cite{georgework}.
+Also, they helped with my project as a reference implementation and as assurance that I would not run into serious implementation issues.
+So I would like to thank George for its groundwork of providing a running implementation of SafraFT.
+The experiment presented here is performed as reaction to reviewers feedback to add `compelling end-to-end application'.
+  
+
+  
