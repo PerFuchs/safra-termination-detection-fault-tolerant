@@ -14,6 +14,29 @@
   To save message \co{DIST d} is only send if $d < \infty $.
   If \co{Y} happens to be a child of \co{X}, it resets its own \co{dist} and \co{parent} value to $\infty$ respectively $\bot$ and sends a \co{REQUEST} message to all its neighbours.
   
+  The requirement for FIFO channels is best understood by a counterexample example on a none FIFO network.
+  The network used for this example is shown in \cref{fig:fifoNecessaryNetwork}. 
+  Only important messages are mentioned; all other can be assumed to be send and received in any order.
+  The Chandy Misra algorithm starts with \co{A} as root node sending \co{DIST 0} messages to \co{B} and \co{C} which on receive consider \co{A} there parent and update their \co{dist} variable.
+  They also send \co{DIST} message to their neighbours. 
+  When \co{C} and \co{D} receive the \co{DIST} messages from \co{B} respectively \co{C} they consider \co{B} respecitively \co{C} their parents.
+  \co{C} sends a \co{DIST TODO} message to \co{D} - lets call it \co{M1}.
+  Now \co{B} crashes and when \co{C} detects this, it sends a \co{REQUEST} message towards \co{A} and \co{D} - call the latter \co{M2}.
+  If \co{M2} overtakes \co{M1}, \co{D} resets its variabbles and on receive of \co{M1} considers \co{C} its parent which is correct but with an incorrect \co{dist} value of TODO.
+  All \co{DIST} messages received by \co{D} from now on have a higher distance value and are dismissed. 
+  So the error is never corrected.
+  A straightforward fix for this is to use FIFO networks.
+  
+  \begin{figure}[h]
+  	\includegraphics[height=5cm]{figures/FIFO_necessary}
+  	\centering
+  	\caption{None FIFO network with \co{A} as root to demonstrate necessity of FIFO networks.}	
+  	\label{fig:fifoNecessaryNetwork}
+  \end{figure}
+  
+  
+  % TODO explain why FIFO networks are no problem for us.
+  
   I argue that this augmented Chandy Misra algorithm constructs correct sink trees in presence of fail-safe failures. 
   Each failure only affects nodes that see themselves as children, grandchildren and so on; that is, it only affects subtrees.
   Because the perfect failure detector guarantees that each node failure will eventually be detected at the children of the failed node, they eventually send \co{REQUEST} message to all their neighbours.
@@ -32,11 +55,10 @@
 
   Anyhow, my work suggests that the Chandy Misra version is correct because I ran it more than % TODO 
   times and compared the constructed trees to the expected trees which where determined offline. The algorithm yielded the correct sink tree every time.
-  
-  %TODO why FIFO channels
-  
+   
   
  %TODO Provide pseudo code?
+ % TODO provide example?
   
 \subsection{Fault Simulation}
 	I simulate faults by stopping Safra and the basic algorithm on the failing isntance.
@@ -90,28 +112,24 @@ The last two points are the reason why I decided against that approach at first.
 
 \subsection{Offline Analysis}
  % TODO is that more in Results on defintion from token after termination.
-We measure tokens before and after termination
-  - define 
-    - tokens after termination
-    - actual termination (not real point of time for termination)
-      defintion:
-       1. No messages in the channels
-        2. All nodes are passive
-        3. Termination is postponed until all nodes that need to take action on any fault, detected the regarding fault. Only nodes which parent node fails need to take action and this might trigger further events in any other node.
-    - detected termination
-    
-  - needs means of determining termination independent and closer to actual termination than Safra
-    - by logging token count, time spent events, active status change, message counter change (mean to determine no messages in the cahnnel) and parent crash detected
-    - based on this detecting actual termination
-    - by logging token count, time spent events. Dividing in before and after termination.
-    
-  - Also using it for verification  see \cref{verifaction}
-		
-    
+ We measure tokens before and after termination
+ - define 
+ - tokens after termination
+ - actual termination (not real point of time for termination)
+ defintion:
+ 1. No messages in the channels
+ 2. All nodes are passive
+ 3. Termination is postponed until all nodes that need to take action on any fault, detected the regarding fault. Only nodes which parent node fails need to take action and this might trigger further events in any other node.
+ - detected termination
+ 
+ - needs means of determining termination independent and closer to actual termination than Safra
+ - by logging token count, time spent events, active status change, message counter change (mean to determine no messages in the cahnnel) and parent crash detected
+ - based on this detecting actual termination
+ - by logging token count, time spent events. Dividing in before and after termination.
+ 
+ - Also using it for verification  see \cref{verifaction}
 
-  
-
-\subsection{Enviroment}
+\subsection{Environment}
 \subsubsection{IBIS}
   IBIS is a Java-based platform for distributed computing developed by researchers of the Vrije Universiteit Amsterdam. 
   Its suppart IPL is used as the message passing library for this project. 
@@ -126,7 +144,7 @@ We measure tokens before and after termination
   At time of the experiments the VU had 41 nodes with 8 cores per node.
   Therefore, multiple instances were run on each physical node.
   This is possible because Safra and Chandy Misra are both communication heavy with rather low processing and memory requirements.
-  % TODO AFek kutten yung
+  % TODO AFK
  
 \subsubsection{Network Topology}
   The basic algorithm I use take a network topology to work on as input. 
