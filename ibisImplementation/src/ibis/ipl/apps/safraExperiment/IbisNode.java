@@ -122,8 +122,6 @@ class IbisNode {
       safraNode.startAlgorithm();
       chandyMisraNode.startAlgorithm();
 
-      logger.debug(String.format("%04d started algorithm", communicationLayer.getID()));
-
       safraNode.await();
       chandyMisraNode.terminate();
       totalTime.stopAndCreateTotalTimeSpentEvent();
