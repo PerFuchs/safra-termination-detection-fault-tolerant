@@ -37,6 +37,7 @@ public class Event implements Comparable<Event> {
   private final boolean isSafraReduceTime;    // TODO delete in the end
   private final boolean isBasicTimeSpent;
   private final boolean isTotalTimeSpentEvent;
+  private final boolean isAnnounce;
 
   private final boolean activeStatus;
   private final int messageCounterUpdateIndex;
@@ -60,6 +61,8 @@ public class Event implements Comparable<Event> {
 
     this.isBackupTokenSend = e.contains(getBackupTokenSendEvent());
     boolean typeFound = isBackupTokenSend;  // To avoid unnecessary string operations.
+    this.isAnnounce = !typeFound && e.contains("<<Announce>>");
+    typeFound |= isAnnounce;
     this.isNodeCrashed = !typeFound && e.contains(getNodeCrashedEvent());
     typeFound |= isNodeCrashed;
     this.isParentCrashDetected = !typeFound && e.contains(getParentCrashEvent());
@@ -384,5 +387,13 @@ public class Event implements Comparable<Event> {
 
   public boolean isBasicTimeSpentEvent() {
     return isBasicTimeSpent;
+  }
+
+  public long getTime() {
+    return time.getTime();
+  }
+
+  public boolean isAnnounce() {
+    return isAnnounce;
   }
 }
