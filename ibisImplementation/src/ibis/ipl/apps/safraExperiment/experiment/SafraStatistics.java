@@ -15,6 +15,7 @@ public class SafraStatistics {
   private long safraTimeSpent;
   private long basicTimeSpent;
   private long safratTimeSpentAfterTermination;
+  private long totalTimeAfterTermination;
   private int backupTokenSend;
   private int tokenSendAfterTermination;
   private int tokenSend;
@@ -37,6 +38,9 @@ public class SafraStatistics {
     safraTimeSpent = 0;
     basicTimeSpent = 0;
     safratTimeSpentAfterTermination = 0;
+    totalTimeAfterTermination = 0;
+
+    long actualTerminationTime = 0;
 
     // For the fault sensitive variant only the 0th inner index is used.
     int[][] nodeSums = new int[numberOfNodes][numberOfNodes];
@@ -127,6 +131,15 @@ public class SafraStatistics {
         // Backup tokens can be issued after termination this behaviour is accounted for because every backupTokenSend
         // event has a corresponding tokenSend event.
        }
+
+       if (terminated) {
+        actualTerminationTime = e.getTime();
+       }
+
+       if (e.isAnnounce()) {
+        totalTimeAfterTermination = e.getTime() - actualTerminationTime;
+       }
+
     }
   }
 
@@ -208,7 +221,7 @@ public class SafraStatistics {
   }
 
   public void writeToCSVFile(Path filePath) throws IOException {
-    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;numberOfNodesCrashed;basicTime\n";
+    String headerLine = "tokens;tokenAfterTermination;backupToken;tokenSize (bytes);safraTime (seconds);safraTimeAfterTermination;totalTime;numberOfNodesCrashed;basicTime;totalTimeAfterTermination\n";
 
     StringBuilder contentLine = new StringBuilder();
     contentLine.append(getTokenSend());
@@ -228,10 +241,15 @@ public class SafraStatistics {
     contentLine.append(getNumberOfNodesCrashed());
     contentLine.append(";");
     contentLine.append(getBasicTimeSpent());
+    contentLine.append(getTotalTimeAfterTermination());
+    contentLine.append(";");
     contentLine.append("\n");
 
-
     Files.write(filePath, (headerLine + contentLine.toString()).getBytes());
+  }
+
+  private long getTotalTimeAfterTermination() {
+    return totalTimeAfterTermination;
   }
 
   public int getNumberOfNodesCrashed() {
