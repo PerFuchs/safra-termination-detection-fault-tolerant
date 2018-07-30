@@ -17,10 +17,11 @@ def compare_safra_versions(configurations):
     compare_tokens_after_termination(paired_by_network_size)
 
     compare_basic_times(paired_by_network_size)
+    compare_token_bytes(paired_by_network_size)
     compare_safra_times(paired_by_network_size)
     compare_safra_times_after_termination(paired_by_network_size)
     compare_total_times(paired_by_network_size)
-    compare_token_bytes(paired_by_network_size)
+    compare_total_times_after_termination
 
 def compare_tokens(configurations):
     for network_size, (fault_tolerant, fault_sensitive) in configurations.items():
@@ -51,6 +52,11 @@ def compare_safra_times_after_termination(configurations):
     for network_size, (fault_tolerant, fault_sensitive) in configurations.items():
         show_mean_equality("Safra time after termination", network_size, fault_tolerant.get_safra_times_after_termination(), fault_sensitive.get_safra_times_after_termination(), True)
 
+def compare_total_times_after_termination(configurations):
+    for network_size, (fault_tolerant, fault_sensitive) in configurations.items():
+        show_mean_equality("Total time after termination", network_size, fault_tolerant.get_total_times_after_termination(), fault_sensitive.get_total_times_after_termination(), True)
+
+
 
 def compare_total_times(configurations):
     for network_size, (fault_tolerant, fault_sensitive) in configurations.items():
@@ -67,6 +73,7 @@ def compare_token_bytes(configurations):
 
         print("Network size %i Bytes per token: %i" % (network_size, round(mean)))
 
+
 def show_mean_equality(name, network_size, ft, fs, float=False):
     mean_ft = statistics.mean(ft)
     mean_fs = statistics.mean(fs)
@@ -79,4 +86,4 @@ def show_mean_equality(name, network_size, ft, fs, float=False):
     else:
         print("%s Network Size: %i Means FT/FS: %i  %i Difference %i%%" % (name, network_size, round(mean_ft), round(mean_fs), difference_percent))
 
-
+    print("\n\n")

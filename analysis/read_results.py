@@ -49,6 +49,12 @@ class Repetition:
                 self.safra_time_after_termination = float(statistics['safraTimeAfterTermination'])
                 self.total_time = float(statistics['totalTime'])
                 self.basic_time = float(statistics['basicTime'])
+
+                if 'totalTimeAfterTermination' in statistics:
+                    self.total_time_after_termination = float(statistics['totalTimeAfterTermination'])
+                else:
+                    self.total_time_after_termination = -1
+
                 if 'numberOfNodesCrashed' in statistics:
                     self.number_of_nodes_crashed = int(statistics['numberOfNodesCrashed'])
                     real_fault_percentage = self.number_of_nodes_crashed / number_of_nodes
@@ -111,6 +117,9 @@ class Configuration:
 
     def get_safra_times_after_termination(self):
         return list(map(lambda r: r.safra_time_after_termination, self.repetitions))
+
+    def get_total_times_after_termination(self):
+        return list(map(lambda r: r.total_time_after_termination, self.repetitions))
 
     def get_number_of_nodes_crashed(self):
         return list(map(lambda r: r.number_of_nodes_crashed, self.repetitions))
