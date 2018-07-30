@@ -207,13 +207,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       nextNode = (nextNode + 1) % communicationLayer.getIbisCount();
     }
     if (nextNode == communicationLayer.getID()) {
-      logger.debug(String.format("%d next successor is myself", communicationLayer.getID()));
       if (!basicAlgorithmIsActive) {
         announce();
       }
       return;
     }
-    logger.debug(String.format("%d choosing new successor %d", communicationLayer.getID(), nextNode));
     if (isBlackUntil != communicationLayer.getID()) {
       isBlackUntil = furthest(isBlackUntil, nextNode);
     }
@@ -230,15 +228,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_RECEIVING_TOKEN);
 
     TokenFT t = (TokenFT) token;
-    logger.debug(String.format("%d received token.", communicationLayer.getID()));
-
     if (t.sequenceNumber == getSequenceNumber() + 1) {
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);
       this.token = t;
       handleToken(timer);
-    } else {
-      logger.debug(String.format("%d ignored because of sequence number.", communicationLayer.getID()));
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -248,8 +242,6 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       int me = communicationLayer.getID();
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
       report.removeAll(token.crashed);
-
-      logger.debug(String.format("%d isBlackUntil %d", me, isBlackUntil));
 
       if (isBlackUntil == me || report.isEmpty()) {
         long mySum = 0;
@@ -269,7 +261,6 @@ public class SafraFT implements Observer, Safra, CrashHandler {
           }
         }
 
-        logger.debug(String.format("%d calculated sum %d", me, sum));
         if (sum == 0) {
           announce();
           return;
@@ -318,13 +309,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     experimentLogger.info(Event.getTokenSendEvent(token.getSize()));
     timer.start();
 
-    logger.debug(String.format("%d Forwarding token to %d", communicationLayer.getID(), nextNode));
-    logger.debug(String.format("%d Token has %d crash reports", communicationLayer.getID(), token.crashed.size()));
-
     this.backupToken = token;
     this.token = null;
     if (nextNode == communicationLayer.getID()) {
-      logger.debug(String.format("%d considering myself next", communicationLayer.getID()));
       if (!basicAlgorithmIsActive) {
         announce();
         return;
