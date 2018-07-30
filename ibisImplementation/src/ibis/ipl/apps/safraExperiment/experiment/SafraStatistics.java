@@ -132,12 +132,14 @@ public class SafraStatistics {
         // event has a corresponding tokenSend event.
        }
 
-       if (terminated) {
+       if (terminated && actualTerminationTime == 0) {
+        logger.debug("Actual time after termination: " + e.getTime());
         actualTerminationTime = e.getTime();
        }
 
        if (e.isAnnounce()) {
         totalTimeAfterTermination = e.getTime() - actualTerminationTime;
+         logger.debug("Total time after termination " + totalTimeAfterTermination);
        }
 
     }
@@ -241,15 +243,15 @@ public class SafraStatistics {
     contentLine.append(getNumberOfNodesCrashed());
     contentLine.append(";");
     contentLine.append(getBasicTimeSpent());
-    contentLine.append(getTotalTimeAfterTermination());
     contentLine.append(";");
+    contentLine.append(getTotalTimeAfterTermination());
     contentLine.append("\n");
 
     Files.write(filePath, (headerLine + contentLine.toString()).getBytes());
   }
 
-  private long getTotalTimeAfterTermination() {
-    return totalTimeAfterTermination;
+  private double getTotalTimeAfterTermination() {
+    return totalTimeAfterTermination / 1000.0;
   }
 
   public int getNumberOfNodesCrashed() {
