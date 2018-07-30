@@ -13,15 +13,11 @@ import scipy.stats as st
 
 from graphing import get_scatter_graph_with_mean_and_confidence_interval, get_box_trace
 
-experiment_folder = sys.argv[1]
-
-
 class MyDialect(csv.excel):
     delimiter = ';'
 
 
 class Repetition:
-
     def read_warning_file(self):
         warningFileName = '/'.join([self.folder, '.warning'])
         if isfile(warningFileName):
@@ -58,37 +54,48 @@ class Repetition:
                     real_fault_percentage = self.number_of_nodes_crashed / number_of_nodes
                     if real_fault_percentage < fault_percentage - 0.1:
                         self.valid = False
-                        self.errors.append("Fault percentage of %f but aimed for %f" % (real_fault_percentage, fault_percentage))
+                        self.errors.append(
+                            "Fault percentage of %f but aimed for %f" % (real_fault_percentage, fault_percentage))
                 break  # There should be only one line
 
         logs = len(list(filter(lambda f: f.endswith('.log'), listdir(folder))))
         chandy_misra_results = len(list(filter(lambda f: f.endswith('.chandyMisra'), listdir(folder))))
 
-        assert logs == number_of_nodes + 1  # 1 is the out.log file summarizing the whole run
-        assert chandy_misra_results == number_of_nodes
+        assert logs == number_of_nodes + 1, folder  # 1 is the out.log file summarizing the whole run
+        assert chandy_misra_results == number_of_nodes, folder
 
 
 class Configuration:
-    def __init__(self, folder):
+
+    def __init__(self, repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive):
+        self.fault_sensitive = fault_sensitive
+        self.fault_percentage = fault_percentage
+        self.number_of_nodes = number_of_nodes
+        self.invalid_repetitions = invalid_repetitions
+        self.repetitions = repetitions
+
+    @classmethod
+    def from_folder(cls, folder):
         configuration_name = basename(folder)
         number_of_nodes, fault_percentage, _ = configuration_name.split('-')
-        self.number_of_nodes = int(number_of_nodes)
+        number_of_nodes = int(number_of_nodes)
         if fault_percentage == "fs":
-            self.fault_sensitive = True
-            self.fault_percentage = 0.0
+            fault_sensitive = True
+            fault_percentage = 0.0
         else:
-            self.fault_sensitive = False
-            self.fault_percentage = int(fault_percentage) / 100
+            fault_sensitive = False
+            fault_percentage = float(fault_percentage) / 100
 
-        self.repetitions = []
-        self.invalid_repetitions = []
+        repetitions = []
+        invalid_repetitions = []
         for file_name in listdir(folder):
             if isdir('/'.join((folder, file_name))) and not file_name.endswith('.failure'):
-                r = Repetition('/'.join((folder, file_name)), self.number_of_nodes, self.fault_percentage)
+                r = Repetition('/'.join((folder, file_name)), number_of_nodes, fault_percentage)
                 if r.valid:
-                    self.repetitions.append(r)
+                    repetitions.append(r)
                 else:
-                    self.invalid_repetitions.append(r)
+                    invalid_repetitions.append(r)
+        return Configuration(repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive)
 
     def get_tokens(self):
         return list(map(lambda r: r.tokens, self.repetitions))
@@ -96,13 +103,13 @@ class Configuration:
     def get_token_bytes(self):
         return list(map(lambda r: r.token_bytes, self.repetitions))
 
-    def get_safra_time(self):
+    def get_safra_times(self):
         return list(map(lambda r: r.safra_time, self.repetitions))
 
-    def get_total_time(self):
+    def get_total_times(self):
         return list(map(lambda r: r.total_time, self.repetitions))
 
-    def get_safra_time_after_termination(self):
+    def get_safra_times_after_termination(self):
         return list(map(lambda r: r.safra_time_after_termination, self.repetitions))
 
     def get_number_of_nodes_crashed(self):
@@ -114,53 +121,36 @@ class Configuration:
     def get_tokens_after_termination(self):
         return list(map(lambda r: r.tokens_after_termination, self.repetitions))
 
-    def get_basic_time(self):
+    def get_basic_times(self):
         return list(map(lambda r: r.basic_time, self.repetitions))
 
-
-configurations = []
-
-for file_name in listdir(experiment_folder):
-    configuration_folder = '/'.join((experiment_folder, file_name))
-    if isdir(configuration_folder) and configuration_folder.endswith('.run'):
-        configuration = Configuration(configuration_folder)
-        if (configuration.number_of_nodes == 50):
-            configurations.append(configuration)
-
-configurations = sorted(configurations, key=lambda c: c.fault_percentage)
-configurations = sorted(configurations, key=lambda c: c.number_of_nodes)
-
-for c in configurations:
-    print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
-    print("Nodes: %i Fault Percentage: %f" % (c.number_of_nodes, c.fault_percentage))
-    print("Repetitions: %i \nInvalid Repetitions: %i" % (len(c.repetitions), len(c.invalid_repetitions)))
-
-    print("Errors:")
-    for r in c.invalid_repetitions:
-        print("Repetition: %i" % r.number)
-        for e in r.errors:
-            print("  " + e)
-    print("")
-    print("")
-
-fields = ['tokens', 'tokens_after_termination', 'backup_tokens', 'number_of_nodes_crashed', 'safra_time', 'basic_time', 'safra_time_after_termination', 'total_time', 'token_bytes']
-data = defaultdict(lambda: list())
-
-for f in fields:
-    for c in configurations:
-        data[f].append(get_box_trace(getattr(c, 'get_'+f)(), "%i-%f-%r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive)))
-
-for plot_name, plot_data in data.items():
-    plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
+    def merge_with(self, other):
+        assert self.fault_sensitive == other.fault_sensitive
+        assert self.number_of_nodes == other.number_of_nodes
+        assert self.fault_percentage == other.fault_percentage
+        self.repetitions += other.repetitions
+        self.invalid_repetitions += other.invalid_repetitions
+        return self
 
 
-# for configuration in configurations:
-#     data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")
+def get_configurations(folder):
+    configurations = defaultdict(lambda: list())
 
+    for file_name in listdir(folder):
+        configuration_folder = '/'.join((folder, file_name))
+        if isdir(configuration_folder) and configuration_folder.endswith('.run'):
+            configuration = Configuration.from_folder(configuration_folder)
+            configurations[(configuration.number_of_nodes, configuration.fault_percentage, configuration.fault_sensitive)].append(configuration)
 
-    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_number_of_nodes_crashed(), "faults")
-    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_backup_tokens(), "backup")
-    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens_after_termination(), "afterTermination")
-    # data += get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_safra_time(), "times")
-    # plotly.offline.plot(data, filename='../graphs/graph.html')
+    merged_configurations = []
+    for key_values, similiar_configurations in configurations.items():
+        merged = Configuration([], [], *key_values)
+        for c in similiar_configurations:
+            merged = merged.merge_with(c)
+        merged_configurations.append(merged)
 
+    merged_configurations = sorted(merged_configurations, key=lambda c: c.fault_sensitive)
+    merged_configurations = sorted(merged_configurations, key=lambda c: c.fault_percentage)
+    merged_configurations = sorted(merged_configurations, key=lambda c: c.number_of_nodes)
+
+    return merged_configurations
