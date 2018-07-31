@@ -10,7 +10,7 @@ def get_scatter_graph_with_mean_and_confidence_interval(x_axis, values, name):
     values_trace = go.Scatter(
         x=x_axis,
         y=values,
-        mode='markers',
+        mode='lines+markers',
         marker={
             'size': 15
         },
@@ -43,13 +43,14 @@ def get_scatter_graph_with_mean_and_confidence_interval(x_axis, values, name):
     return data
 
 
-def get_box_trace(values, name):
+def get_box_trace(values, name, color='rgb(107,174,214)'):
     return go.Box(
         y = values,
         name = name,
         boxpoints = 'outliers',
+        boxmean = False,
         marker = dict(
-            color = 'rgb(107,174,214)'),
+            color = color),
         line = dict(
-            color = 'rgb(107,174,214)')
+            color = color)
     )

@@ -73,7 +73,8 @@ class Repetition:
 
 class Configuration:
 
-    def __init__(self, repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive):
+    def __init__(self, repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive, fault_group):
+        self.fault_group = fault_group
         self.fault_sensitive = fault_sensitive
         self.fault_percentage = fault_percentage
         self.number_of_nodes = number_of_nodes
@@ -85,12 +86,21 @@ class Configuration:
         configuration_name = basename(folder)
         number_of_nodes, fault_percentage, _ = configuration_name.split('-')
         number_of_nodes = int(number_of_nodes)
-        if fault_percentage == "fs":
+        if fault_percentage == 'fs':
             fault_sensitive = True
             fault_percentage = 0.0
         else:
             fault_sensitive = False
             fault_percentage = float(fault_percentage) / 100
+
+        if fault_sensitive:
+            fault_group = '0 fs'
+        elif fault_percentage == 0.0:
+            fault_group = '0'
+        elif fault_percentage == 0.9:
+            fault_group = '90'
+        else:
+            fault_group = '5n'
 
         repetitions = []
         invalid_repetitions = []
@@ -101,7 +111,7 @@ class Configuration:
                     repetitions.append(r)
                 else:
                     invalid_repetitions.append(r)
-        return Configuration(repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive)
+        return Configuration(repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive, fault_group)
 
     def get_tokens(self):
         return list(map(lambda r: r.tokens, self.repetitions))
@@ -149,7 +159,7 @@ def get_configurations(folder):
         configuration_folder = '/'.join((folder, file_name))
         if isdir(configuration_folder) and configuration_folder.endswith('.run'):
             configuration = Configuration.from_folder(configuration_folder)
-            configurations[(configuration.number_of_nodes, configuration.fault_percentage, configuration.fault_sensitive)].append(configuration)
+            configurations[(configuration.number_of_nodes, configuration.fault_percentage, configuration.fault_sensitive, configuration.fault_group)].append(configuration)
 
     merged_configurations = []
     for key_values, similiar_configurations in configurations.items():

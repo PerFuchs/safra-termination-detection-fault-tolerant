@@ -18,7 +18,6 @@ from read_results import get_configurations
 experiment_folder = sys.argv[1]
 configurations = get_configurations(experiment_folder)
 
-
 for c in configurations:
     print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
     print("Nodes: %i Fault Percentage: %f Fault Sensitive: %r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive))
