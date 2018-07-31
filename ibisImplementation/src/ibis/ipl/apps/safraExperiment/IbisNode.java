@@ -58,7 +58,7 @@ class IbisNode {
       Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
 
-      IbisCapabilities s = new IbisCapabilities(IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
+      IbisCapabilities s = new IbisCapabilities(IbisCapabilities.TERMINATION, IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
 
       PortType porttype = new PortType(PortType.CONNECTION_MANY_TO_ONE, PortType.COMMUNICATION_RELIABLE, PortType.RECEIVE_AUTO_UPCALLS, PortType.SERIALIZATION_DATA, PortType.COMMUNICATION_FIFO);
 
@@ -157,6 +157,8 @@ class IbisNode {
       }
 
       barrierFactory.getBarrier("Done").await();
+      registry.terminate();
+      registry.waitUntilTerminated();
 
       signalHandler.stop();
       ibis.end();
