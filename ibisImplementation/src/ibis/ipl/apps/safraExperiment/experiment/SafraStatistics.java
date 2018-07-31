@@ -138,6 +138,10 @@ public class SafraStatistics {
        }
 
        if (e.isAnnounce()) {
+        if (!terminated) {
+          logger.error("Announce was called before actual termination");
+          experiment.writeToErrorFile("Announce was called before actual termination.");
+        }
         totalTimeAfterTermination = e.getTime() - actualTerminationTime;
          logger.debug("Total time after termination " + totalTimeAfterTermination);
        }
