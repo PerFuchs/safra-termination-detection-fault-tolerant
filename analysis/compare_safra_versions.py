@@ -22,6 +22,7 @@ def compare_safra_versions(configurations):
 	present_processing_times(paired_by_network_size_sorted)
 	present_total_times(paired_by_network_size_sorted)
 
+	compare_token_bytes(paired_by_network_size_sorted)
 
 # TODO use difference symbol should that be in ratio not percent?
 def present_processing_times(configurations):
@@ -85,3 +86,12 @@ def present_total_times(configurations):
 		cells=dict(values=values)
 	)]
 	plotly.plotly.plot(data, filename='total_times.html')
+
+
+
+def compare_token_bytes(configurations):
+	for network_size, (fault_tolerant, fs) in configurations.items():
+		bytes_per_token = map(lambda t: t[0] / t[1], zip(fault_tolerant.get_token_bytes(), fault_tolerant.get_tokens()))
+		mean = statistics.mean(fault_tolerant.get_token_bytes())
+
+		print("Network size %i Bytes per token: %i" % (network_size, round(mean)))

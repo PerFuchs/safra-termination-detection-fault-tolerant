@@ -1,15 +1,117 @@
 \section{Results}
+\label{sec:results}
 
-* Metrics definition
-* How many runs
-  * Independent variables
-  * Dependend variables
-  
-Show results
 
-  - Verification 
-  - CM result compared to actual result
-  - no warn and error messages
-  %TODO search logs for execption traces and words as warn, error check them
-  % TODO document raw data format
-  - networks to be interesting
+Verification
+compare expected tree to actual tree
+* explain problem with CM about nodes that should fail not failing
+* check every case of problems with CM
+checks if anything happens after termination
+* nothing did happen
+checks that detected termination happened after actual termination  
+
+
+% TODO add total timer after termination to metrics in introdution  
+token bytes constant 12 for SafraFT linear upwards for SafraFT starting at 420 and endind at 
+
+\subsection{Comparision of Safra versions}
+This section compares SafraFS and SafraFT. 
+Additionally, it analysis how the network size influences both algorithms.
+
+The number of tokens send in total and after termination is presented in \cref{fig:tokens.png}.
+The key observation is that SafraFS and SafraFT behave the same for all network sizes.
+There is no notable difference between the medians, the variance and the ratio between total tokens and tokens after termination for any network size - except for a unusual high variance in tokens after termination SafraFS for 1000 nodes and a high variance in total tokens for SafraFS for 2000 nodes % TODO is that a dirty experiment - can it be fixed by repeting it?
+As one would expect, the number of tokens seems to grow linearly with the network size.
+Note that the first network size is 5 times smaller than the second after the network size doubles for each run.
+
+The bit complexity of SafraFS is constant.
+In this experiment each token of SafraFS contains 12 bytes.
+SafraFT has a bit complexity linearly to the network size (when no faults occur).
+For a network of 50 nodes each token has 420 bytes; a token in a 2000 node network counts 16020 bytes.
+The growth can be described by $bytes = 8 * <network size> + 20$.
+
+I measured two kinds of timing metrics in this experiment.
+On the one hand, there are the wall time metrics of total time and total time after termination.
+Both were recorded in elapsed seconds between two events. 
+These events are start of the Safra and basic algorithm until each instance is informed of termination for total time. 
+Total time after termination is defined as the ammount of seconds between the actual termination (as defined in \cref{TODO}) and the event of an node calling
+announce. % TODO is that too much explanation, does everybody but you know so?
+On the ohter hand, there are basic, Safra and Safra after termination processing times (including the time needed to send of messages).
+These are the accumulated times all instances needed to process basic or Safra functionality.
+Total times and processing times are measured in a different way and should not be compared directly for multiple reasons. 
+First, while total times include idle times, time spent for logging (where the process did not execute or methods), processing time do not include these.
+Secondly, total time is wall time between two events and processing times are accumulated over all processes. 
+One particular example for when this leads to differences is that time spent concurrently by two processes counts double in processing time metrics but only once in wall time metrics.
+
+One can observer in \cref{table:processing\_times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
+Furthermore, one sees that while SafraFS timing grow much slower than SafraFT timings and that the difference becomes bigger. 
+This hints for a change in time complexity between the two versions.
+
+A small subexperiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writting tokens onto the wire. % TODO wording
+As we know from the previous section, the number of token send does not differ between the algorithms.
+Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT. 
+This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the change of time complexity.
+The time complexity would change because the increase in network size leads to more token being sent (as in SafraFS) but also to bigger tokens being sent.
+
+Most of the additional time for SafraFT is spent after termination.
+By the hypothesis introduced in the last paragraph, this is explained by most tokens being sent after termination (see \cref{fig:tokens}).
+
+The processing time \cref{table:processing\_times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
+Although SafraFT uses significantly more time, the overhead on the processing time stays moderate.
+
+The same pattern of SafraFT using more time and reacting worse to an increase in network size is visible for total times in \cref{table:total\_times}.
+Again the majority of this time is spent after actual termination for the same reason as before.
+I would like to note that the low processing time overhead of Safra is not in contradiction to the large amount of wall time spent after termination.
+This seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active in the beginning that when it accumulates a lot of processing time; while Safra causes a lot of idle time at the end when all processes wait for their predecessor to pass on the token.
+
+To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes a higher time complexity which leads to a later termination detection. 
+Still, SafraFT causes only a moderate processing time overhead.
+
+% TODO move to discussion
+% TODO find convincing example of such an basic algorithm.
+Our setup of an basic algorithm completing its work relatively fast and termination detection takes more time afterwards clearly shows a drawback of fault tolerant Safra.
+However, a system with a long running basic algorithm e.g. multiple hours, would put this times in a whole different perspective.
+Then the seconds taken to detect termination would be less of an issue and the moderate processing time overhead demostrated far more important.
+
+
+\subsection{Influence of faults}
+
+Influence of faults via all faulty runs compared to none faulty runs not so much within each other
+stay general and high level
+hopefully same influcences for all network sizes
+
+
+\subsection{Backup Tokens}
+
+* mean is slightly lower too much lower than the number of faults report highest and lowest absolute difference of means
+* extremes can be much lower TODO report lowest to a good bit higher
+
+influence on number of token send?
+* There seems to be a slight positive correlation between the number of tokens and the number of backup tokens 
+* This is due to more cycles after sending a backup token as blackuntil calls for one more cycle
+* but not enough data to explain if this is because faults increase token or backup tokens 
+
+
+\subsection{Token}
+
+positive correlation to faults if fauts small
+negative correlation to faults if many faults
+
+
+\subsection{Tokens after termination}
+Unclear correlation to crashes not the right data as well
+
+Many crashes lead to most tokens being send before termination
+Low or now crashes lead to most tokens being send after termination
+
+
+
+Raw data 
+* where to find
+* what's there
+* what was run
+* list of configurations
+* with date
+* number of nodes / number of instances per node
+
+
