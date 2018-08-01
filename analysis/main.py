@@ -24,22 +24,25 @@ configurations = get_configurations(experiment_folder)
 expected_configurations = {}
 
 for network_size in [50, 250, 500, 1000, 2000]:
-    for fault_group in ['0 fs', '0', '5n', '90']:
-        expected_configurations[(network_size, fault_group)] = 40
+	for fault_group in ['0 fs', '0', '5n', '90']:
+		expected_configurations[(network_size, fault_group)] = 40
 
 for c in configurations:
-    expected_configurations[(c.number_of_nodes, c.fault_group)] = expected_configurations[(c.number_of_nodes, c.fault_group)] - len(c.repetitions)
-    print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
-    print("Nodes: %i Fault Percentage: %f Fault Sensitive: %r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive))
-    print("Repetitions: %i \nInvalid Repetitions: %i" % (len(c.repetitions), len(c.invalid_repetitions)))
+	expected_configurations[(c.number_of_nodes, c.fault_group)] = expected_configurations[
+		                                                              (c.number_of_nodes, c.fault_group)] - len(
+		c.repetitions)
+	print("+++++++++++++++++++++++++++++++++++++++++++++++++++")
+	print(
+		"Nodes: %i Fault Percentage: %f Fault Sensitive: %r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive))
+	print("Repetitions: %i \nInvalid Repetitions: %i" % (len(c.repetitions), len(c.invalid_repetitions)))
 
-    print("Errors:")
-    for r in c.invalid_repetitions:
-        print("Repetition: %s" % r.folder)
-        for e in r.errors:
-            print("  " + e)
-    print("")
-    print("")
+	print("Errors:")
+	for r in c.invalid_repetitions:
+		print("Repetition: %s" % r.folder)
+		for e in r.errors:
+			print("  " + e)
+	print("")
+	print("")
 
 pprint(expected_configurations, indent=2)
 
@@ -51,9 +54,9 @@ fields = ['tokens', 'tokens_after_termination', 'number_of_nodes_crashed', 'safr
 data = defaultdict(lambda: list())
 
 for f in fields:
-    for c in configurations:
-        data[f].append(get_box_trace(getattr(c, 'get_' + f)(),
-                                     "%i-%f-%r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive)))
+	for c in configurations:
+		data[f].append(get_box_trace(getattr(c, 'get_' + f)(),
+		                             "%i-%f-%r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive)))
 
 # for plot_name, plot_data in data.items():
 #     plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
