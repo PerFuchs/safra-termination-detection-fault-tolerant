@@ -82,10 +82,8 @@ public class SafraStatistics {
       if (terminated && (e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
         // These are only warnings because they could be caused by a message of a node that crashed already.
         // Then they should be ignored by the offline termination detection.
-        logger.info(String.format("Basic event happened  on node %d after termination: %s",
-            e.getNode(), e.getEvent()));
-        experiment.writeToWarnFile(String.format("Basic event happened  on node %d after termination: %s",
-            e.getNode(), e.getEvent()));
+        logger.info(String.format("Basic event happened  on node %d after termination: %s", e.getNode(), e.getEvent()));
+        experiment.writeToWarnFile(String.format("Basic event happened  on node %d after termination: %s", e.getNode(), e.getEvent()));
       }
       if (e == lastParentCrashDetected) {
         lastParentCrashDetectedEncountered = true;
@@ -128,42 +126,114 @@ public class SafraStatistics {
       }
       if (e.isBackupTokenSend()) {
         backupTokenSend++;
-        // Backup tokens can be issued after termination this behaviour is accounted for because every backupTokenSend
-        // event has a corresponding tokenSend event.
-       }
+      }
 
-       if (terminated && actualTerminationTime == 0) {
+      if (terminated && actualTerminationTime == 0) {
         logger.debug("Actual time after termination: " + e.getTime());
         actualTerminationTime = e.getTime();
-       }
+      }
 
-       if (e.isAnnounce()) {
+      if (e.isAnnounce()) {
         if (!terminated) {
           logger.error("Announce was called before actual termination");
           experiment.writeToErrorFile("Announce was called before actual termination.");
+
+          provideEarlyAnnounceInformation(experiment, events);
         }
         totalTimeAfterTermination = e.getTime() - actualTerminationTime;
-         logger.debug("Total time after termination " + totalTimeAfterTermination);
-       }
+        logger.debug("Total time after termination " + totalTimeAfterTermination);
+      }
 
     }
   }
 
+  private void provideEarlyAnnounceInformation(Experiment experiment, List<Event> events) throws IOException {
+    Event lastBasicEvent = null;
+    Event announce = null;
+    List<Event> crashes = new LinkedList<>();
+    List<Event> parentCrashEvents = new LinkedList<>();
+    for (Event e : events) {
+      if (e.isBasic() && announce == null) {
+        lastBasicEvent = e;
+      }
+      if (e.isParentCrashDetected()) {
+        parentCrashEvents.add(e);
+      }
+      if (e.isNodeCrashed()) {
+        crashes.add(e);
+      }
+      if (e.isAnnounce()) {
+        announce = e;
+      }
+    }
+
+    List<Event> closeParentCrashEvents = new LinkedList<>();
+    int announceCrashDetectedDelta = 500;
+    long lowerParentCrashLimit = announce.getTime() - announceCrashDetectedDelta;
+    for (Event parentCrash : parentCrashEvents) {
+      if (parentCrash.getTime() >= lowerParentCrashLimit) {
+        closeParentCrashEvents.add(parentCrash);
+      }
+    }
+
+    if (closeParentCrashEvents.isEmpty()) {
+      experiment.writeToErrorFile("Announce was called early; did not find related parent crash event!");
+    }
+
+    String message = buildEarlyAnnounceInformationMessage(parentCrashEvents, closeParentCrashEvents, crashes, lastBasicEvent);
+
+    logger.warn(message);
+    experiment.writeToWarnFile(message);
+  }
+
+  private String buildEarlyAnnounceInformationMessage(List<Event> parentCrashEvents,
+                                                      List<Event> closeParentCrashEvents, List<Event> crashes,
+                                                      Event lastBasicEvent) {
+    StringBuilder message = new StringBuilder();
+
+    message.append("Found parent crash detected close or after announce: \n");
+    for (Event e : closeParentCrashEvents) {
+      message.append(e.getEvent());
+      message.append('\n');
+    }
+
+    message.append('\n');
+
+    message.append("Found the following parent crash events (use grep on `out.log` for crash reason): ");
+    for (Event e : parentCrashEvents) {
+      if (!closeParentCrashEvents.contains(e)) {
+        message.append(e.getEvent());
+        message.append('\n');
+      }
+    }
+    message.append('\n');
+
+    message.append("Found the following crash events: ");
+    for (Event e : crashes) {
+      message.append(e.getEvent());
+      message.append('\n');
+    }
+    message.append('\n');
+
+    message.append("Last basic event before announce was: ");
+    message.append(lastBasicEvent);
+    message.append('\n');
+
+    return message.toString();
+  }
+
   /**
    * Determines if the basic algorithm has terminated.
-   *
+   * <p>
    * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
    * messages from and to crashed nodes.
-   *
+   * <p>
    * Also termination cannot be reached before final fault. Furthermore, termination cannot be reached before the
    * last event of a node detecting it's parent crashing (and repairing this)
    *
    * @return if the system has terminated.
    */
-  private boolean hasTerminated(int[][] nodeSums,
-                                boolean[] nodeActiveStatus,
-                                Set<Integer> currentlyCrashedNodes,
-                                boolean lastParentCrashEventEncountered) {
+  private boolean hasTerminated(int[][] nodeSums, boolean[] nodeActiveStatus, Set<Integer> currentlyCrashedNodes, boolean lastParentCrashEventEncountered) {
     if (!lastParentCrashEventEncountered) {
       return false;
     }

@@ -319,7 +319,7 @@ public class Event implements Comparable<Event> {
     }
     StringBuilder sb = new StringBuilder();
     sb.append(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(time));
-    sb.append(": ");
+    sb.append(String.format(" %d: ", node));
 
     if (isActiveStatusChange) {
       sb.append("ActiveStatusChange ");
@@ -395,5 +395,9 @@ public class Event implements Comparable<Event> {
 
   public boolean isAnnounce() {
     return isAnnounce;
+  }
+
+  public boolean isBasic() {
+    return isActiveStatusChange || isMessageCounterUpdate;
   }
 }
