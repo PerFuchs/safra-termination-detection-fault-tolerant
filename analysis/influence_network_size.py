@@ -7,48 +7,6 @@ from plotly import graph_objs as go
 
 import graphing
 
-
-# TODO delete
-def present_token_vs_token_after_termination(grouped_by_fault_percentage_sorted):
-    headers = ['Tokens FT', 'Tokens FS', 'Difference (%)', 'TA FT', 'TA FS', 'Difference (%)', 'FT ratio', 'FS ratio']
-
-    network_sizes = 5
-    values = []
-    for i in range(len(headers)):
-        values.append([-1] * network_sizes)
-    for i in range(network_sizes):
-        ft_configuration = grouped_by_fault_percentage_sorted['0'][i]
-        fs_configuration = grouped_by_fault_percentage_sorted['0 fs'][i]
-
-        ft_token_mean = round(statistics.mean(ft_configuration.get_tokens()))
-        fs_token_mean = round(statistics.mean(fs_configuration.get_tokens()))
-        ft_token_after_termination_mean = round(statistics.mean(ft_configuration.get_tokens_after_termination()))
-        fs_token_after_termination_mean = round(statistics.mean(fs_configuration.get_tokens_after_termination()))
-
-        token_difference = difference_in_percent(ft_token_mean, fs_token_mean)
-        token_after_termination_difference = difference_in_percent(ft_token_after_termination_mean, fs_token_after_termination_mean)
-
-        ft_ratio = round(ft_token_mean / ft_token_after_termination_mean, 2)
-        fs_ratio = round(fs_token_mean / fs_token_after_termination_mean, 2)
-
-
-        row = [ft_token_mean, fs_token_mean, token_difference,
-                       ft_token_after_termination_mean,
-                       fs_token_after_termination_mean,
-                       token_after_termination_difference,
-                       ft_ratio,
-                       fs_ratio]
-        for j, value in enumerate(row):
-            values[j][i] = value
-
-
-    data = [go.Table(
-        header=dict(values=headers),
-        cells=dict(values=values)
-    )]
-    plotly.plotly.plot(data, filename='ft_vs_fs_table.html')
-
-
 def difference_in_percent(a, b):
     difference = abs(a - b)
     return round(difference / min(a, b) * 100)
@@ -61,11 +19,7 @@ def analyse_influence_of_network_size(configurations):
     grouped_by_fault_percentage_sorted = dict(map(lambda i: (i[0], sorted(i[1], key=lambda c: c.number_of_nodes)), grouped_by_fault_group.items()))
     grouped_by_fault_percentage_sorted = OrderedDict(sorted(grouped_by_fault_percentage_sorted.items(), key=lambda i: i[0]))
 
-    present_linear_relationships_token_token_after_termination(grouped_by_fault_percentage_sorted)
-    present_token_vs_token_after_termination(grouped_by_fault_percentage_sorted)
-
-    # analyse_influence_on_tokens(grouped_by_fault_percentage_sorted)
-    # analyse_influence_on_tokens_after_termination(grouped_by_fault_percentage_sorted)
+    present_token_and_token_after_termination(grouped_by_fault_percentage_sorted)
 
     analyse_influence_on_safra_time(grouped_by_fault_percentage_sorted)
     analyse_influence_on_safra_time_after_termination(grouped_by_fault_percentage_sorted)
@@ -74,7 +28,7 @@ def analyse_influence_of_network_size(configurations):
     # analyse_influence_on_total_time(grouped_by_fault_percentage_sorted)
 
 
-def present_linear_relationships_token_token_after_termination(configurations):
+def present_token_and_token_after_termination(configurations):
     data = []
 
     for i in range(5):
