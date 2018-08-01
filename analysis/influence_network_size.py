@@ -8,11 +8,6 @@ from plotly import graph_objs as go
 import graphing
 
 
-def difference_in_percent(a, b):
-	difference = abs(a - b)
-	return round(difference / min(a, b) * 100)
-
-
 def analyse_influence_of_network_size(configurations):
 	grouped_by_fault_group = defaultdict(lambda: list())
 	for c in configurations:
