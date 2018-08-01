@@ -3,6 +3,19 @@ import scipy.stats as st
 import plotly.graph_objs as go
 import plotly
 
+
+def get_scatter_graph_data(x_axis, values, name):
+    return go.Scatter(
+        x=x_axis,
+        y=values,
+        mode='markers',
+        marker={
+            'size': 15
+        },
+        name=name
+    )
+
+
 def get_scatter_graph_with_mean_and_confidence_interval(x_axis, values, name):
     mean = np.mean(values)
     # low_confidence, high_confidence = st.t.interval(0.95, len(values) - 1, loc=mean,

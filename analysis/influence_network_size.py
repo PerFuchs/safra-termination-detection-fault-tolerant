@@ -8,10 +8,11 @@ from plotly import graph_objs as go
 import graphing
 
 
+# TODO delete
 def present_token_vs_token_after_termination(grouped_by_fault_percentage_sorted):
     headers = ['Tokens FT', 'Tokens FS', 'Difference (%)', 'TA FT', 'TA FS', 'Difference (%)', 'FT ratio', 'FS ratio']
 
-    network_sizes = 4
+    network_sizes = 5
     values = []
     for i in range(len(headers)):
         values.append([-1] * network_sizes)
@@ -47,15 +48,6 @@ def present_token_vs_token_after_termination(grouped_by_fault_percentage_sorted)
     )]
     plotly.plotly.plot(data, filename='ft_vs_fs_table.html')
 
-    # trace = go.Table(
-    #     header=dict(values=['A Scores', 'B Scores']),
-    #     cells=dict(values=[[100, 90, 80, 90],
-    #                        [95, 85, 75, 95]]))
-    #
-    # data = [trace]
-    # plotly.plotly.plot(data, filename = 'basic_table')
-
-
 
 def difference_in_percent(a, b):
     difference = abs(a - b)
@@ -75,22 +67,17 @@ def analyse_influence_of_network_size(configurations):
     # analyse_influence_on_tokens(grouped_by_fault_percentage_sorted)
     # analyse_influence_on_tokens_after_termination(grouped_by_fault_percentage_sorted)
 
-    analyse_influence_on_token_bytes(grouped_by_fault_percentage_sorted)
-
-    analyse_influence_on_token_vs_token_after_termination(grouped_by_fault_percentage_sorted)
-
-
     analyse_influence_on_safra_time(grouped_by_fault_percentage_sorted)
     analyse_influence_on_safra_time_after_termination(grouped_by_fault_percentage_sorted)
-
-    analyse_influence_on_basic_time(grouped_by_fault_percentage_sorted)
-    analyse_influence_on_total_time(grouped_by_fault_percentage_sorted)
+    #
+    # analyse_influence_on_basic_time(grouped_by_fault_percentage_sorted)
+    # analyse_influence_on_total_time(grouped_by_fault_percentage_sorted)
 
 
 def present_linear_relationships_token_token_after_termination(configurations):
     data = []
 
-    for i in range(4):
+    for i in range(5):
         fs_configuration = configurations['0 fs'][i]
         ft_configuration = configurations['0'][i]
         data.append(graphing.get_box_trace(fs_configuration.get_tokens(), 'FS %i' % fs_configuration.number_of_nodes))
@@ -101,40 +88,6 @@ def present_linear_relationships_token_token_after_termination(configurations):
 
     plotly.offline.plot(data, filename='../graphs/tokens_and_token_after_termination_box_plot.html')
 
-
-# def present_linear_relationships_token_token_after_termination(configurations):
-#     data = []
-#     x_axis = ['50', '250', '500', '1000', '2000']
-#     for fault_group, sorted_configurations in configurations.items():
-#         if fault_group == '0' or fault_group == 'fs':
-#             data.append(graphing.get_scatter_graph_data(list(map(lambda c: statistics.mean(c.get_tokens()), sorted_configurations)), x_axis, 'Tokens %s' % fault_group))
-#             data.append(graphing.get_scatter_graph_data(list(map(lambda c: statistics.mean(c.get_tokens_after_termination()), sorted_configurations)), x_axis, 'Tokens after termination %s' % fault_group))
-#     plotly.offline.plot(data, filename='../graphs/tokens_and_token_after_termination_box_plot.html')
-
-
-def analyse_influence_on_tokens(configurations):
-    for fault_group, sorted_configurations in configurations.items():
-        present_linear_relationship(sorted_configurations, 'tokens')
-
-
-def analyse_influence_on_tokens_after_termination(configurations):
-    for fault_group, sorted_configurations in configurations.items():
-        present_linear_relationship(sorted_configurations, 'tokens_after_termination')
-
-
-def analyse_influence_on_token_vs_token_after_termination(configurations):
-    for fault_group, sorted_configurations in configurations.items():
-        for c in sorted_configurations:
-            print("FG: %s Token/Token after termination: %f Network: %i" % (c.fault_group,
-                                                                            statistics.mean(c.get_tokens()) / statistics.mean(c.get_tokens_after_termination()),
-                                                                            c.number_of_nodes))
-        print("\n\n")
-
-
-def analyse_influence_on_token_bytes(configurations):
-    for fault_group, sorted_configurations in configurations.items():
-        present_linear_relationship(sorted_configurations, 'token_bytes')
-
 def analyse_influence_on_safra_time(configurations):
     for fault_group, sorted_configurations in configurations.items():
         present_linear_relationship(sorted_configurations, 'safra_times', True)
@@ -143,9 +96,6 @@ def analyse_influence_on_safra_time(configurations):
 def analyse_influence_on_safra_time_after_termination(configurations):
     for fault_group, sorted_configurations in configurations.items():
         present_linear_relationship(sorted_configurations, 'safra_times_after_termination', True)
-
-
-
 
 
 def analyse_influence_on_basic_time(configurations):

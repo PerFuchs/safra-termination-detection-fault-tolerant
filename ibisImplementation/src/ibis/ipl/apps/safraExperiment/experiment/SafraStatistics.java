@@ -128,8 +128,6 @@ public class SafraStatistics {
       }
       if (e.isBackupTokenSend()) {
         backupTokenSend++;
-        // Backup tokens can be issued after termination this behaviour is accounted for because every backupTokenSend
-        // event has a corresponding tokenSend event.
        }
 
        if (terminated && actualTerminationTime == 0) {
