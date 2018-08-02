@@ -109,16 +109,6 @@ stay general and high level
 hopefully same influcences for all network sizes
 
 
-\subsection{Backup Tokens}
-
-* mean is slightly lower too much lower than the number of faults report highest and lowest absolute difference of means
-* extremes can be much lower TODO report lowest to a good bit higher
-
-influence on number of token send?
-* There seems to be a slight positive correlation between the number of tokens and the number of backup tokens 
-* This is due to more cycles after sending a backup token as blackuntil calls for one more cycle
-* but not enough data to explain if this is because faults increase token or backup tokens 
-
 
 \subsection{Tokens}
 
@@ -144,8 +134,29 @@ influence on number of token send?
   
   back to really low variance variance
   
+  tokens after termination
+    most tokens are sent before termination! 
+    even lower than no faults
+    linear growth as well
+    
+\subsection{Backup tokens}
+The average amount of backup tokens sent for either fault simulation and every network size is lower than the number of faults.
+This is because SafraFT only issues backup tokens when the fault of its successor is detected via the fault detector but not if this fault is noticed by receiving a token.
+That result is suprising because the simulated fault detector in my setup detects faults in a really timely manner.
+Still, there are some runs were 1 to 5 nodes fail but no backup token is issued for all network sizes. 
+
+The other extreme were more backup tokens are issued than faults occure exists as well.
+This can be explained by my decission to have node failing after issuesing a backup token.
+For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node \co{C} fails which is detected by \co{B} and a backup token is issued.
+After, issueing the backup token \co{B} fails on detection \co{A} issues a backup token towards \co{C}.
+Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.
+
+The idea that backup tokens lead to an increasing number of tokens might spring to mind; as a matter of fact, runs with more backup tokens also exhibit a higher number of tokens.
+However the idea is missleading because either the real token is lost or the backup token is stopped at its first receiver.
+In both cases only one token `survives' and is forwarded further.
+The real reason for the increase in tokens is the number of crashes which is explained in \cref{TODO}.
+Therefore, predicting a raising number of tokens by the fact that backup tokens are issued would incorrect.    
   
-  most tokens are sent before termination! 
 
 \subsection{Tokens after termination}
 Unclear correlation to crashes not the right data as well

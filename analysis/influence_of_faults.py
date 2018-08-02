@@ -21,7 +21,24 @@ def analyse_influence_of_faults(configurations):
 		sorted(grouped_by_fault_group_sorted.items(), key=lambda i: i[0]))
 
 	present_token_and_token_after_termination(grouped_by_fault_group_sorted)
+	present_backup_token_vs_crashes(grouped_by_fault_group_sorted)
 	additional_information(grouped_by_fault_group_sorted)
+
+
+def present_backup_token_vs_crashes(configurations):
+	data = {}
+
+	only_faulty_configurations = OrderedDict(filter(lambda i: i[0] != '0', configurations.items()))
+
+	for fault_group, configurations_sorted in only_faulty_configurations.items():
+		data[fault_group] = []
+		for i, c in enumerate(configurations_sorted):
+			data[fault_group].append(graphing.get_box_trace(c.get_backup_tokens(), 'T %s %i' % (fault_group, c.number_of_nodes)))
+			data[fault_group].append(graphing.get_box_trace(c.get_number_of_nodes_crashed(),
+			                                   'C %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
+
+	plotly.offline.plot(data['5n'], filename='../graphs/backup_tokens_vs_crashes_5n.html')
+	plotly.offline.plot(data['90'], filename='../graphs/backup_tokens_vs_crashes_90.html')
 
 
 def present_token_and_token_after_termination(configurations):
