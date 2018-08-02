@@ -225,7 +225,7 @@ public class Tree {
    *                            all vertices that aren't reachable from root.
    * @return A shortest path sink tree to root or NULL if the graph is not connected.
    */
-  public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices, Set<Integer> unreachableVertices) {
+  public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices, List<Integer> unreachableVertices) {
     Map<Integer, List<Channel>> adjacencyGraph = new HashMap<>();
     for (int v : vertices) {
       adjacencyGraph.put(v, new LinkedList<Channel>());

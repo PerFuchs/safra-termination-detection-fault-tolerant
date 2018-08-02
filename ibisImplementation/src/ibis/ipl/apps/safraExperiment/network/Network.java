@@ -47,7 +47,7 @@ public class Network {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
     Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
     List<Channel> aliveChannels = getAliveChannel(channels, crashedNodeNumbers);
-    return Tree.getSinkTree(aliveChannels, communicationLayer.getRoot(), aliveNodes, new HashSet<Integer>());
+    return Tree.getSinkTree(aliveChannels, communicationLayer.getRoot(), aliveNodes, new LinkedList<Integer>());
   }
 
   public Network combineWith(Network network, int weightMultiplier) {
@@ -151,27 +151,27 @@ public class Network {
     int root = communicationLayer.getRoot();
     // Add heavyweight edges from the root to nodes that are unreachable when other nodes crash - because the root cannot
     // fail this guarantees the network stays connected with arbitrary failing nodes.
-    Set<Integer> unreachableVertices = new HashSet<>();  // Output parameter from getSinkTree
+    List<Integer> unreachableVertices = new LinkedList<>();  // Output parameter from getSinkTree
     Tree sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
         root,
         getAliveNodes(communicationLayer, nodesExpectedToCrash),
         unreachableVertices);
-    Set<Integer> connectedToRoot = connectedWith(channels, root);  // All nodes already connected to root
+
+    // All nodes should have the same list to pick a random element from.
+    Collections.sort(unreachableVertices);
 
     while (sinkTree == null) {
-      int node = synchronizedRandom.getInt(communicationLayer.getIbisCount());
-      while (!unreachableVertices.contains(node) || nodesExpectedToCrash.contains(node) || node == root || connectedToRoot.contains(node)) {
-        node = synchronizedRandom.getInt(communicationLayer.getIbisCount());
-      }
+      unreachableVertices.removeAll(nodesExpectedToCrash);
+      int node = unreachableVertices.get(synchronizedRandom.getInt(unreachableVertices.size()));
       channels.add(new Channel(root, node, 400000));
       channels.add(new Channel(node, root, 400000));
 
-      unreachableVertices = new HashSet<>();
+      unreachableVertices = new LinkedList<>();
       sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
           communicationLayer.getRoot(),
           getAliveNodes(communicationLayer, nodesExpectedToCrash),
           unreachableVertices);
-      connectedToRoot = connectedWith(channels, communicationLayer.getRoot());
+      Collections.sort(unreachableVertices);
     }
 
     logger.debug(String.format("Network on %d is: %s", communicationLayer.getID(), n.toString()));
