@@ -109,7 +109,7 @@ without unreasonable deterioration in any metric.
 
 \subsection{Tokens}
 For both the networks where between 1 and 5 nodes failed, as well as, for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
-More so for higher networks and/or more faults. The data is presented \cref{fig:TODO} and \cref{table:TODO}. % Table presents comparision with 0 configuration
+More so highly faulty networks more faults. The data is presented \cref{fig:TODO} and \cref{table:TODO}. % Table presents comparision with 0 configuration
 
 Otherwise, the two types of fault simulation had a highly different influence on the tokens and tokens after termination metrics.
 
@@ -124,7 +124,7 @@ Other than networks with one to 5 failing nodes, networks with up to 90\% node f
 A likely explanation is that the low survival rate of 1 out of 10 leads to less different scenarios than 995 nodes surviving as in the fault scenario treated the last paragraphs.
 
 Even though, only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
-That is most likely due to the high amount of backup tokens generated.
+That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:TODO})
 
 Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
     
@@ -140,6 +140,56 @@ For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node
 After, issueing the backup token \co{B} fails on detection \co{A} issues a backup token towards \co{C}.
 Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.  
 
+
+\subsection{Processing Time}
+
+Basic times are similiar to 0 time!
+
+5n
+ increase from 37\% to 67\% over 0 time, why is this less strong than for tokens because counting of messages is a big part of safra messages
+ higher variability as 0 time
+ 
+ time after termination
+   more variability
+   again most time were most tokens are - after termination
+   similiar increase than for token - no counting for messages
+   
+ how high is the overhead?
+ 
+90
+ low variability again
+ higher absolute numbers than 5n
+ increase from 2.11 to 3.65
+   two questions:
+     nearly always stronger than for tokens - more fault processing??
+     strongest for 250 nodes?
+   
+  time after termination
+    less time after termination, because less tokens
+    low variability
+    less time than 0
+    
+ \subsection{Total time}
+ 
+ 5n
+  higher variability
+  higher than 0
+ time after
+   again after termination
+   except for 50 increased
+   but only really slightly. because of defintion of actual termination moves termination back until last parent crash is detected
+  
+  how high is the overhead
+  
+ 90
+   slightly higher variability than 0
+   higher than 0 
+   
+  time after
+    less than 0
+    less tokens  
+ 
+ 
 
 
 Raw data 

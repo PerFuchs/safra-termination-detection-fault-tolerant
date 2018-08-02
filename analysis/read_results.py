@@ -1,4 +1,5 @@
 import csv
+import operator
 import sys
 from collections import defaultdict
 
@@ -129,6 +130,9 @@ class Configuration:
 
 	def get_total_times(self):
 		return list(map(lambda r: r.total_time, self.repetitions))
+
+	def get_average_total_times(self):
+		return list(map(operator.truediv, self.get_total_times(), [self.number_of_nodes] * len(self.repetitions)))
 
 	def get_safra_times_after_termination(self):
 		return list(map(lambda r: r.safra_time_after_termination, self.repetitions))

@@ -53,7 +53,7 @@ def present_processing_times(configurations):
 		header=dict(values=headers),
 		cells=dict(values=values)
 	)]
-	plotly.plotly.plot(data, filename='processing_times.html')
+	# plotly.plotly.plot(data, filename='processing_times.html')
 
 
 # TODO use difference symbol should that be in ratio not percent?
@@ -85,7 +85,7 @@ def present_total_times(configurations):
 		header=dict(values=headers),
 		cells=dict(values=values)
 	)]
-	plotly.plotly.plot(data, filename='total_times.html')
+	# plotly.plotly.plot(data, filename='total_times.html')
 
 
 
