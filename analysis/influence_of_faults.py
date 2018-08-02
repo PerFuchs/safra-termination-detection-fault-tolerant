@@ -50,6 +50,11 @@ def present_token_and_token_after_termination(configurations):
 			data.append(graphing.get_box_trace(c.get_tokens_after_termination(),
 			                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
 
+			if fault_group == '90':
+				data.append(graphing.get_box_trace(c.get_backup_tokens(),
+			                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(140,255,0)'))
+
+
 	plotly.offline.plot(data, filename='../graphs/tokens_and_tokens_after_faulty.html')
 
 
