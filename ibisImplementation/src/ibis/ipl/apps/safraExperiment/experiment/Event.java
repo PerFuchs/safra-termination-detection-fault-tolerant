@@ -1,6 +1,5 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
-import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -336,6 +335,10 @@ public class Event implements Comparable<Event> {
       sb.append(String.format("Safra time spent: %d", timeSpent));
     } else if (isTotalTimeSpentEvent) {
       sb.append(String.format("Total time spent: %d", timeSpent));
+    } else if (isParentCrashDetected) {
+      sb.append("ParentCrashDetected");
+    } else if (isAnnounce) {
+      sb.append("Announce");
     }
     return sb.toString();
   }
@@ -400,4 +403,8 @@ public class Event implements Comparable<Event> {
   public boolean isBasic() {
     return isActiveStatusChange || isMessageCounterUpdate;
   }
-}
+
+  public String toString() {
+    return getEvent();
+  }
+ }

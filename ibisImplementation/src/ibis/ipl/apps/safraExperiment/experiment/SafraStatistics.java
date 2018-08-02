@@ -4,7 +4,6 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -180,16 +179,17 @@ public class SafraStatistics {
       experiment.writeToErrorFile("Announce was called early; did not find related parent crash event!");
     }
 
-    String message = buildEarlyAnnounceInformationMessage(parentCrashEvents, closeParentCrashEvents, crashes, lastBasicEvent);
+    String message = buildEarlyAnnounceInformationMessage(announce, parentCrashEvents, closeParentCrashEvents, crashes, lastBasicEvent);
 
     logger.warn(message);
     experiment.writeToWarnFile(message);
   }
 
-  private String buildEarlyAnnounceInformationMessage(List<Event> parentCrashEvents,
+  private String buildEarlyAnnounceInformationMessage(Event announce, List<Event> parentCrashEvents,
                                                       List<Event> closeParentCrashEvents, List<Event> crashes,
                                                       Event lastBasicEvent) {
     StringBuilder message = new StringBuilder();
+    message.append("Announce event is: " ).append(announce.toString()).append('\n');
 
     message.append("Found parent crash detected close or after announce: \n");
     for (Event e : closeParentCrashEvents) {
@@ -199,7 +199,7 @@ public class SafraStatistics {
 
     message.append('\n');
 
-    message.append("Found the following parent crash events (use grep on `out.log` for crash reason): ");
+    message.append("Found the following parent crash events (use grep on `out.log` for crash reason): \n");
     for (Event e : parentCrashEvents) {
       if (!closeParentCrashEvents.contains(e)) {
         message.append(e.getEvent());

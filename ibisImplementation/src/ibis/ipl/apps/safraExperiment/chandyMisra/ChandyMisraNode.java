@@ -4,7 +4,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class ChandyMisraNode implements CrashHandler {
   private final static Logger logger = Logger.getLogger(ChandyMisraNode.class);
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private Safra safraNode;
   private CommunicationLayer communicationLayer;

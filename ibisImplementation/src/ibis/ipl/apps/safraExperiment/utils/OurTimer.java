@@ -1,11 +1,11 @@
 package ibis.ipl.apps.safraExperiment.utils;
 
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import org.apache.log4j.Logger;
 
 public class OurTimer {
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private long duration;
   private long start;

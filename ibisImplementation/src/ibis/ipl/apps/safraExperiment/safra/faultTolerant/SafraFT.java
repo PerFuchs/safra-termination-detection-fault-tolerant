@@ -7,7 +7,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -23,7 +23,7 @@ import java.util.concurrent.Semaphore;
 
 public class SafraFT implements Observer, Safra, CrashHandler {
   private final static Logger logger = Logger.getLogger(SafraFT.class);
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private Semaphore semaphore = new Semaphore(1, false);
 

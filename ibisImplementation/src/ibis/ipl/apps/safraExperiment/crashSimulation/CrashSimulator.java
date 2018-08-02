@@ -2,7 +2,7 @@ package ibis.ipl.apps.safraExperiment.crashSimulation;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import org.apache.log4j.Logger;
 
@@ -11,7 +11,7 @@ import java.util.*;
 
 public class CrashSimulator {
   private final static Logger logger = Logger.getLogger(CrashSimulator.class);
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   /**
    * Map from points to crash at mapped to the amount of repetitions when to crash after

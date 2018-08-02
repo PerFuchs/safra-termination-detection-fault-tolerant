@@ -8,7 +8,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.network.Tree;
@@ -24,7 +24,6 @@ import org.apache.log4j.*;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,7 +49,7 @@ class IbisNode {
       Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
-      Logger.getLogger(Experiment.class).setLevel(Level.INFO);
+      Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
       Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
@@ -102,7 +101,7 @@ class IbisNode {
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
       logger.trace("Constructed network");
 
-      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
+      OnlineExperiment experiment = new OnlineExperiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
 
       Safra safraNode;
       if (faultTolerant) {

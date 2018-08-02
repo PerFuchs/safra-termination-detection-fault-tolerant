@@ -3,7 +3,7 @@ package ibis.ipl.apps.safraExperiment.safra.faultSensitive;
 import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -19,7 +19,7 @@ import java.util.concurrent.Semaphore;
 
 public class SafraFS implements Observer, Safra {
   private final static Logger logger = Logger.getLogger(SafraFS.class);
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private Semaphore semaphore = new Semaphore(1, false);
 
