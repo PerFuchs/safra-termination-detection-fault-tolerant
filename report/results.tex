@@ -5,7 +5,6 @@
 The experiment is aimed to support our paper with a practical, correct application of our alogorithm.
 Towards this goal I build multiple correctness checks into the experiment. 
 
-
 To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced. 
 The analysis tools provided with the experiment point any of these logs out to make sure they are not overlooked.
 
@@ -36,21 +35,9 @@ These runs might indicate that announce was called to early or and that messages
 When this happens the run also provides further information about the announce event, all crash and all parent crash detection events in its logs to ease verification that the errors were caused by a scenario as described above.
 Each of these run was carefully examined and if the errors were caused by this known problem, they were declared invalid and not used for further analysis.
 
-
-\begin{itemize}
-	\item the application logs errors if any message or action is executed after termination has been detected by Safra
-	\item per offline analysis (see \cref{ssec:offline\_analysis}) I determine the point of actual termination, then it is verified that termination is detected afterwards
-	\item 
-\end{itemize}
-
-Verification
 compare expected tree to actual tree
 * explain problem with CM about nodes that should fail not failing
 * check every case of problems with CM
-checks if anything happens after termination
-* nothing did happen
-checks that detected termination happened after actual termination  
-
 
 % TODO add total timer after termination to metrics in introdution  
 token bytes constant 12 for SafraFT linear upwards for SafraFT starting at 420 and endind at 
@@ -60,8 +47,8 @@ This section compares SafraFS and SafraFT.
 Additionally, it analysis how the network size influences both algorithms.
 
 The number of tokens send in total and after termination is presented in \cref{fig:tokens.png}.
-The key observation is that SafraFS and SafraFT behave the same for all network sizes.
-There is no notable difference between the medians, the variance and the ratio between total tokens and tokens after termination for any network size - except for a unusual high variance in tokens after termination SafraFS for 1000 nodes and a high variance in total tokens for SafraFS for 2000 nodes % TODO is that a dirty experiment - can it be fixed by repeting it?
+The key observation is that SafraFS and SafraFT behave higly similiar.
+There is no notable difference between the medians, the variance and the ratio between total tokens and tokens after termination for the same network size - except for a unusual high variance in tokens after termination SafraFS for 1000 nodes and a high variance in total tokens for SafraFS for 2000 nodes % TODO is that a dirty experiment - can it be fixed by repeting it?
 As one would expect, the number of tokens seems to grow linearly with the network size.
 Note that the first network size is 5 times smaller than the second after the network size doubles for each run.
 
@@ -133,11 +120,32 @@ influence on number of token send?
 * but not enough data to explain if this is because faults increase token or backup tokens 
 
 
-\subsection{Token}
+\subsection{Tokens}
 
-positive correlation to faults if fauts small
-negative correlation to faults if many faults
-
+5n
+ unclear raising realationship some are overlinear some less linear last one might hint for h
+ high increases later on
+ raised variance more on bigger networks
+ 
+ raises from 0 between 61 to 119 from 
+   raises more later on
+ 
+ Tokens after termination 
+   raised variance more on bigger networks
+    raises from 0 between 27 to 52 from 
+      raises more later on
+   
+ 
+ 
+90 
+  back to clearly linear groth
+  absolute higher than 5n 
+  raises from 0 between 75 to 112
+  
+  back to really low variance variance
+  
+  
+  most tokens are sent before termination! 
 
 \subsection{Tokens after termination}
 Unclear correlation to crashes not the right data as well

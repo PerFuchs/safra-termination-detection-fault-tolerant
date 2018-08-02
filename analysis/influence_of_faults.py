@@ -1,68 +1,54 @@
 import statistics
+from collections import defaultdict, OrderedDict
 
 import plotly
 from scipy.stats import stats
 
+import graphing
 from graphing import get_scatter_graph_data
+from utils import present_linear_relationship, difference_in_percent
 
 
 def analyse_influence_of_faults(configurations):
 	configurations = filter(lambda c: not c.fault_sensitive, configurations)
-	# configurations = filter(lambda c: c.fault_percentage != 0, configurations)
+
+	grouped_by_fault_group = defaultdict(lambda: list())
 	for c in configurations:
-		backup_token_mean = round(statistics.mean(c.get_backup_tokens()))
-		faults_mean = round(statistics.mean(c.get_number_of_nodes_crashed()))
+		grouped_by_fault_group[c.fault_group].append(c)
+	grouped_by_fault_group_sorted = dict(
+		map(lambda i: (i[0], sorted(i[1], key=lambda c: c.number_of_nodes)), grouped_by_fault_group.items()))
+	grouped_by_fault_group_sorted = OrderedDict(
+		sorted(grouped_by_fault_group_sorted.items(), key=lambda i: i[0]))
 
-		correlation_coefficient, _ = stats.pearsonr(c.get_tokens(), c.get_backup_tokens())
-		print("Size %i Number of faults: %i Backup tokens: %i Correlation: %f" % (
-		c.number_of_nodes, faults_mean, backup_token_mean, correlation_coefficient))
+	present_token_and_token_after_termination(grouped_by_fault_group_sorted)
+	additional_information(grouped_by_fault_group_sorted)
 
-		# if  c.fault_percentage == 0.9:
-		x_axis = list(range(0, len(c.repetitions)))
 
-		tokens_backup_tokens = zip(c.get_tokens(), c.get_backup_tokens(), c.get_number_of_nodes_crashed())
-		tokens_backup_tokens = sorted(tokens_backup_tokens, key=lambda t: t[1])
+def present_token_and_token_after_termination(configurations):
+	data = []
 
-		data = []
-		data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[0], tokens_backup_tokens)), "Tokens"))
-		data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[1], tokens_backup_tokens)), 'Backup tokens'))
-		# data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[2], tokens_backup_tokens)), 'Crashes'))
-		plotly.offline.plot(data, filename='../graphs/%i-%f.html' % (c.number_of_nodes, c.fault_percentage))
+	for fault_group, configurations_sorted in configurations.items():
+		for i, c in enumerate(configurations_sorted):
+			data.append(graphing.get_box_trace(c.get_tokens(), 'T %s %i' % (fault_group, c.number_of_nodes)))
+			data.append(graphing.get_box_trace(c.get_tokens_after_termination(),
+			                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
 
-	# for c in configurations:
-	#     token_after_termination_mean = round(statistics.mean(c.get_tokens_after_termination()))
-	#     faults_mean = round(statistics.mean(c.get_number_of_nodes_crashed()))
-	#
-	#     correlation_coefficient, _ = stats.pearsonr(c.get_tokens_after_termination(), c.get_number_of_nodes_crashed())
-	#     print("Size %i Number of faults: %i Tokens after termination tokens: %i Correlation: %f" % (c.number_of_nodes, faults_mean, token_after_termination_mean, correlation_coefficient))
-	#
-	#     # if  c.fault_percentage == 0.9:
-	#     x_axis = list(range(0, len(c.repetitions)))
-	#
-	#     tokens_backup_tokens = zip(c.get_tokens(), c.get_tokens_after_termination(), c.get_number_of_nodes_crashed())
-	#     tokens_backup_tokens = sorted(tokens_backup_tokens, key=lambda t: t[1])
-	#
-	#     data = []
-	#     data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[0], tokens_backup_tokens)), "Tokens"))
-	#     data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[1], tokens_backup_tokens)), 'Backup tokens'))
-	#     data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[2], tokens_backup_tokens)), 'Crashes'))
-	#     plotly.offline.plot(data, filename='../graphs/%i-%f.html' % (c.number_of_nodes, c.fault_percentage))
+	plotly.offline.plot(data, filename='../graphs/tokens_and_tokens_after_faulty.html')
 
-	# for c in configurations:
-	#     token_after_termination_mean = round(statistics.mean(c.get_tokens()))
-	#     faults_mean = round(statistics.mean(c.get_number_of_nodes_crashed()))
-	#
-	#     correlation_coefficient, _ = stats.pearsonr(c.get_tokens_after_termination(), c.get_number_of_nodes_crashed())
-	#     print("Size %i Number of faults: %i Tokens after termination tokens: %i Correlation: %f" % (c.number_of_nodes, faults_mean, token_after_termination_mean, correlation_coefficient))
-	#
-	#     # if  c.fault_percentage == 0.9:
-	#     x_axis = list(range(0, len(c.repetitions)))
-	#
-	#     tokens_backup_tokens = zip(c.get_tokens(), c.get_tokens_after_termination(), c.get_number_of_nodes_crashed())
-	#     tokens_backup_tokens = sorted(tokens_backup_tokens, key=lambda t: t[1])
-	#
-	#     data = []
-	#     data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[0], tokens_backup_tokens)), "Tokens"))
-	#     data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[1], tokens_backup_tokens)), ''))
-	#     data.append(get_scatter_graph_data(x_axis, list(map(lambda t: t[2], tokens_backup_tokens)), 'Crashes'))
-	#     plotly.offline.plot(data, filename='../graphs/%i-%f.html' % (c.number_of_nodes, c.fault_percentage))
+
+def additional_information(configurations):
+	data_scatter = {}
+	for fault_group, sorted_configurations in configurations.items():
+		present_linear_relationship(sorted_configurations, 'tokens', True)
+		present_linear_relationship(sorted_configurations, 'tokens_after_termination', True)
+
+		for fault_group, configurations_sorted in configurations.items():
+			data_scatter[fault_group] = []
+			for i, c in enumerate(configurations_sorted):
+				data_scatter[fault_group].append(statistics.mean(c.get_tokens()))
+				print("T %s %i Increase from fault free: %i" % (fault_group, c.number_of_nodes, difference_in_percent(statistics.mean(c.get_tokens()), statistics.mean(configurations['0'][i].get_tokens()))))
+				print("TA %s %i Increase from fault free: %i" % (fault_group, c.number_of_nodes, difference_in_percent(statistics.mean(c.get_tokens_after_termination()), statistics.mean(configurations['0'][i].get_tokens_after_termination()))))
+				print("Ratio %s %i %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_tokens()) / statistics.mean(c.get_tokens_after_termination()), 2)))
+				print("")
+
+	# plotly.offline.plot([graphing.get_scatter_graph_data(list(range(5)), data, fault_group) for fault_group, data in data_scatter.items()], filename='../graphs/scatter.html')

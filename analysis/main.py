@@ -41,6 +41,9 @@ for c in configurations:
 		print("Repetition: %s" % r.folder)
 		for e in r.errors:
 			print("  " + e)
+		print("\nWarnings")
+		for e in r.warnings:
+			print("  " + e)
 	print("")
 	print("")
 
@@ -48,6 +51,7 @@ pprint(expected_configurations, indent=2)
 
 compare_safra_versions(configurations)
 analyse_influence_of_network_size(configurations)
+analyse_influence_of_faults(configurations)
 
 fields = ['tokens', 'tokens_after_termination', 'number_of_nodes_crashed', 'safra_times', 'basic_times',
           'safra_times_after_termination', 'total_times', 'token_bytes']
