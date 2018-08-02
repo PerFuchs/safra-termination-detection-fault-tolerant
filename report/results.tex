@@ -1,6 +1,47 @@
 \section{Results}
 \label{sec:results}
 
+\subsection{Correctness of SafraFT}
+The experiment is aimed to support our paper with a practical, correct application of our alogorithm.
+Towards this goal I build multiple correctness checks into the experiment. 
+
+
+To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced. 
+The analysis tools provided with the experiment point any of these logs out to make sure they are not overlooked.
+
+To proof termination is not detected to early, I use offline analysis (see \cref{ssec:offline\_analysis}) to determine the point of actual termination and verify that detection happened after.
+
+The experiment revealed a problem with the framework for termination chosen to develop SafraFT.
+It is common to define termination by:
+\begin{enumerate}
+	\item All nodes are passive
+	\item No messages are in the channels
+\end{enumerate}
+This definition is based on the fact that a node is either an initiator or can only become active if it receives a message. 
+However, under the presence of failures and if additionally the outcome of the algorithm depends on the set of alive nodes, nodes might get activated by the detection of a failure.
+For example, when Chandy Misra builds a sink tree, nodes that detect a crash of their parents will become active afterwards to find a new path towards root.
+Hence, the definition of termination that our algorithm is build upon does not fully capture our choice of basic algorithm which will lead to an early detection of termination.
+
+The fact described above leads to the following concrete scenario: lets consider the situation that all node are passive and no message are in the channel. 
+In other words, the system terminated by our definition.
+Node \co{X} forwards the token and crashes afterwards. 
+Node \co{Y} calls announce after receipt of the token.
+Assume node \co{Z} is a child of \co{X} and detects the crash of its parent, it becomes active after termination has been formally reached and announced.
+By sending out \co{REQUEST} message, it might activate other nodes again.
+
+In %TODO 
+out of %TODO 
+runs scenarios like the one described above were encountered. 
+These runs might indicate that announce was called to early or and that messages were received after termination.
+When this happens the run also provides further information about the announce event, all crash and all parent crash detection events in its logs to ease verification that the errors were caused by a scenario as described above.
+Each of these run was carefully examined and if the errors were caused by this known problem, they were declared invalid and not used for further analysis.
+
+
+\begin{itemize}
+	\item the application logs errors if any message or action is executed after termination has been detected by Safra
+	\item per offline analysis (see \cref{ssec:offline\_analysis}) I determine the point of actual termination, then it is verified that termination is detected afterwards
+	\item 
+\end{itemize}
 
 Verification
 compare expected tree to actual tree
