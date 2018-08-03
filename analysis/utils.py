@@ -1,3 +1,4 @@
+import csv
 import statistics
 
 
@@ -21,3 +22,11 @@ def present_linear_relationship(sorted_configurations, field_name, float_represe
 		else:
 			print("FG: %s %s: %i Network: %i Scale: %f" % (c.fault_group, field_name, mean, c.number_of_nodes, mean / scale))
 	print("\n")
+
+
+def write_csv(file_name, headers, rows):
+	with open(file_name, 'w') as csv_file:
+		writer = csv.writer(csv_file)
+		writer.writerow(headers)
+		for r in rows:
+			writer.writerow(r)

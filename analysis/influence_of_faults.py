@@ -2,11 +2,9 @@ import statistics
 from collections import defaultdict, OrderedDict
 
 import plotly
-from scipy.stats import stats
 
 import graphing
-from graphing import get_scatter_graph_data
-from utils import present_linear_relationship, difference_in_percent
+from utils import write_csv
 
 
 def analyse_influence_of_faults(configurations):
@@ -21,10 +19,124 @@ def analyse_influence_of_faults(configurations):
 		sorted(grouped_by_fault_group_sorted.items(), key=lambda i: i[0]))
 
 	present_token_and_token_after_termination(grouped_by_fault_group_sorted)
-	present_processing_times(grouped_by_fault_group_sorted)
+	present_token_table(grouped_by_fault_group_sorted)
+	present_total_times_table(grouped_by_fault_group_sorted)
+	present_processing_times_table(grouped_by_fault_group_sorted)
 
+	present_processing_times(grouped_by_fault_group_sorted)
 	present_total_times(grouped_by_fault_group_sorted)
-	additional_information(grouped_by_fault_group_sorted)
+
+
+def present_processing_times_table(configurations):
+	headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+	rows = []
+	network_sizes = 4
+	for i in range(network_sizes):
+		c_0 = configurations['0'][i]
+		c_5n = configurations['5n'][i]
+		c_90 = configurations['90'][i]
+
+		no_faults_mean = round(statistics.mean(c_0.get_safra_times()), 3)
+		no_faults_mean_after = round(statistics.mean(c_0.get_safra_times_after_termination()), 3)
+		no_faults_mean_col = '%.03f (%.03f)' % (no_faults_mean, no_faults_mean_after)
+
+		mean_5n = round(statistics.mean(c_5n.get_safra_times()), 3)
+		mean_5n_after = round(statistics.mean(c_5n.get_safra_times_after_termination()), 3)
+		mean_5n_col = '%.03f (%.03f)' % (mean_5n, mean_5n_after)
+
+		mean_90 = round(statistics.mean(c_90.get_safra_times()), 3)
+		mean_90_after = round(statistics.mean(c_90.get_safra_times_after_termination()), 3)
+		mean_90_col = '%.03f (%.03f)' % (mean_90, mean_90_after)
+
+		overhead_5n = round(mean_5n / no_faults_mean, 2)
+		overhead_5n_after = round(mean_5n_after / no_faults_mean_after, 2)
+		overhead_5n_col = '%.02f (%.02f)' % (overhead_5n, overhead_5n_after)
+
+		overhead_90 = round(mean_90 / no_faults_mean, 2)
+		overhead_90_after = round(mean_90_after / no_faults_mean_after, 2)
+		overhead_90_col = '%.02f (%.02f)' % (overhead_90, overhead_90_after)
+
+		rows.append([c_0.number_of_nodes,
+		       no_faults_mean_col, mean_5n_col, overhead_5n_col,
+		       mean_90_col,
+		       overhead_90_col])
+
+	write_csv('../report/figures/processing-times-faulty.csv', headers, rows)
+
+
+def present_total_times_table(configurations):
+	headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+
+	network_sizes = 4
+	rows = []
+	for i in range(network_sizes):
+		c_0 = configurations['0'][i]
+		c_5n = configurations['5n'][i]
+		c_90 = configurations['90'][i]
+
+		mean_0 = round(statistics.mean(c_0.get_average_total_times()), 3)
+		mean_0_after = round(statistics.mean(c_0.get_total_times_after_termination()), 3)
+		mean_0_col = '%.03f (%.03f)' % (mean_0,  mean_0_after)
+
+		mean_5n = round(statistics.mean(c_5n.get_average_total_times()), 3)
+		mean_5n_after = round(statistics.mean(c_5n.get_total_times_after_termination()), 3)
+		mean_5n_col = '%.03f (%.03f)' % (mean_5n, mean_5n_after)
+
+		mean_90 = round(statistics.mean(c_90.get_average_total_times()), 3)
+		mean_90_after = round(statistics.mean(c_90.get_total_times_after_termination()), 3)
+		mean_90_col = '%.03f (%.03f)' % (mean_90, mean_90_after)
+
+		overhead_5n = round(mean_5n / mean_0, 2)
+		overhead_5n_after = round(mean_5n_after / mean_0_after, 2)
+		overhead_5n_col = '%.03f (%.03f)' % (overhead_5n, overhead_5n_after)
+
+		overhead_90 = round(mean_90 / mean_0, 2)
+		overhead_90_after = round(mean_90_after / mean_0_after, 2)
+		overhead_90_col = '%.03f (%.03f)' % (overhead_90, overhead_90_after)
+
+		rows.append([c_0.number_of_nodes,
+		       mean_0_col,
+		       mean_5n_col, overhead_5n_col,
+		       mean_90_col, overhead_90_col])
+
+	write_csv('../report/figures/total-times-faulty.csv', headers, rows)
+
+def present_token_table(configurations):
+	headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+
+	network_sizes = 4
+	rows = []
+	for i in range(network_sizes):
+		c_0 = configurations['0'][i]
+		c_5n = configurations['5n'][i]
+		c_90 = configurations['90'][i]
+
+		mean_0 = round(statistics.mean(c_0.get_tokens()))
+		mean_0_after = round(statistics.mean(c_0.get_tokens_after_termination()))
+		mean_0_col = '%i (%i) // %.02f' % (mean_0,  mean_0_after, round(mean_0_after/ mean_0, 2))
+
+		mean_5n = round(statistics.mean(c_5n.get_tokens()))
+		mean_5n_after = round(statistics.mean(c_5n.get_tokens_after_termination()))
+		mean_5n_col = '%i (%i) // %.02f' % (mean_5n, mean_5n_after, round(mean_5n_after / mean_5n, 2))
+
+		mean_90 = round(statistics.mean(c_90.get_tokens()))
+		mean_90_after = round(statistics.mean(c_90.get_tokens_after_termination()))
+		mean_90_col = '%i (%i) // %.02f' % (mean_90, mean_90_after, round(mean_90_after / mean_90, 2))
+
+		overhead_5n = round(mean_5n / mean_0, 2)
+		overhead_5n_after = round(mean_5n_after / mean_0_after, 2)
+		overhead_5n_col = '%.02f (%.02f)' % (overhead_5n, overhead_5n_after)
+
+		overhead_90 = round(mean_90 / mean_0, 2)
+		overhead_90_after = round(mean_90_after / mean_0_after, 2)
+		overhead_90_col = '%.02f (%.02f)' % (overhead_90, overhead_90_after)
+
+		rows.append([c_0.number_of_nodes,
+		       mean_0_col,
+		       mean_5n_col, overhead_5n_col,
+		       mean_90_col, overhead_90_col])
+
+	write_csv('../report/figures/tokens-faulty.csv', headers, rows)
 
 
 def present_processing_times(configurations):
@@ -32,15 +144,12 @@ def present_processing_times(configurations):
 
 	for fault_group, configurations_sorted in configurations.items():
 		for i, c in enumerate(configurations_sorted):
+			data.append(graphing.get_box_trace(c.get_basic_times(), 'B %s %i' % (fault_group, c.number_of_nodes)))
 			data.append(graphing.get_box_trace(c.get_safra_times(), 'T %s %i' % (fault_group, c.number_of_nodes)))
 			data.append(graphing.get_box_trace(c.get_safra_times_after_termination(),
 			                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
 
-
-
-
 	plotly.offline.plot(data, filename='../graphs/processing_times.html')
-
 
 
 def present_total_times(configurations):
@@ -55,7 +164,6 @@ def present_total_times(configurations):
 	plotly.offline.plot(data, filename='../graphs/total_times.html')
 
 
-
 def present_token_and_token_after_termination(configurations):
 	data = []
 
@@ -64,33 +172,8 @@ def present_token_and_token_after_termination(configurations):
 			data.append(graphing.get_box_trace(c.get_tokens(), 'T %s %i' % (fault_group, c.number_of_nodes)))
 			data.append(graphing.get_box_trace(c.get_tokens_after_termination(),
 			                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
-
 			if fault_group == '90':
 				data.append(graphing.get_box_trace(c.get_backup_tokens(),
-			                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(140,255,0)'))
-
+				                                   'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(140,255,0)'))
 
 	plotly.offline.plot(data, filename='../graphs/tokens_and_tokens_after_faulty.html')
-
-
-def additional_information(configurations):
-	data_scatter = {}
-	for fault_group, sorted_configurations in configurations.items():
-		present_linear_relationship(sorted_configurations, 'tokens', True)
-		present_linear_relationship(sorted_configurations, 'tokens_after_termination', True)
-		present_linear_relationship(sorted_configurations, 'safra_times', True)
-
-	for fault_group, configurations_sorted in configurations.items():
-		data_scatter[fault_group] = []
-		for i, c in enumerate(configurations_sorted):
-			data_scatter[fault_group].append(statistics.mean(c.get_tokens()))
-			print("T %s %i Increase from fault free: %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_tokens()) / statistics.mean(configurations['0'][i].get_tokens()), 2)))
-			print("Time %s %i Increase from fault free: %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_safra_times()) / statistics.mean(configurations['0'][i].get_safra_times()), 2)))
-			print("TA %s %i Increase from fault free: %f11 " % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_tokens_after_termination()) / statistics.mean(configurations['0'][i].get_tokens_after_termination()), 2)))
-			print("Time A %s %i Increase from fault free: %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_safra_times_after_termination()) / statistics.mean(configurations['0'][i].get_safra_times_after_termination()), 2)))
-			print("Total Time A %s %i Increase from fault free: %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_average_total_times()) / statistics.mean(configurations['0'][i].get_average_total_times()), 2)))
-			print("Time A %s %i Increase from fault free: %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_total_times_after_termination()) / statistics.mean(configurations['0'][i].get_total_times_after_termination()), 2)))
-			print("Ratio %s %i %f" % (fault_group, c.number_of_nodes, round(statistics.mean(c.get_tokens()) / statistics.mean(c.get_tokens_after_termination()), 2)))
-			print("")
-
-	# plotly.offline.plot([graphing.get_scatter_graph_data(list(range(5)), data, fault_group) for fault_group, data in data_scatter.items()], filename='../graphs/scatter.html')

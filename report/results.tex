@@ -1,5 +1,25 @@
 \section{Results}
 \label{sec:results}
+Over the next sections I present the main results of my experiment to support our claim that SafraFT is correct, to show how SafraFT compares to SafraFS and to exemplify the performance of SafraFT under the presence of faults.
+
+The observations are based on runs of the system described in \cref{sec:methods} on the DAS-4 cluster at the Vrije Universiteit of Amsterdam.
+I meassured runs on networks from 50 to 2000 nodes for SafraFT and SafraFS.
+SafraFT was also tested with 1 to 5 nodes failing per run (dubbed 5n) and with 90\% node failure.
+\cref{table:runs} presents how many repetition of each configuration were run.
+
+The raw data including a manual how to interpret it can be found TODO here.
+\begin{table}[]
+	\begin{tabular}{@{}llll@{}}
+		\toprule
+		Algorithm & Network              & Faults & Repetitions  \\ \midrule
+		SafraFS   & 50/250/500/1000/2000 & 0      & 40 each TODO \\
+		SafraFT   & 50/250/500/1000/2000 & 0      & TODO         \\
+		SafraFT   & 50/250/500/1000/2000 & 5n     & TODO         \\
+		SafraFT   & 50/250/500/1000/2000 & 90\%   & TODO         \\ \bottomrule
+	\end{tabular}
+	\label{table:runs}
+	\caption{List of all configurations run.}
+\end{table}
 
 \subsection{Correctness of SafraFT}
 The experiment is aimed to support our paper with a practical, correct application of our alogorithm.
@@ -8,7 +28,7 @@ Towards this goal I build multiple correctness checks into the experiment.
 To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced. 
 The analysis tools provided with the experiment point any of these logs out to make sure they are not overlooked.
 
-To proof termination is not detected to early, I use offline analysis (see \cref{ssec:offline\_analysis}) to determine the point of actual termination and verify that detection happened after.
+To proof termination is not detected to early, I use offline analysis (see \cref{ssec:offlineanalysis}) to determine the point of actual termination and verify that detection happened after.
 
 The experiment revealed a problem with the framework for termination chosen to develop SafraFT.
 It is common to define termination by:
@@ -71,7 +91,7 @@ First, while total times include idle times, time spent for logging (where the p
 Secondly, total time is wall time between two events and processing times are accumulated over all processes. 
 One particular example for when this leads to differences is that time spent concurrently by two processes counts double in processing time metrics but only once in wall time metrics.
 
-One can observer in \cref{table:processing\_times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
+One can observer in \cref{table:processing-times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
 Furthermore, one sees that while SafraFS timing grow much slower than SafraFT timings and that the difference becomes bigger. 
 This hints for a change in time complexity between the two versions.
 
@@ -84,10 +104,10 @@ The time complexity would change because the increase in network size leads to m
 Most of the additional time for SafraFT is spent after termination.
 By the hypothesis introduced in the last paragraph, this is explained by most tokens being sent after termination (see \cref{fig:tokens}).
 
-The processing time \cref{table:processing\_times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
+The processing time \cref{table:processing-times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
 Although SafraFT uses significantly more time, the overhead on the processing time stays moderate.
 
-The same pattern of SafraFT using more time and reacting worse to an increase in network size is visible for total times in \cref{table:total\_times}.
+The same pattern of SafraFT using more time and reacting worse to an increase in network size is visible for total times in \cref{table:total-times}.
 Again the majority of this time is spent after actual termination for the same reason as before.
 I would like to note that the low processing time overhead of Safra is not in contradiction to the large amount of wall time spent after termination.
 This seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active in the beginning that when it accumulates a lot of processing time; while Safra causes a lot of idle time at the end when all processes wait for their predecessor to pass on the token.
@@ -101,13 +121,15 @@ Our setup of an basic algorithm completing its work relatively fast and terminat
 However, a system with a long running basic algorithm e.g. multiple hours, would put this times in a whole different perspective.
 Then the seconds taken to detect termination would be less of an issue and the moderate processing time overhead demostrated far more important.
 
+
+% TODO not most of processing, total time is spent after termination just slightly half of it
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs under the presence of node crashes.
 I run to really different scenarios: one considering networks with 1 to 5 nodes failing and one with 90\% of all nodes crashing.
 These scenarios are chosen to show SafraFT in both the realistic case of a low number of faults to handle, as well as, the an extreme case; with the aim to confirm that SafraFT handles both cases correctly and
 without unreasonable deterioration in any metric.
 
-\subsection{Tokens}
+\subsubsection{Tokens}
 For both the networks where between 1 and 5 nodes failed, as well as, for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
 More so highly faulty networks more faults. The data is presented \cref{fig:TODO} and \cref{table:TODO}. % Table presents comparision with 0 configuration
 
@@ -127,8 +149,26 @@ Even though, only one 10th of the nodes survive to participate in the latter tok
 That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:TODO})
 
 Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
+
+\begin{table}
+	\begin{tabular}{rrrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$} \\
+		\midrule
+		\csvreader[head to column names]{figures/tokens-faulty.csv}{}% use head of csv as column names
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety}
+		\\\bottomrule
+	\end{tabular}
+	\caption{Tokens before and after termination (in braces). For different fault scenarios compared to fault-free networks.}
+	\label{table:tokens-faulty}
+\end{table}
     
-\subsection{Backup tokens}
+\subsubsection{Backup tokens}
 The average amount of backup tokens sent for either fault simulation and every network size is lower than the number of faults.
 This is because SafraFT only issues backup tokens when the fault of its successor is detected via the fault detector but not if this fault is noticed by receiving a token.
 That result is suprising because the simulated fault detector in my setup detects faults in a really timely manner.
@@ -141,63 +181,83 @@ After, issueing the backup token \co{B} fails on detection \co{A} issues a backu
 Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.  
 
 
-\subsection{Processing Time}
+\subsubsection{Processing Time}
+The observations of this chapter are backed by \cref{table:processing-times-faulty}.
 
-Basic times are similiar to 0 time!
+As for tokens, one can see an increase in processing times before termination under the presents of faults compared to fault free runs. 
+This increase is stronger for runs with more faults.
+Which is no surprise as these runs also produced more tokens.
 
-5n
- increase from 37\% to 67\% over 0 time, why is this less strong than for tokens because counting of messages is a big part of safra messages
- higher variability as 0 time
- 
- time after termination
-   more variability
-   again most time were most tokens are - after termination
-   similiar increase than for token - no counting for messages
-   
- how high is the overhead?
- 
-90
- low variability again
- higher absolute numbers than 5n
- increase from 2.11 to 3.65
-   two questions:
-     nearly always stronger than for tokens - more fault processing??
-     strongest for 250 nodes?
-   
-  time after termination
-    less time after termination, because less tokens
-    low variability
-    less time than 0
+For runs with 1 to 5 failing node a higher variability in the processing times before and after termination becomes apparent. 
+A likely reasons for this has been explained in the \cref{ssec:tokens-faulty}.
+As the processing time grows for this runs, so does the processing time after termination.
+
+For highly faulty networks one observes results in line with the results for tokens in these networks.
+The variability for processing time before or after termination is not raised compared to fault free networks.
+The processing time taken is even higher than the one for less faulty networks.
+
+Less processing time after termination is spent than for fault free networks because less tokens need to be send.
+% TODO transpose these tables
+\begin{table}
+	\begin{tabular}{rrrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$} \\
+		\midrule
+		\csvreader[head to column names]{figures/processing-times-faulty.csv}{}
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety}
+		\\\bottomrule
+	\end{tabular}
+	\caption{Processing times before and after termination (in braces). For different fault scenarios compared to fault-free networks.}
+	\label{table:processing-times-faulty}
+\end{table}
     
  \subsection{Total time}
+ In line with the observations from the two sections before, one observes:
+ \begin{itemize}
+ 	\item an increase in total time spent which is more pronounced on more faulty networks
+ 	\item a higher variability for time spent before and after termination for less faulty networks
+ 	\item less time spent after termination by highly faulty networks
+ \end{itemize}
+ The absolute numbers and relative increases are presented in \cref{table:total-times-faulty}.
  
- 5n
-  higher variability
-  higher than 0
- time after
-   again after termination
-   except for 50 increased
-   but only really slightly. because of defintion of actual termination moves termination back until last parent crash is detected
-  
-  how high is the overhead
-  
- 90
-   slightly higher variability than 0
-   higher than 0 
-   
-  time after
-    less than 0
-    less tokens  
+ \begin{table}
+ 	\begin{tabular}{rrrrrr}%
+ 		\toprule
+ 		\multicolumn{1}{c}{Network} &
+ 		\multicolumn{1}{c}{No faults} &
+ 		\multicolumn{1}{c}{5n} &
+ 		\multicolumn{1}{c}{$\Delta$} &
+ 		\multicolumn{1}{c}{90\%} &
+ 		\multicolumn{1}{c}{$\Delta$} \\
+ 		\midrule
+ 		\csvreader[head to column names]{figures/total-times-faulty.csv}{}
+ 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety}
+ 		\\\bottomrule
+ 	\end{tabular}
+ 	\caption{Total times before and after termination (in braces). For different fault scenarios compared to fault-free networks.}
+ 	\label{table:total-times-faulty}
+ \end{table}
  
- 
+ % TODO why does total time after for less faulty networks not increase.
+
+    \begin{landscape}
+ \begin{figure}
+ 	\frame{\includegraphics[trim={1cm 55cm 1cm 2cm},clip,width=23cm]{figures/total-times-faulty.png}}
+ \end{figure}
+ \begin{figure}
+ 	\includegraphics[trim={1cm 55cm 1cm 2cm},clip,width=23cm]{figures/processing-times-faulty.png}
+ \end{figure}
+ \begin{figure}
+ 	\includegraphics[trim={1cm 55cm 1cm 2cm},clip,width=23cm]{figures/tokens-faulty.png}
+ \end{figure} 
+    \end{landscape}
 
 
-Raw data 
-* where to find
-* what's there
-* what was run
-* list of configurations
-* with date
-* number of nodes / number of instances per node
+
 
 
