@@ -9,40 +9,44 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class AnalysisOnly {
+  private Path reanalysisFolder;
 
-  private static Path analysisFolder;
-  private static Path reanalysisFolder;
-
-  public static void main(String[] args) throws IOException {
-    BasicConfigurator.configure();
-    analysisFolder = Paths.get(args[0]);
-    reanalysisFolder = Paths.get(analysisFolder.toString(), "reanalysis");
+  public AnalysisOnly(Path repetitionFolder, int networkSize, boolean isFaultTolerant) throws IOException {
+    this.reanalysisFolder = Paths.get(repetitionFolder.toString(), "reanalysis");
 
     setupReanalysisFolder();
 
-    Experiment experiment = new OfflineExperiment(analysisFolder, reanalysisFolder, getNetworkSize(), getFaultTolerance());
+    Experiment experiment = new OfflineExperiment(repetitionFolder, reanalysisFolder, networkSize, isFaultTolerant);
     experiment.writeSafraStatitistics();
   }
 
-  private static void setupReanalysisFolder() throws IOException {
+  public static void main(String[] args) throws IOException {
+    BasicConfigurator.configure();
+
+    File experimentFolder = new File(args[0]);
+
+    for (File configurationFolder : experimentFolder.listFiles()) {
+      if (configurationFolder.getName().endsWith(".run")) {
+        for (File repititionFolder : configurationFolder.listFiles()) {
+          AnalysisOnly analysis = new AnalysisOnly(Paths.get(repititionFolder.getAbsolutePath()), getNetworkSize(configurationFolder), getFaultTolerance(configurationFolder));
+        }
+      }
+    }
+  }
+
+  private void setupReanalysisFolder() throws IOException {
     if (reanalysisFolder.toFile().exists()) {
       deleteFolder(reanalysisFolder.toFile());
     }
     Files.createDirectory(reanalysisFolder);
   }
 
-  /**
-   * Assumes the repetition to analyse in a folder as '<network-size>-<fault-percentage>-....run'
-   */
-  private static int getNetworkSize() {
-    return Integer.valueOf(analysisFolder.getParent().getFileName().toString().split("-")[0]);
+  private static int getNetworkSize(File configurationFolder) {
+    return Integer.valueOf(configurationFolder.getName().split("-")[0]);
   }
 
-  /**
-   * Assumes the repetition to analyse in a folder as '<network-size>-<fault-percentage>-....run'
-   */
-  private static boolean getFaultTolerance() {
-    return !analysisFolder.getParent().getFileName().toString().split("-")[1].equals("fs");
+  private static boolean getFaultTolerance(File configurationFolder) {
+    return !configurationFolder.getName().split("-")[1].equals("fs");
   }
 
   static void deleteFolder(File folder) {

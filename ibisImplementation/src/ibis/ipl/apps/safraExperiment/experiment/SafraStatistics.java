@@ -227,16 +227,8 @@ public class SafraStatistics {
    * <p>
    * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
    * messages from and to crashed nodes.
-   * <p>
-   * Also termination cannot be reached before final fault. Furthermore, termination cannot be reached before the
-   * last event of a node detecting it's parent crashing (and repairing this)
-   *
-   * @return if the system has terminated.
    */
   private boolean hasTerminated(int[][] nodeSums, boolean[] nodeActiveStatus, Set<Integer> currentlyCrashedNodes, boolean lastParentCrashEventEncountered) {
-    if (!lastParentCrashEventEncountered) {
-      return false;
-    }
     logger.trace("Trying active");
     for (int i = 0; i < nodeActiveStatus.length; i++) {
       if (nodeActiveStatus[i] && !currentlyCrashedNodes.contains(i)) {
