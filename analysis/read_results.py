@@ -15,32 +15,49 @@ import scipy.stats as st
 from graphing import get_scatter_graph_with_mean_and_confidence_interval, get_box_trace
 
 
+USE_REANALYSING_RESULTS = False
+
 class MyDialect(csv.excel):
 	delimiter = ';'
 
 
 class Repetition:
+	REANALYSIS_FOLDER = 'reanalysis'
+
 	def read_warning_file(self):
-		warningFileName = '/'.join([self.folder, '.warning'])
-		if isfile(warningFileName):
-			return open(warningFileName).readlines()
-		return []
+		warnings_file = '/'.join([self.folder, '.warn'])
+		reanalysis_warnings_file = '/'.join([self.folder, Repetition.REANALYSIS_FOLDER, '.warn'])
+
+		if isfile(warnings_file):
+				self.warnings = open(warnings_file).readlines()
+		if isfile(reanalysis_warnings_file):
+			self.reanalysis_warnings = open(reanalysis_warnings_file).readlines()
 
 	def read_error_file(self):
-		errorFileName = '/'.join([self.folder, '.error'])
-		if isfile(errorFileName):
-			return open(errorFileName).readlines()
-		return []
+		errors_file = '/'.join([self.folder, '.error'])
+		reanalysis_errors_file = '/'.join([self.folder, Repetition.REANALYSIS_FOLDER, '.error'])
+
+		if isfile(errors_file):
+			self.errors = open(errors_file).readlines()
+		if isfile(reanalysis_errors_file):
+			self.reanalysis_errors = open(reanalysis_errors_file).readlines()
 
 	def __init__(self, folder, number_of_nodes, fault_percentage):
 		self.folder = folder
+		self.is_reanalyzed = isdir('/'.join((folder, Repetition.REANALYSIS_FOLDER))) and USE_REANALYSING_RESULTS
+
 		self.number = int(basename(self.folder))
-		self.errors = self.read_error_file()
-		self.valid = len(self.errors) == 0
 
-		self.warnings = self.read_warning_file()
+		self.errors = []
+		self.reanalysis_errors = []
+		self.read_error_file()
+		self.valid = len(self.reanalysis_errors) == 0 if self.is_reanalyzed else len(self.errors) == 0
 
-		with open('/'.join((folder, 'safraStatistics.csv'))) as csvFile:
+		self.warnings = []
+		self.reanalysis_warnings = []
+		self.read_warning_file()
+
+		with open('/'.join((folder, Repetition.REANALYSIS_FOLDER if self.is_reanalyzed else '', 'safraStatistics.csv'))) as csvFile:
 			reader = csv.DictReader(csvFile, dialect=MyDialect())
 			for statistics in reader:
 				self.tokens = int(statistics['tokens'])
@@ -74,6 +91,33 @@ class Repetition:
 
 		assert logs == number_of_nodes + 1, folder  # 1 is the out.log file summarizing the whole run
 		assert chandy_misra_results == number_of_nodes, folder
+
+	def print_warnings(self):
+		if self.warnings:
+			print('Analysis warnings:')
+			print('  ', end='')
+			print('\n  '.join(self.warnings))
+
+		if self.reanalysis_warnings:
+			print('Reanalysis errors: ')
+			print('  ', end='')
+			print('\n  '.join(self.reanalysis_warnings))
+
+	def print_errors(self):
+		if self.errors:
+			print("Analysis errors:")
+			print('  ', end='')
+			print('\n  '.join(self.errors))
+
+		if self.reanalysis_errors:
+			print('Reanalysis errors: ')
+			print('  ', end='')
+			print('\n  '.join(self.reanalysis_errors))
+
+	def print_errors_and_warnings(self):
+		self.print_errors()
+		self.print_warnings()
+
 
 
 class Configuration:

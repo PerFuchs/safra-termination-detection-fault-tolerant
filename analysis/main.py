@@ -35,17 +35,25 @@ for c in configurations:
 	print(
 		"Nodes: %i Fault Percentage: %f Fault Sensitive: %r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive))
 	print("Repetitions: %i \nInvalid Repetitions: %i" % (len(c.repetitions), len(c.invalid_repetitions)))
+	for r in c.repetitions + c.invalid_repetitions:
+		if r.errors or r.reanalysis_errors:
+			print("Repetition: %s" % r.folder)
+			r.print_errors()
+	print("Other runs with warnings %i / with reanalysis warnings %i" % (len(list(filter(lambda r: r.warnings,c.repetitions))),
+	                                                                     len(list(filter(lambda r: r.reanalysis_warnings, c.repetitions)))))
+	print("")
+	print("")
 
-	print("Errors:")
-	for r in c.invalid_repetitions:
-		print("Repetition: %s" % r.folder)
-		for e in r.errors:
-			print("  " + e)
-		print("\nWarnings")
-		for e in r.warnings:
-			print("  " + e)
-	print("")
-	print("")
+repetitions_with_crashes = 0
+repetitions_with_rea_warnings = 0
+for c in configurations:
+	if c.fault_group == '5n' or c.fault_group == '90':
+		repetitions_with_crashes += len(c.repetitions)
+		repetitions_with_rea_warnings += len(list(filter(lambda r: r.reanalysis_warnings, c.repetitions)))
+
+print('Runs with crashes: %i' % repetitions_with_crashes)
+print("Estimated ratio of repetition with early official termination: %f" % (repetitions_with_rea_warnings / repetitions_with_crashes))
+
 
 pprint(expected_configurations, indent=2)
 
