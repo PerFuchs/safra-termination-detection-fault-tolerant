@@ -27,16 +27,18 @@
   So the error is never corrected.
   A straightforward fix for this is to use FIFO networks.
   
+  SafraFT uses the same FIFO channels as its basic algorithm during the experiment.
+  Although, we still claim it does not need this property.
+  This claim is straighforward to proof: SafraFT guarantees that at most one message is in any channel at all times because it forwards only a single token and when a backup token is issued, it is send to a different node than the original token and only the first of both tokens is forwarded afterwards.
+  Hence, I do not see the use of FIFO channels during the experiment as a problem.
+  
   \begin{figure}[h]
   	\includegraphics[height=5cm]{figures/FIFO_necessary}
   	\centering
   	\caption{None FIFO network with \co{A} as root to demonstrate necessity of FIFO networks.}	
   	\label{fig:fifoNecessaryNetwork}
   \end{figure}
-  
-  
-  % TODO explain why FIFO networks are no problem for us.
-  
+    
   I argue that this augmented Chandy Misra algorithm constructs correct sink trees in presence of fail-safe failures. 
   Each failure only affects nodes that see themselves as children, grandchildren and so on; that is, it only affects subtrees.
   Because the perfect failure detector guarantees that each node failure will eventually be detected at the children of the failed node, they eventually send \co{REQUEST} message to all their neighbours.
@@ -53,8 +55,8 @@
   
   The presented fault tolerant Chandy Misra algorithm could be improved by relieving the necessity for FIFO-channels, a more formal proof of correctness and a thourough complexity analysis.
 
-  Anyhow, my work suggests that the Chandy Misra version is correct because I ran it more than % TODO 
-  times and compared the constructed trees to the expected trees which where determined offline. The algorithm yielded the correct sink tree every time.
+  Anyhow, my work suggests that the Chandy Misra version is correct because I run it more than % TODO 
+  times and compare the constructed trees to the expected trees which were determined offline. The algorithm yielded the correct sink tree every time.
    
   
  %TODO Provide pseudo code?
