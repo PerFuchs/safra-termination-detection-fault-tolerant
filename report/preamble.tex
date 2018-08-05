@@ -32,6 +32,7 @@
 \usepackage{csvsimple}
 
 \usepackage{pdflscape}
+\usepackage{rotating}
 
 
 \usepackage{subcaption}
@@ -97,3 +98,15 @@
 \usepackage{tablefootnote}
 
 \newcommand{\co}[1]{\texttt{#1}}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % clear all fields
+
+\setlength{\textheight}{8.8in}
+
+
+\fancyfoot[C]{\thepage}
+
+% rule only in nonfloat pages
+\renewcommand{\headrulewidth}{\iffloatpage{0pt}{0.4pt}}

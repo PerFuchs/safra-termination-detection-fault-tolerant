@@ -47,7 +47,7 @@ def present_processing_times(configurations):
 
 
 def present_total_times(configurations):
-  headers = ['networkSize', 'FT', 'FS', 'difference', 'FTAfter', 'FSAfter', 'DifferenceAfter']
+  headers = ['networkSize', 'FT', 'FS', 'difference', 'FTAfter', 'FSAfter', 'differenceAfter']
 
   rows = []
   for i, (network_size, (ft_configuration, fs_configuration)) in enumerate(configurations.items()):

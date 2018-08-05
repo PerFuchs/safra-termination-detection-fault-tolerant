@@ -1,13 +1,13 @@
 \section{Introduction} 
 This technical report presents an experiment using our fault tolerant Safra version (short SafraFT) \cite{ourpaper}
   to detect termination of a fault tolerant Chandy Misra routing algorithm.
- The fault tolerant Chandy Misra version is developed for this project as an extension of the fault sensitive Chandy Misra algorithm described in \cite{fokkink,2018} on page 57.
+ The fault tolerant Chandy Misra version is developed for this project as an extension of the fault sensitive Chandy Misra algorithm described in \cite{Fokkink:2018} on page 57.
  The extension and further important implementation decissions can be found in \cref{sec:methods}.
  
 The experiment aims to
 \begin{itemize}
 	\item backup our claim that SafraFT is correct by using it in a realistic setting and verifying that termination is detected in a timely manner after actual termination occured
-	\item compare the performance of SafraFT to the fault sensitive Safra implementation (abbriviated SafraFS) from \cite{safraPaper}
+	\item compare the performance of SafraFT to the fault sensitive Safra implementation (abbriviated SafraFS) from \cite{demirbas2000optimal}
 	\item demonstrate the ability of SafraFT to handle networks with 25 and up to 2000 nodes in a fault free, 1 to 5 faults and highly faulty (90\% node failure) environment
 \end{itemize}
 

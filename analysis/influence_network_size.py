@@ -36,4 +36,4 @@ def present_token_and_token_after_termination(configurations):
     data.append(graphing.get_box_trace(ft_configuration.get_tokens_after_termination(),
                                        'FT %i' % ft_configuration.number_of_nodes, 'rgb(255,140,0'))
 
-  plotly.offline.plot(data, filename='../graphs/tokens_and_token_after_termination_box_plot.html')
+  plotly.offline.plot(graphing.hide_layout(data), filename='../graphs/tokens_and_token_after_termination_box_plot.html')

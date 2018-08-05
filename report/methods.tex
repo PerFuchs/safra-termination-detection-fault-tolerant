@@ -4,6 +4,7 @@
  - src Distributed algorithms by Fokking
  - either write and connec this ro just reference this in the next chapter
 \subsection {Fault tolerant Chandy Misra}
+\label{ssec:fault-tolerant-chandy-misra}
   The fault tolerant Chandy Misra version used for our experiments constructs a sink tree in an undirected network under the assumption that a perfect failure detector is present at each node (a detector that does not suspect nodes that haven't actually failed and also will detect each failure eventually). 
   Other than, the original Chandy Misra algorithm this version requires FIFO-channels.
   Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
@@ -93,7 +94,7 @@
 \subsection{Fault Detection}
 Our Safra version assumes the presence of a perfect fault detector.
 This kind of fault detection is easy to implement and integrate with the system e.g.
-\cite{fokkink:2018} on page 113 describes a straightforward implementation.
+\cite{Fokkink:2018} on page 113 describes a straightforward implementation.
 
 As building a perfect fault detector is a well known and solved problem, but nonetheless time consuming, I decided to avoid implementing one.
 For this experiment fault detection is simulated by sending \co{CRASH} messages from crashing nodes to its neighbours. 
@@ -112,6 +113,7 @@ The last two points are the reason why I decided against that approach at first.
   
 
 \subsection{Offline Analysis}
+\label{ssec:offline-analysis}
 For the experiment, I meassure some metrics before and after termination e.g. the total token count and tokens sent after termination of the basic algorithm.
 To allow generation of these metrics, I need a close estimate of when basic algorithm terminated.
 For this I generate log files of events during execution and analyse these afterwards.

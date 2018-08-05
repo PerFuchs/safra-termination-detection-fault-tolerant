@@ -67,3 +67,8 @@ def get_box_trace(values, name, color='rgb(107,174,214)'):
     line=dict(
       color=color)
   )
+
+def hide_layout(data):
+  layout = go.Layout(showlegend=False)
+  figure = go.Figure(data=data, layout=layout)
+  return figure

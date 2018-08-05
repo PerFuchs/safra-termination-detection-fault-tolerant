@@ -114,15 +114,15 @@ def present_token_table(configurations):
 
     mean_0 = round(statistics.mean(c_0.get_tokens()))
     mean_0_after = round(statistics.mean(c_0.get_tokens_after_termination()))
-    mean_0_col = '%i (%i) // %.02f' % (mean_0, mean_0_after, round(mean_0_after / mean_0, 2))
+    mean_0_col = '%i (%i)' % (mean_0, mean_0_after)
 
     mean_5n = round(statistics.mean(c_5n.get_tokens()))
     mean_5n_after = round(statistics.mean(c_5n.get_tokens_after_termination()))
-    mean_5n_col = '%i (%i) // %.02f' % (mean_5n, mean_5n_after, round(mean_5n_after / mean_5n, 2))
+    mean_5n_col = '%i (%i)' % (mean_5n, mean_5n_after)
 
     mean_90 = round(statistics.mean(c_90.get_tokens()))
     mean_90_after = round(statistics.mean(c_90.get_tokens_after_termination()))
-    mean_90_col = '%i (%i) // %.02f' % (mean_90, mean_90_after, round(mean_90_after / mean_90, 2))
+    mean_90_col = '%i (%i)' % (mean_90, mean_90_after)
 
     overhead_5n = round(mean_5n / mean_0, 2)
     overhead_5n_after = round(mean_5n_after / mean_0_after, 2)
@@ -177,4 +177,4 @@ def present_token_and_token_after_termination(configurations):
         data.append(graphing.get_box_trace(c.get_backup_tokens(),
                                            'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(140,255,0)'))
 
-  plotly.offline.plot(data, filename='../graphs/tokens_and_tokens_after_faulty.html')
+  plotly.offline.plot(graphing.hide_layout(data), filename='../graphs/tokens_and_tokens_after_faulty.html')
