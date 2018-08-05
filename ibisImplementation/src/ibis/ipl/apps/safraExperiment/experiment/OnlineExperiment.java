@@ -13,12 +13,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OnlineExperiment extends Experiment {
   private static Logger logger = Logger.getLogger(OnlineExperiment.class);
@@ -51,6 +52,14 @@ public class OnlineExperiment extends Experiment {
     setupLogger();
   }
 
+  public void writeNetwork() throws IOException {
+    network.writeToFile(Paths.get(outputFolder.toString(), "network.txt"));
+  }
+
+  public Network readNetwork() throws IOException {
+    return Network.fromFile(Paths.get(outputFolder.toString(), "network.txt"));
+  }
+
   private void setupLogger() throws IOException {
     experimentLogger.setLevel(Level.INFO);
     experimentLogger.setAdditivity(false);
@@ -77,7 +86,7 @@ public class OnlineExperiment extends Experiment {
 
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes, Set<Integer> nodesExpectedToCrash) throws IOException {
     Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
-    Tree expectedTree = network.getSinkTree(crashedNodes);
+    Tree expectedTree = readNetwork().getSinkTree(crashedNodes);
 
     if (expectedTree == null && !nodesExpectedToCrash.equals(crashedNodes)) {
       // Some nodes were expected to crash but did not. Now these have no connection to root

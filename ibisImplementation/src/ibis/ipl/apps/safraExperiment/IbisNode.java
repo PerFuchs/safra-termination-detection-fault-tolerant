@@ -83,13 +83,13 @@ class IbisNode {
       CrashDetector crashDetector = new CrashDetector();
 
       Set<CrashPoint> enabledCrashPoints = new HashSet<>();
-//      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
-//      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
+      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
+      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
 
-//      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
-//      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
+      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
+      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
 
-//      enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
+      enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
 
       enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
@@ -134,6 +134,7 @@ class IbisNode {
       if (communicationLayer.isRoot()) {
         logger.debug("Starting verfication and output processing.");
         // Takes a long time for big networks skip it for them
+        experiment.writeNetwork();
         if (communicationLayer.getIbisCount() <= 500) {
           experiment.writeNetworkStatistics(network);
         }
