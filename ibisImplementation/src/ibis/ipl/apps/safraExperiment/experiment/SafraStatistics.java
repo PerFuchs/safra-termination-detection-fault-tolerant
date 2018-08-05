@@ -229,6 +229,9 @@ public class SafraStatistics {
    * messages from and to crashed nodes.
    */
   private boolean hasTerminated(int[][] nodeSums, boolean[] nodeActiveStatus, Set<Integer> currentlyCrashedNodes, boolean lastParentCrashEventEncountered) {
+    if (!lastParentCrashEventEncountered) {
+      return false;
+    }
     logger.trace("Trying active");
     for (int i = 0; i < nodeActiveStatus.length; i++) {
       if (nodeActiveStatus[i] && !currentlyCrashedNodes.contains(i)) {
