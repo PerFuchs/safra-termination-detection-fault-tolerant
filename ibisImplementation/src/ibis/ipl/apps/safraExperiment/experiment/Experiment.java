@@ -196,7 +196,10 @@ public class Experiment {
       }
       int lineNumber = 0;
       for (String e : lines) {
-        events.add(Event.createEventFromLogLine(this, i, lineNumber, e));
+        Event event = Event.createEventFromLogLine(this, i, lineNumber, e);
+        if (event != null) {
+          events.add(event);
+        }
         lineNumber++;
       }
     }
