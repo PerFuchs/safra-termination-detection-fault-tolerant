@@ -162,9 +162,17 @@ public class Network {
 
     while (sinkTree == null) {
       unreachableVertices.removeAll(nodesExpectedToCrash);
-      int node = unreachableVertices.get(synchronizedRandom.getInt(unreachableVertices.size()));
-      channels.add(new Channel(root, node, 400000));
-      channels.add(new Channel(node, root, 400000));
+
+      int nodesToConnect = unreachableVertices.size() / 2;
+      if (nodesToConnect == 0) {
+        nodesToConnect = 1;
+      }
+      for (int i = 0; i < nodesToConnect; i++) {
+          int node = unreachableVertices.get(synchronizedRandom.getInt(unreachableVertices.size()));
+          unreachableVertices.remove(new Integer(node));
+          channels.add(new Channel(root, node, 400000));
+          channels.add(new Channel(node, root, 400000));
+      }
 
       unreachableVertices = new LinkedList<>();
       sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
