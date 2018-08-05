@@ -29,9 +29,10 @@ To assure nothing happens after termination detection, the application logs if a
 The analysis tools provided with the experiment point these logs out to make sure they are not overlooked.
 
 To proof termination is not detected to early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
+All % TODO runs using SafraFT under the presence of faults confirm that termination was never detected to early according to this framework.
 
-The experiment revealed a problem with the framework for termination chosen to develop SafraFT.
-It is common to define termination by:
+However, the experiment revealed that the framework for termination chosen to develop SafraFT is not complete and does not cover all cases for my experiment setup.
+SafraFT is developed for the following and commonly used definition of termination:
 \begin{enumerate}
 	\item All nodes are passive
 	\item No messages are in the channels
@@ -39,35 +40,32 @@ It is common to define termination by:
 This definition is based on the fact that a node is either an initiator or can only become active if it receives a message. 
 However, under the presence of failures and if additionally the outcome of the algorithm depends on the set of alive nodes, nodes might get activated by the detection of a failure.
 For example, when Chandy Misra builds a sink tree, nodes that detect a crash of their parents will become active afterwards to find a new path towards root.
-Hence, the definition of termination that our algorithm is build upon does not fully capture our choice of basic algorithm which will lead to an early detection of termination.
-
-The fact described above leads to the following concrete scenario: lets consider the situation that all node are passive and no message are in the channel. 
+The idea described above leads to the following concrete scenario: lets consider the situation that all node are passive and no message are in the channel. 
 In other words, the system terminated by our definition.
 Node \co{X} forwards the token and crashes afterwards. 
 Node \co{Y} calls announce after receipt of the token.
 Assume node \co{Z} is a child of \co{X} and detects the crash of its parent, it becomes active after termination has been formally reached and announced.
 By sending out \co{REQUEST} message, it might activate other nodes again.
 
-In %TODO 
-out of %TODO 
-runs scenarios like the one described above were encountered. 
-These runs might indicate that announce was called to early or and that messages were received after termination.
-When this happens the run also provides further information about the announce event, all crash and all parent crash detection events in its logs to ease verification that the errors were caused by a scenario as described above.
-Each of these run was carefully examined and if the errors were caused by this known problem, they were declared invalid and not used for further analysis.
+To conclude, the definition of termination that our algorithm is build upon does not fully capture our choice of basic algorithm which could lead to an early detection of termination.
 
-compare expected tree to actual tree
-* explain problem with CM about nodes that should fail not failing
-* check every case of problems with CM
+To verify if situations like this actual occur during the experiment, I analysed the logs generated according to both defintions of termination - the one used to develop SafraFT and the same definition but extended with the assumption that termination is postponed until the last crash leading to activity in the basic algorithm has been detected.
 
-% TODO add total timer after termination to metrics in introdution  
-token bytes constant 12 for SafraFT linear upwards for SafraFT starting at 420 and endind at 
+As stated above, SafraFT did never detect termination too early according to the first definition.
+According to the extended definition it detects termination to early in %TODO out of % TODO runs.
+However, due to fact that repairing the sink tree after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes only in % TODO of these cases that leads to the situation that basic activity happened after detected
+termination.
 
+I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact caused by a situation as described above.
+The logs of these runs provide a summary of all detections of parent crashes close to the announce call to ease this procedure.
+
+% TODO write about Chandy Misra verification?
 \subsection{Comparision of Safra versions}
 This section compares SafraFS and SafraFT. 
 Additionally, it analysis how the network size influences both algorithms.
 
 The number of tokens send in total and after termination is presented in \cref{fig:tokens.png}.
-The key observation is that SafraFS and SafraFT behave higly similiar.
+The key observation is that SafraFS and SafraFT behave highly similiar.
 There is no notable difference between the medians, the variance and the ratio between total tokens and tokens after termination for the same network size - except for a unusual high variance in tokens after termination SafraFS for 1000 nodes and a high variance in total tokens for SafraFS for 2000 nodes % TODO is that a dirty experiment - can it be fixed by repeting it?
 As one would expect, the number of tokens seems to grow linearly with the network size.
 Note that the first network size is 5 times smaller than the second after the network size doubles for each run.
@@ -91,11 +89,29 @@ First, while total times include idle times, time spent for logging (where the p
 Secondly, total time is wall time between two events and processing times are accumulated over all processes. 
 One particular example for when this leads to differences is that time spent concurrently by two processes counts double in processing time metrics but only once in wall time metrics.
 
+\begin{table}
+	\begin{tabular}{rrrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{Basic} &
+		\multicolumn{1}{c}{Safra FS} &
+		\multicolumn{1}{c}{Overhead FS} &
+		\multicolumn{1}{c}{Safra FT} &
+		\multicolumn{1}{c}{Overhead FT} \\
+		\midrule
+		\csvreader[head to column names]{figures/processing-times.csv}{}
+		{\\\networkSize & \basic & \FS & \FSoverhead & \FT & \FToverhead}
+		\\\bottomrule
+	\end{tabular}
+	\caption{Processing times before and after termination (in braces) in seconds and overhead caused by processing Safa's methods in percent}
+	\label{table:processing-times}
+\end{table}
+
 One can observer in \cref{table:processing-times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
 Furthermore, one sees that while SafraFS timing grow much slower than SafraFT timings and that the difference becomes bigger. 
 This hints for a change in time complexity between the two versions.
 
-A small subexperiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writting tokens onto the wire. % TODO wording
+A small subexperiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writting tokens onto the wire.
 As we know from the previous section, the number of token send does not differ between the algorithms.
 Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT. 
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the change of time complexity.
@@ -107,20 +123,13 @@ By the hypothesis introduced in the last paragraph, this is explained by most to
 The processing time \cref{table:processing-times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
 Although SafraFT uses significantly more time, the overhead on the processing time stays moderate.
 
-The same pattern of SafraFT using more time and reacting worse to an increase in network size is visible for total times in \cref{table:total-times}.
+The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times}.
 Again the majority of this time is spent after actual termination for the same reason as before.
 I would like to note that the low processing time overhead of Safra is not in contradiction to the large amount of wall time spent after termination.
 This seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active in the beginning that when it accumulates a lot of processing time; while Safra causes a lot of idle time at the end when all processes wait for their predecessor to pass on the token.
 
 To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes a higher time complexity which leads to a later termination detection. 
 Still, SafraFT causes only a moderate processing time overhead.
-
-% TODO move to discussion
-% TODO find convincing example of such an basic algorithm.
-Our setup of an basic algorithm completing its work relatively fast and termination detection takes more time afterwards clearly shows a drawback of fault tolerant Safra.
-However, a system with a long running basic algorithm e.g. multiple hours, would put this times in a whole different perspective.
-Then the seconds taken to detect termination would be less of an issue and the moderate processing time overhead demostrated far more important.
-
 
 % TODO not most of processing, total time is spent after termination just slightly half of it
 \subsection{Influence of faults}

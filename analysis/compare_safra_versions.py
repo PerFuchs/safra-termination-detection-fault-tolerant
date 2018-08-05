@@ -20,22 +20,28 @@ def compare_safra_versions(configurations):
 
 
 def present_processing_times(configurations):
-  headers = ['networkSize', 'basic', 'FT', 'FS', 'difference', 'overheadFS', 'overheadFT']
+  headers = ['networkSize', 'basic', 'FT', 'FS', 'difference', 'FSoverhead', 'FToverhead']
 
   rows = []
   for i, (network_size, (ft_configuration, fs_configuration)) in enumerate(configurations.items()):
     basic_time_mean = round(statistics.mean(ft_configuration.get_basic_times()), 3)
+
     ft_safra_time_mean = round(statistics.mean(ft_configuration.get_safra_times()), 3)
+    ft_safra_time_mean_after = round(statistics.mean(ft_configuration.get_safra_times_after_termination()), 3)
+    ft_safra_time_mean_col = '%.03f (%.03f)' % (ft_safra_time_mean, ft_safra_time_mean_after)
+
     fs_safra_time_mean = round(statistics.mean(fs_configuration.get_safra_times()), 3)
+    fs_safra_time_mean_after = round(statistics.mean(fs_configuration.get_safra_times_after_termination()), 3)
+    fs_safra_time_mean_col = '%.03f (%.03f)' % (fs_safra_time_mean, fs_safra_time_mean_after)
 
     safra_time_difference = round(ft_safra_time_mean / fs_safra_time_mean, 2)
     ft_overhead = round(ft_safra_time_mean / basic_time_mean * 100, 2)
     fs_overhead = round(fs_safra_time_mean / basic_time_mean * 100, 2)
 
     rows.append([network_size,
-                 basic_time_mean, ft_safra_time_mean, fs_safra_time_mean,
+                 basic_time_mean, ft_safra_time_mean_col, fs_safra_time_mean_col,
                  safra_time_difference,
-                 ft_overhead, fs_overhead])
+                 fs_overhead, ft_overhead])
 
   write_csv('../report/figures/processing-times.csv', headers, rows)
 
