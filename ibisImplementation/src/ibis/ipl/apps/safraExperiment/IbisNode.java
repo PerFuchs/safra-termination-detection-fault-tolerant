@@ -54,7 +54,7 @@ class IbisNode {
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
-      Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
+      Logger.getLogger(MessageBarrier.class).setLevel(Level.TRACE);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.TERMINATION, IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
@@ -83,13 +83,13 @@ class IbisNode {
       CrashDetector crashDetector = new CrashDetector();
 
       Set<CrashPoint> enabledCrashPoints = new HashSet<>();
-      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
-      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
+//      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
+//      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
 
-      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
-      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
+//      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
+//      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
 
-      enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
+//      enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
 
       enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);

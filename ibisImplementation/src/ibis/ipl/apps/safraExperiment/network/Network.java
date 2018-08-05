@@ -119,8 +119,6 @@ public class Network {
   public static Network getRandomOutdegreeNetwork(CommunicationLayer communicationLayer, SynchronizedRandom synchronizedRandom, Set<Integer> nodesExpectedToCrash) {
     List<Channel> channels = new LinkedList<>();
 
-    StringBuilder n = new StringBuilder();
-
     for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
       int outdeegree = synchronizedRandom.getInt(6);
       if (outdeegree == 0) {
@@ -129,19 +127,12 @@ public class Network {
 
       Set<Integer> connectedTo = connectedWith(channels, i);
 
-      Set<Integer> usedWeights = new HashSet<>();
-      usedWeights.add(0);
       while (connectedTo.size() <= outdeegree) {
         int to = synchronizedRandom.getInt(communicationLayer.getIbisCount());
         while (connectedTo.contains(to) || to == i) {
           to = synchronizedRandom.getInt(communicationLayer.getIbisCount());
         }
         int weight = synchronizedRandom.getInt(50000);
-        while (usedWeights.contains(weight)) {
-          weight = synchronizedRandom.getInt(50000);
-        }
-        usedWeights.add(weight);
-        n.append(String.format("%d -%d-> %d , ", i, weight, to));
         channels.add(new Channel(i, to, weight));
         channels.add(new Channel(to, i, weight));
         connectedTo.add(to);
@@ -181,8 +172,6 @@ public class Network {
           unreachableVertices);
       Collections.sort(unreachableVertices);
     }
-
-    logger.debug(String.format("Network on %d is: %s", communicationLayer.getID(), n.toString()));
 
     return new Network(channels, communicationLayer);
   }
