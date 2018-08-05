@@ -41,11 +41,13 @@ public class CrashSimulator {
     StringBuilder nodesToCrashString = new StringBuilder();
 
     // All nodes agree on which nodes to crash.
+    LinkedList<Integer> nodesAvailableToCrash = new LinkedList<>();
+    for (int i = 1; i < numberOfNodes; i++) {
+      nodesAvailableToCrash.add(i);
+    }
     for (int i = 0; i < numberOfNodesToCrash; i++) {
-      int crash = synchronizedRandom.getInt(numberOfNodes);
-      while (crashingNodes.contains(crash) || crash == communicationLayer.getRoot()) {  // Do not crash the root node. Otherwise Chandy-Misra is senseless
-        crash = synchronizedRandom.getInt(numberOfNodes);
-      }
+      int crash = nodesAvailableToCrash.get(synchronizedRandom.getInt(nodesAvailableToCrash.size()));
+      nodesAvailableToCrash.remove(new Integer(crash));
       crashingNodes.add(crash);
       nodesToCrashString.append(String.format("%d ,", crash));
     }
