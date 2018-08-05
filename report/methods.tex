@@ -95,7 +95,6 @@ Our Safra version assumes the presence of a perfect fault detector.
 This kind of fault detection is easy to implement and integrate with the system e.g.
 \cite{fokkink:2018} on page 113 describes a straightforward implementation.
 
-% TODO do I want a second reference e.g. a paper that shows an implementation
 As building a perfect fault detector is a well known and solved problem, but nonetheless time consuming, I decided to avoid implementing one.
 For this experiment fault detection is simulated by sending \co{CRASH} messages from crashing nodes to its neighbours. 
 This leads to a realistic fault detection model because these messages are sent asynchronlously through the same channels as all other messages. 
