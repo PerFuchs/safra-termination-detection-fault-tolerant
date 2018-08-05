@@ -103,7 +103,7 @@ In particular, a fault is detected \textit{eventually after} it happened as with
 \co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.
 
 After running the experiments, I noticed a limitation due to my fault detection mechanism:
-configurations in which a message is received from a node after its crash was detected, do not arise because I use FIFO channels for all messages.  %TODO connect to the argumentation for these channels.
+configurations in which a message is received from a node after its crash was detected, do not arise because I use FIFO channels for all messages (see Fault Tolerant Chandy Misra \cref{ssec:fault-tolerant-chandy-misra}).  
 This could be easily fixed by using dedicated channels for crash messages - in IBIS this would manifest in dedicated "crash message" ports on each node.
 Then receiving crash messages would be out-of-band with regular message and the order of receiption would depend on sending time, the Linux scheduler and IBIS implementation details.
 The last two points are the reason why I decided against that approach at first.
@@ -112,23 +112,27 @@ The last two points are the reason why I decided against that approach at first.
   
 
 \subsection{Offline Analysis}
- % TODO is that more in Results on defintion from token after termination.
- We measure tokens before and after termination
- - define 
- - tokens after termination
- - actual termination (not real point of time for termination)
- defintion:
- 1. No messages in the channels
- 2. All nodes are passive
- 3. Termination is postponed until all nodes that need to take action on any fault, detected the regarding fault. Only nodes which parent node fails need to take action and this might trigger further events in any other node.
- - detected termination
- 
- - needs means of determining termination independent and closer to actual termination than Safra
- - by logging token count, time spent events, active status change, message counter change (mean to determine no messages in the cahnnel) and parent crash detected
- - based on this detecting actual termination
- - by logging token count, time spent events. Dividing in before and after termination.
- 
- - Also using it for verification  see \cref{verifaction}
+For the experiment, I meassure some metrics before and after termination e.g. the total token count and tokens sent after termination of the basic algorithm.
+To allow generation of these metrics, I need a close estimate of when basic algorithm terminated.
+For this I generate log files of events during execution and analyse these afterwards.
+
+Termination is commonly defined by:
+\begin{enumerate}
+	\item All nodes are passive
+	\item No messages are in the channels
+\end{enumerate}
+To allow verification of 1. every node logs changes of its active status.
+The second point can be verified indirectly by logging all changes of the message counters managed by Safra's algorithm.
+These counters are incremented for each message sent and decremented for each message received.
+Therefore, one can conclude that no messages are in flight when the sum of all counters is 0.
+All nodes log the aforementioned events combined with a timestamp.
+By sorting and keeping track of active statuses, as well as, the sum of message counters one can estimate the time of basic termination by the timestamp of the last node becoming passive while the sum of all message counters is zero.
+This technique is similiar to the one Safra uses but a global view on the system achieved by offline analysis allows to detect basic termination immediatedly when it occurs.
+
+With this system in place it is possible to determine the number of tokens sent after termination by logging each token sent event and categorizing them during the offline analysis.
+
+All processing metrics are archieved by the same principle: they are logged online when they occur and are grouped into total and after termination by analysing the logs.
+Wall time between basic termination and detection by Safra is determined by comparing the timestamp of the event causing termination with the timestamp of the announce call by Safra.
 
 \subsection{Environment}
 \subsubsection{IBIS}

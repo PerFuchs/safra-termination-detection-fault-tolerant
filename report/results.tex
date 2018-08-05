@@ -26,9 +26,9 @@ The experiment is aimed to support our paper with a practical, correct applicati
 Towards this goal I build multiple correctness checks into the experiment. 
 
 To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced. 
-The analysis tools provided with the experiment point any of these logs out to make sure they are not overlooked.
+The analysis tools provided with the experiment point these logs out to make sure they are not overlooked.
 
-To proof termination is not detected to early, I use offline analysis (see \cref{ssec:offlineanalysis}) to determine the point of actual termination and verify that detection happened after.
+To proof termination is not detected to early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
 
 The experiment revealed a problem with the framework for termination chosen to develop SafraFT.
 It is common to define termination by:
@@ -245,17 +245,7 @@ Less processing time after termination is spent than for fault free networks bec
  
  % TODO why does total time after for less faulty networks not increase.
 
-    \begin{landscape}
- \begin{figure}
- 	\frame{\includegraphics[trim={1cm 55cm 1cm 2cm},clip,width=23cm]{figures/total-times-faulty.png}}
- \end{figure}
- \begin{figure}
- 	\includegraphics[trim={1cm 55cm 1cm 2cm},clip,width=23cm]{figures/processing-times-faulty.png}
- \end{figure}
- \begin{figure}
- 	\includegraphics[trim={1cm 55cm 1cm 2cm},clip,width=23cm]{figures/tokens-faulty.png}
- \end{figure} 
-    \end{landscape}
+
 
 
 
