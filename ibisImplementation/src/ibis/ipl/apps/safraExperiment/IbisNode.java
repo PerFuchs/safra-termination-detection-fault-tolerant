@@ -160,11 +160,20 @@ class IbisNode {
       logger.trace(String.format("%04d Done", communicationLayer.getID()));
       Thread.sleep(new Random().nextInt(3000));
 
+      barrierFactory.getBarrier("Done").await();
+      registry.terminate();
+      registry.waitUntilTerminated();
+
       signalHandler.stop();
       ibis.end();
       System.exit(0);
     } catch (Exception e) {
       e.printStackTrace();
+      try {
+        registry.terminate();
+      } catch (IOException io) {
+        io.printStackTrace();
+      }
       try {
         ibis.end();
       } catch (IOException io) {
