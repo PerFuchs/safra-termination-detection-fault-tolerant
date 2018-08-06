@@ -17,7 +17,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Semaphore;
 
-public class SafraFS implements Observer, Safra {
+public class SafraFS implements Safra {
   private final static Logger logger = Logger.getLogger(SafraFS.class);
   private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
@@ -32,12 +32,10 @@ public class SafraFS implements Observer, Safra {
   private TokenFS token;
 
   private CommunicationLayer communicationLayer;
-  private final Registry registry;
 
   private boolean terminationDetected = false;
 
-  public SafraFS(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer, boolean isInitiator) throws IOException {
-    this.registry = registry;
+  public SafraFS(CommunicationLayer communicationLayer, boolean isInitiator) throws IOException {
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
     this.isInitiator = isInitiator;
@@ -46,8 +44,6 @@ public class SafraFS implements Observer, Safra {
       token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
       setActive(true, "Initiator");
     }
-
-    signalHandler.addObserver(this);
   }
 
   /**
@@ -166,7 +162,8 @@ public class SafraFS implements Observer, Safra {
 
   private synchronized void announce() throws IOException {
     experimentLogger.info(String.format("%s %d", Event.getAnnounceEvent(), communicationLayer.getID()));
-    IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
+    communicationLayer.floodAnnounce();
+    handleAnnounce();
   }
 
   public void await() throws InterruptedException {
@@ -188,15 +185,10 @@ public class SafraFS implements Observer, Safra {
     communicationLayer.sendToken(token, nextNode);
   }
 
-
-  @Override
-  public synchronized void update(Observable observable, Object o) {
-    if (o instanceof IbisSignal) {
-      IbisSignal signal = (IbisSignal) o;
-      if (signal.module.equals("safra") && signal.name.equals("announce")) {
-        terminationDetected = true;
-        semaphore.release();
-      }
+  public void handleAnnounce() {
+    if (!terminationDetected) {
+      terminationDetected = true;
+      semaphore.release();
     }
   }
 

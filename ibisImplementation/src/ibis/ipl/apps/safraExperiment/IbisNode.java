@@ -49,13 +49,13 @@ class IbisNode {
       Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
       Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
-      Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
+      Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
       Logger.getLogger(Experiment.class).setLevel(Level.INFO);
       Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
-      Logger.getLogger(MessageBarrier.class).setLevel(Level.TRACE);
+      Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.TERMINATION, IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
@@ -75,7 +75,7 @@ class IbisNode {
       logger.trace(String.format("%s Pool closed", ibis.identifier().toString()));
 
       SynchronizedRandom synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
-      logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));  // To control all chose the same seed.
+      logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
 
       CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
@@ -84,13 +84,13 @@ class IbisNode {
       CrashDetector crashDetector = new CrashDetector();
 
       Set<CrashPoint> enabledCrashPoints = new HashSet<>();
-//      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
-//      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
+      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
+      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_TOKEN);
 
-//      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
-//      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
+      enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BACKUP_TOKEN);
+      enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BACKUP_TOKEN);
 
-//      enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
+      enabledCrashPoints.add(CrashPoint.BEFORE_RECEIVING_TOKEN);
 
       enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
@@ -106,9 +106,9 @@ class IbisNode {
 
       Safra safraNode;
       if (faultTolerant) {
-        safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
+        safraNode = new SafraFT(communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
       } else {
-        safraNode = new SafraFS(registry, signalHandler, communicationLayer, communicationLayer.isRoot());
+        safraNode = new SafraFS(communicationLayer, communicationLayer.isRoot());
       }
 
       ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
@@ -165,6 +165,11 @@ class IbisNode {
       System.exit(0);
     } catch (Exception e) {
       e.printStackTrace();
+      try {
+        registry.terminate();
+      } catch (IOException io) {
+        io.printStackTrace();
+      }
       try {
         ibis.end();
       } catch (IOException io) {

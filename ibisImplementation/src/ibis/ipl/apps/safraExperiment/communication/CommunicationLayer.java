@@ -33,6 +33,7 @@ public class CommunicationLayer {
   private boolean crashed;
   private Network network;
   private Safra safraNode;
+  private Set<String> floodPayloadSeen = new HashSet<>();
 
   public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) {
     this.ibis = ibis;
@@ -247,6 +248,26 @@ public class CommunicationLayer {
       m.finish();
     }
   }
+
+  public void floodAnnounce() throws IOException {
+    floodMessage("safra:announce");
+  }
+
+  void floodMessage(String payload) throws IOException {
+    if (!floodPayloadSeen.contains(payload)) {
+      floodPayloadSeen.add(payload);
+      logger.debug(String.format("%d flooding payload", getID()));
+      for (SendPort sp : sendPorts.values()) {
+        WriteMessage m = sp.newMessage();
+        m.writeInt(MessageTypes.FLOOD.ordinal());
+        m.writeString(payload);
+        m.send();
+        m.finish();
+      }
+    }
+  }
+
+
 
   public void setCrashSimulator(CrashSimulator crashSimulator) {
     this.crashSimulator = crashSimulator;

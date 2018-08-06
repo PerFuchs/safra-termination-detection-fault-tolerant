@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 
-public class SafraFT implements Observer, Safra, CrashHandler {
+public class SafraFT implements Safra, CrashHandler {
   private final static Logger logger = Logger.getLogger(SafraFT.class);
   private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
 
@@ -42,17 +42,13 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private final CrashSimulator crashSimulator;
 
   private CommunicationLayer communicationLayer;
-  private final Registry registry;
 
   private boolean terminationDetected = false;
 
-  public SafraFT(Registry registry,
-                 SignalPollerThread signalHandler,
-                 CommunicationLayer communicationLayer,
+  public SafraFT(CommunicationLayer communicationLayer,
                  CrashSimulator crashSimulator,
                  CrashDetector crashDetector,
                  boolean isBasicInitiator) throws IOException {
-    this.registry = registry;
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
 
@@ -81,7 +77,6 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       setActive(true, "Initiator");
     }
 
-    signalHandler.addObserver(this);
     crashDetector.addHandler(this);
   }
 
@@ -294,7 +289,8 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   private synchronized void announce() throws IOException {
     experimentLogger.info(String.format("%s %d", Event.getAnnounceEvent(), communicationLayer.getID()));
-    IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
+    communicationLayer.floodAnnounce();
+    handleAnnounce();
   }
 
   public void await() throws InterruptedException {
@@ -321,16 +317,11 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
   }
 
-
-  @Override
-  public synchronized void update(Observable observable, Object o) {
-    if (o instanceof IbisSignal) {
-      IbisSignal signal = (IbisSignal) o;
-      if (signal.module.equals("safra") && signal.name.equals("announce")) {
-        logger.debug(String.format("%d got announce signal", communicationLayer.getID()));
-        terminationDetected = true;
-        semaphore.release();
-      }
+  public void handleAnnounce() {
+    if (!terminationDetected) {
+      logger.debug(String.format("%d got announce signal", communicationLayer.getID()));
+      terminationDetected = true;
+      semaphore.release();
     }
   }
 

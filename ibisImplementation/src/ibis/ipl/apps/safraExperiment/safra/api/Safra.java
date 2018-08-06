@@ -18,4 +18,6 @@ public interface Safra {
   TokenFactory getTokenFactory();
 
   boolean crashDetected(int origin);
+
+  void handleAnnounce();
 }
