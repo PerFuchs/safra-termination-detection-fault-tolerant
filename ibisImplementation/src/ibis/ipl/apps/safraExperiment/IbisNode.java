@@ -156,20 +156,11 @@ class IbisNode {
         Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
       }
 
-      barrierFactory.getBarrier("Done").await();
-      registry.terminate();
-      registry.waitUntilTerminated();
-
       signalHandler.stop();
       ibis.end();
       System.exit(0);
     } catch (Exception e) {
       e.printStackTrace();
-      try {
-        registry.terminate();
-      } catch (IOException io) {
-        io.printStackTrace();
-      }
       try {
         ibis.end();
       } catch (IOException io) {
