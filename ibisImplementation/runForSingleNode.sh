@@ -13,6 +13,20 @@ startChandyMisraInstance () {
     ibis.ipl.apps.safraExperiment.IbisNode ${outputFolder} ${crashPercentage} ${isFaultTolerant}
 }
 
+waitForAllNodesToFinish () {
+    local outputFolder=$1
+    local nodes=$2
+
+    touch "$outputFolder/$(hostname).done"
+
+    local gl="*.done"
+    local a="$outputFolder/$gl"
+    while [ "$(ls -1q ${a} | wc -l)" != "$nodes" ]
+    do
+     sleep 1
+    done
+}
+
 for j in $(seq 1 $3)
  do
     echo "Starting repetition ${j}"
@@ -25,7 +39,9 @@ for j in $(seq 1 $3)
     for pid in ${pids[*]}; do
         wait $pid
     done
-    sleep 4
+    mkdir -p "$4/${j}/"
+    waitForAllNodesToFinish "$4/$j" $8
+    sleep 2
     echo "Done repetition ${j}"
 done
 
