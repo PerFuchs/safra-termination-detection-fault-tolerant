@@ -18,8 +18,9 @@ The raw data including a manual how to interpret it can be found TODO here.
 		SafraFT   & 50/250/500/1000/2000 & 5n     & TODO         \\
 		SafraFT   & 50/250/500/1000/2000 & 90\%   & TODO         \\ \bottomrule
 	\end{tabular}
-	\label{table:runs}
 	\caption{List of all configurations run.}
+	\label{table:runs}
+	% TODO include number of nodes and number of instances per node
 \end{table}
 
 \subsection{Correctness of SafraFT}
@@ -61,7 +62,6 @@ termination.
 I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact caused by a situation as described above.
 The logs of these runs provide a summary of all detections of parent crashes close to the announce call to ease this procedure.
 
-% TODO write about Chandy Misra verification?
 \subsection{Comparision of Safra versions}
 This section compares SafraFS and SafraFT. 
 Additionally, it analysis how the network size influences both algorithms.

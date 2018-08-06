@@ -2,13 +2,13 @@
 This technical report presents an experiment using our fault tolerant Safra version (short SafraFT) \cite{ourpaper}
   to detect termination of a fault tolerant Chandy Misra routing algorithm.
  The fault tolerant Chandy Misra version is developed for this project as an extension of the fault sensitive Chandy Misra algorithm described in \cite{Fokkink:2018} on page 57.
- The extension and further important implementation decissions can be found in \cref{sec:methods}.
+ The an explanation of the extension and further important implementation decissions can be found in \cref{sec:methods}.
  
 The experiment aims to
 \begin{itemize}
 	\item backup our claim that SafraFT is correct by using it in a realistic setting and verifying that termination is detected in a timely manner after actual termination occured
-	\item compare the performance of SafraFT to the fault sensitive Safra implementation (abbriviated SafraFS) from \cite{demirbas2000optimal}
-	\item demonstrate the ability of SafraFT to handle networks with 25 and up to 2000 nodes in a fault free, 1 to 5 faults and highly faulty (90\% node failure) environment
+	\item compare the performance of SafraFT to a fault sensitive Safra implementation (abbriviated SafraFS) from \cite{demirbas2000optimal}
+	\item demonstrate the ability of SafraFT to handle networks of 25 and up to 2000 nodes in a fault free, 1 to 5 faults and highly faulty (90\% node failure) environment
 \end{itemize}
 
 Towards this aim, I measure the following dependent variables
@@ -20,7 +20,7 @@ Towards this aim, I measure the following dependent variables
 	\item processing time for Safra's procedures
 	\item time spent processing the basic algorithm's procedures 
 	\item wall time for the complete computation
-	\item wall time duration between termination of the basic algorithm and detection of the fact
+	\item wall time  between termination of the basic algorithm and detection of the fact
 \end{itemize} 
 
 All these metrics are measured within the following enviroments:
@@ -34,8 +34,8 @@ All these metrics are measured within the following enviroments:
 I do not aim to show the exact relationships between the dependent variables and the indepent variables e.g. the relationship between backup tokens send and the amount of faults.
 This is because the exact relationship depends heavily on the basic algorithm, the network and even the hardware the system is running on.
 Therefore, detailing the dependence would not be helpful to anyone considering to apply our algorithm to his system.
-However, this experiment should enable the reader to judge if SafraFT can be used in practice and convince him that SafraFT does not perform worse than SafraFS in a fault free environment (except for its higher bit complexity).
-As well as, giving a good feeling for the trends of the relationships between environment and the measured metrics.
+However, this experiment should enable the reader to judge if SafraFT could be used for his system and convince him that SafraFT performance is comparable to that of SafraFS in a fault free environment (except for its higher bit complexity).
+Furthermore, this report aims to show how SafraFT behaves in a faulty enviroment.
 
 
  % TODO include scaling information in the results
@@ -75,11 +75,10 @@ Hypothesis
   
   
  
-Before performing this experiment George applied SafraFT to a simulated, random basic algorithm in a multi threaded enviroment emulating a distributed system.
+Before performing this experiment George applied SafraFT to a simulated basic algorithm in a multi threaded enviroment emulating a distributed system.
 These experiments showed strong evidence towards correctness and scalabilty of SafraFT.
 The implementation, technical report and results can be found here: \cite{georgework}.
-Also, they helped with my project as a reference implementation and as assurance that I would not run into serious implementation issues.
-So I would like to thank George for its groundwork of providing a running implementation of SafraFT.
+
 The experiment presented here is performed as reaction to reviewers feedback to add `compelling end-to-end application'.
   
 
