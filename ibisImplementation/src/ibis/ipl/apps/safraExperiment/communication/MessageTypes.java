@@ -6,5 +6,6 @@ public enum MessageTypes {
   CRASHED,
   TOKEN,
   BARRIER,
-  FLOOD
+  FLOOD,
+  ANNOUNCE
 }

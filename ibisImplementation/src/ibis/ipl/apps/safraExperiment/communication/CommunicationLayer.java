@@ -265,8 +265,12 @@ public class CommunicationLayer {
     }
   }
 
-  public void floodAnnounce() throws IOException {
-    floodMessage("safra:announce");
+  public void sendAnnounce(int receiver) throws IOException {
+    SendPort sendPort = sendPorts.get(receiver);
+    WriteMessage m = sendPort.newMessage();
+    m.writeInt(MessageTypes.ANNOUNCE.ordinal());
+    m.send();
+    m.finish();
   }
 
   void floodMessage(String payload) throws IOException {

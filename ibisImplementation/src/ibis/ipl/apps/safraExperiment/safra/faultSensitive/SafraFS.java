@@ -162,7 +162,6 @@ public class SafraFS implements Safra {
 
   private synchronized void announce() throws IOException {
     experimentLogger.info(String.format("%s %d", Event.getAnnounceEvent(), communicationLayer.getID()));
-    communicationLayer.floodAnnounce();
     handleAnnounce();
   }
 
@@ -185,8 +184,9 @@ public class SafraFS implements Safra {
     communicationLayer.sendToken(token, nextNode);
   }
 
-  public void handleAnnounce() {
+  public synchronized void handleAnnounce() throws IOException {
     if (!terminationDetected) {
+      communicationLayer.sendAnnounce((communicationLayer.getID() + 1) % communicationLayer.getIbisCount());
       terminationDetected = true;
       semaphore.release();
     }

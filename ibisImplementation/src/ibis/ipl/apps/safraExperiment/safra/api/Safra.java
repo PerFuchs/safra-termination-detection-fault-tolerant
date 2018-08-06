@@ -19,5 +19,5 @@ public interface Safra {
 
   boolean crashDetected(int origin);
 
-  void handleAnnounce();
+  void handleAnnounce() throws IOException;
 }

@@ -289,7 +289,6 @@ public class SafraFT implements Safra, CrashHandler {
 
   private synchronized void announce() throws IOException {
     experimentLogger.info(String.format("%s %d", Event.getAnnounceEvent(), communicationLayer.getID()));
-    communicationLayer.floodAnnounce();
     handleAnnounce();
   }
 
@@ -317,11 +316,12 @@ public class SafraFT implements Safra, CrashHandler {
     }
   }
 
-  public void handleAnnounce() {
+  public synchronized void handleAnnounce() throws IOException {
     if (!terminationDetected) {
       logger.debug(String.format("%d got announce signal", communicationLayer.getID()));
-      terminationDetected = true;
-      semaphore.release();
+        communicationLayer.sendAnnounce((communicationLayer.getID() + 1) % communicationLayer.getIbisCount());
+        terminationDetected = true;
+        semaphore.release();
     }
   }
 
