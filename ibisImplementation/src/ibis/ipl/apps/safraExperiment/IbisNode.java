@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.text.ParseException;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 
@@ -113,7 +114,7 @@ class IbisNode {
 
       ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
 
-      communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+      communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory, crashSimulator);
       logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
 
       barrierFactory.getBarrier("Connected").await();
@@ -155,6 +156,9 @@ class IbisNode {
         // Copy the output log file
         Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
       }
+      barrierFactory.getBarrier("Done").await();
+      logger.trace(String.format("%04d Done", communicationLayer.getID()));
+      Thread.sleep(new Random().nextInt(3000));
 
       signalHandler.stop();
       ibis.end();

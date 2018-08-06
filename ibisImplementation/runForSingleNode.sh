@@ -41,7 +41,7 @@ for j in $(seq 1 $3)
     done
     mkdir -p "$4/${j}/"
     waitForAllNodesToFinish "$4/$j" $8
-    sleep 2
+    sleep 5
     echo "Done repetition ${j}"
 done
 
