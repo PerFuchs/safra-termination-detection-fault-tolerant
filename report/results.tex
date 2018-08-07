@@ -12,7 +12,7 @@ The raw data including a manual how to interpret it can be found TODO here.
 	\centering
 	\begin{tabular}{@{}lllll@{}}
 		\toprule
-		Algorithm & Network              & Faults & Repetitions  & #Instances / DAS-4 node   \\ \midrule
+		Algorithm & Network              & Faults & Repetitions  & \#Instances / DAS-4 node   \\ \midrule
 		SafraFS   & 50                   & 0      & 100          & 25                    \\
 		SafraFS   & 250/500/1000/2000    & 0      & 100          & 125                   \\
 		SafraFT   & 50                   & 0      & 100          & 25                    \\
@@ -22,7 +22,7 @@ The raw data including a manual how to interpret it can be found TODO here.
 	    SafraFT   & 50                   & 90\%   & 100          & 25                    \\
 		SafraFT   &    250/500/1000/2000 & 90\%   & 100          & 125                   \\ \bottomrule
 	\end{tabular}
-	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple virtual instances in their own processes where run (columm ´#Instances / DAS-4 node'). The amount of physical node equates to network size divided by instances.}
+	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple virtual instances in their own processes where run (columm '\#Instances / DAS-4 node`). The amount of physical node equates to network size divided by instances.}
 	\label{table:runs}
 	% TODO include number of nodes and number of instances per node
 \end{table}
@@ -72,7 +72,6 @@ Additionally, it analysis how the network size influences both algorithms.
 
 The number of tokens send in total and after termination is presented in \cref{fig:tokens-and-tokens-after}.
 
-
 \begin{sidewaysfigure}[ht]
 	\includegraphics{figures/tokens-and-tokens-after.png}
 	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes.}
@@ -82,7 +81,7 @@ The number of tokens send in total and after termination is presented in \cref{f
 The key observation is that SafraFS and SafraFT behave highly similiar.
 There is no notable difference between the medians, the variance and the ratio between total tokens and tokens after termination for the same network size - except for a unusual high variance in tokens after termination SafraFS for 1000 nodes and a high variance in total tokens for SafraFS for 2000 nodes % TODO is that a dirty experiment - can it be fixed by repeting it?
 As one would expect, the number of tokens seems to grow linearly with the network size.
-Note that the first network size is 5 times smaller than the second after the network size doubles for each run.
+Note that the first network size is 5 times smaller than the second for bigger networks the  size doubles for each run.
 
 The bit complexity of SafraFS is constant.
 In this experiment each token of SafraFS contains 12 bytes.
@@ -121,21 +120,21 @@ One particular example for when this leads to differences is that time spent con
 	\label{table:processing-times}
 \end{table}
 
-One can observer in \cref{table:processing-times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
-Furthermore, one sees that while SafraFS timing grow much slower than SafraFT timings and that the difference becomes bigger. 
+One can observe in \cref{table:processing-times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
+Furthermore, one sees that while SafraFS timing grow much slower in bigger networks than SafraFT timings and that the difference becomes bigger. 
 This hints for a change in time complexity between the two versions.
 
 A small subexperiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writting tokens onto the wire.
-As we know from the previous section, the number of token send does not differ between the algorithms.
+As we know from a previous paragraph, the number of token send does not differ between the algorithms.
 Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT. 
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the change of time complexity.
 The time complexity would change because the increase in network size leads to more token being sent (as in SafraFS) but also to bigger tokens being sent.
 
-Most of the additional time for SafraFT is spent after termination.
+Most of the additional processing time for SafraFT is spent after termination.
 By the hypothesis introduced in the last paragraph, this is explained by most tokens being sent after termination (see \cref{fig:tokens-and-tokens-after}).
 
 The processing time \cref{table:processing-times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
-Although SafraFT uses significantly more time, the overhead on the processing time stays moderate.
+Although, SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of % TODO percent
 \\
 \begin{table}
 	\centering
@@ -159,23 +158,25 @@ Although SafraFT uses significantly more time, the overhead on the processing ti
 
 The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times}.
 Again the majority of this time is spent after actual termination for the same reason as before.
-I would like to note that the low processing time overhead of Safra is not in contradiction to the large amount of wall time spent after termination.
-This seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active in the beginning that when it accumulates a lot of processing time; while Safra causes a lot of idle time at the end when all processes wait for their predecessor to pass on the token.
+I would like to note that the low processing time overhead of Safra (maximum of %TODO) 
+is not in contradiction to the large amount of wall time spent after termination (maximum of %TODO).
+These seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active in the beginning that is when it accumulates a lot of processing time; while Safra causes a lot of idle time at the end when all processes wait for their predecessor to pass on the token. 
+This idle time is not included in processing time but wall time does include it.
 
 To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes a higher time complexity which leads to a later termination detection. 
-Still, SafraFT causes only a moderate processing time overhead.
+Still, SafraFT causes only a moderate processing time overhead between %TODO.
 
 % TODO not most of processing, total time is spent after termination just slightly half of it
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs under the presence of node crashes.
-I run to really different scenarios: one considering networks with 1 to 5 nodes failing and one with 90\% of all nodes crashing.
-These scenarios are chosen to show SafraFT in both the realistic case of a low number of faults to handle, as well as, the an extreme case; with the aim to confirm that SafraFT handles both cases correctly and
-without unreasonable deterioration in any metric.
+I run to highly different scenarios: one considering networks with 1 to 5 nodes failing and one with 90\% of all nodes crashing.
+These scenarios are chosen to show SafraFT in both the realistic case of a low number of faults to handle, as well as, the an extreme case; with the aim to confirm that SafraFT handles both cases correctly and without unreasonable deterioration in any metric.
 
+% TODO token size is missing
 \subsubsection{Tokens}
 \label{ssec:tokens-faulty}
 For both the networks where between 1 and 5 nodes failed, as well as, for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
-More so highly faulty networks more faults. The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:tokens-faulty}. % Table presents comparision with 0 configuration
+More so for highly faulty networks more faults. The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:tokens-faulty}. % Table presents comparision with 0 configuration
 
 \begin{sidewaysfigure}[ht]
 	\includegraphics{figures/tokens-and-tokens-after-faulty.png}
@@ -209,10 +210,10 @@ This seems reasonable as runs with failing node might lead to more different sit
 The same example provides an idea why the variability increases in big networks. 
 That is because one extra round in a big network has a much higher impact on the token count than in a small network.
 
-A example crafted similiarly would explain the extremely high maximum of tokens sent and overlinear increase of the average number of tokens in networks with 2000 nodes for 1 to 5 nodes failing.
+The phenomenon explained in the last paragraph most likely causes the extremely high maximum of tokens sent and overlinear increase of the average number of tokens in networks with 2000 nodes for 1 to 5 nodes failing.
 
 Other than networks with one to 5 failing nodes, networks with up to 90\% node failure lead to a similiar variance in tokens and tokens after termination as a fault free networks.
-A likely explanation is that the low survival rate of 1 out of 10 leads to less different scenarios than 995 nodes surviving as in the fault scenario treated the last paragraphs.
+A likely explanation is that the low survival rate of 1 out of 10 instances leads to less different scenarios than in the fault scenario treated the last paragraphs e.g. for a network size of thousand roughly 995 nodes survived for 5n but only 100 nodes survive in the runs discussed in this paragraph.
 
 Even though, only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
 That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty})
@@ -223,7 +224,7 @@ Different from all other networks, highly faulty networks exhibit a much lower t
 The average amount of backup tokens sent for either fault simulation and every network size is lower than the number of faults.
 This is because SafraFT only issues backup tokens when the fault of its successor is detected via the fault detector but not if this fault is noticed by receiving a token.
 That result is suprising because the simulated fault detector in my setup detects faults in a really timely manner.
-Still, there are some runs were 1 to 5 nodes fail but no backup token is issued for all network sizes. 
+Still, there are some runs were 1 to 5 nodes fail but no backup token is issued even for really big networks. 
 
 The other extreme were more backup tokens are issued than faults occure exists as well.
 This can be explained by my decission to have node failing after issuesing a backup token.
@@ -240,7 +241,7 @@ This increase is stronger for runs with more faults.
 Which is no surprise as these runs also produced more tokens.
 
 For runs with 1 to 5 failing node a higher variability in the processing times before and after termination becomes apparent. 
-A likely reasons for this has been explained in the \cref{ssec:tokens-faulty}.
+Most likely this is because of the higher diversity of scenarios possible if some nodes fail  as explained in \cref{ssec:tokens-faulty}.
 As the processing time grows for this runs, so does the processing time after termination.
 
 For highly faulty networks one observes results in line with the results for tokens in these networks.
@@ -297,6 +298,7 @@ Less processing time after termination is spent than for fault free networks bec
  \end{table}
  
  % TODO why does total time after for less faulty networks not increase.
+ % TODO why are these increases and not other to be expected and reasonable
 
 
 
