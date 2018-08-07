@@ -10,15 +10,19 @@ SafraFT was also tested with 1 to 5 nodes failing per run (dubbed 5n) and with 9
 The raw data including a manual how to interpret it can be found TODO here.
 \begin{table}[]
 	\centering
-	\begin{tabular}{@{}llll@{}}
+	\begin{tabular}{@{}lllll@{}}
 		\toprule
-		Algorithm & Network              & Faults & Repetitions  \\ \midrule
-		SafraFS   & 50/250/500/1000/2000 & 0      & 40 each TODO \\
-		SafraFT   & 50/250/500/1000/2000 & 0      & TODO         \\
-		SafraFT   & 50/250/500/1000/2000 & 5n     & TODO         \\
-		SafraFT   & 50/250/500/1000/2000 & 90\%   & TODO         \\ \bottomrule
+		Algorithm & Network              & Faults & Repetitions  & #Instances / DAS-4 node   \\ \midrule
+		SafraFS   & 50                   & 0      & 100          & 25                    \\
+		SafraFS   & 250/500/1000/2000    & 0      & 100          & 125                   \\
+		SafraFT   & 50                   & 0      & 100          & 25                    \\
+		SafraFT   & 250/500/1000/2000    & 0      & 100          & 125                   \\
+		SafraFT   & 50                   & 5n     & 100          & 25                    \\
+		SafraFT   &    250/500/1000/2000 & 5n     & 100          & 125                   \\
+	    SafraFT   & 50                   & 90\%   & 100          & 25                    \\
+		SafraFT   &    250/500/1000/2000 & 90\%   & 100          & 125                   \\ \bottomrule
 	\end{tabular}
-	\caption{List of all configurations run.}
+	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple virtual instances in their own processes where run (columm ´#Instances / DAS-4 node'). The amount of physical node equates to network size divided by instances.}
 	\label{table:runs}
 	% TODO include number of nodes and number of instances per node
 \end{table}
