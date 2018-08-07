@@ -336,6 +336,8 @@ public class Event implements Comparable<Event> {
       sb.append(String.format("Safra time spent: %d", timeSpent));
     } else if (isTotalTimeSpentEvent) {
       sb.append(String.format("Total time spent: %d", timeSpent));
+    } else if (isParentCrashDetected) {
+      sb.append(String.format("Parent crash detected"));
     }
     return sb.toString();
   }

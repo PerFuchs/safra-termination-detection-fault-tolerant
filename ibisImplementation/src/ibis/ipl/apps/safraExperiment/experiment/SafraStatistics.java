@@ -210,7 +210,7 @@ public class SafraStatistics {
     message.append('\n');
 
     message.append("Last basic event before announce was: ");
-    message.append(lastBasicEvent);
+    message.append(lastBasicEvent.toString());
     message.append('\n');
 
     return message.toString();
