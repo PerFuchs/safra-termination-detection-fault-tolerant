@@ -79,12 +79,6 @@ public class SafraStatistics {
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
-      if (terminated && (e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
-        // These are only warnings because they could be caused by a message of a node that crashed already.
-        // Then they should be ignored by the offline termination detection.
-        logger.info(String.format("Basic event happened  on node %d after termination: %s", e.getNode(), e.getEvent()));
-        experiment.writeToWarnFile(String.format("Basic event happened  on node %d after termination: %s", e.getNode(), e.getEvent()));
-      }
       if (e == lastParentCrashDetected) {
         lastParentCrashDetectedEncountered = true;
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);

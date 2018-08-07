@@ -128,9 +128,10 @@ class IbisNode {
       totalTime.stopAndCreateTotalTimeSpentEvent();
 
       experiment.writeChandyMisraResults(chandyMisraNode);
+      Thread.sleep(5000);  // Give events after termination a chance to be looged
       experiment.finalizeExperimentLogger();
 
-      logger.debug(String.format("%04d Finished writting results", communicationLayer.getID()));
+      logger.debug(String.format("%04d Finished writing results", communicationLayer.getID()));
       barrierFactory.getBarrier("ResultsWritten").await();
 
       if (communicationLayer.isRoot()) {

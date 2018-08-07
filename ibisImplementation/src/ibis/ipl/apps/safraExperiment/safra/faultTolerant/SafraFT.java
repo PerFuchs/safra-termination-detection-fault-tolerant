@@ -169,9 +169,6 @@ public class SafraFT implements Safra, CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d notfified crash after termination.", communicationLayer.getID()));
-    }
     if (!crashed.contains(crashedNode) && !report.contains(crashedNode)) {
       report.add(crashedNode);
       if (crashedNode == nextNode) {
@@ -214,9 +211,6 @@ public class SafraFT implements Safra, CrashHandler {
 
   public synchronized void receiveToken(Token token) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
-    }
     if (!(token instanceof TokenFT)) {
       throw new IllegalStateException("None TokenFT used with SafraFT");
     }
@@ -224,6 +218,9 @@ public class SafraFT implements Safra, CrashHandler {
 
     TokenFT t = (TokenFT) token;
     if (t.sequenceNumber == getSequenceNumber() + 1) {
+      if (terminationDetected) {
+        experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+      }
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);
       this.token = t;

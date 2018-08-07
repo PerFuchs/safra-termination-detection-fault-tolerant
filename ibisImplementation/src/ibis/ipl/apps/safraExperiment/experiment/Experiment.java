@@ -90,7 +90,6 @@ public class Experiment {
         logger.error(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
         writeToErrorFile(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
         ret = false;
-        break;
       }
     }
     return ret;

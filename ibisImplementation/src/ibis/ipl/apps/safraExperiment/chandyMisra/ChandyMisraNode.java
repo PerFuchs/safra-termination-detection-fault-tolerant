@@ -85,6 +85,10 @@ public class ChandyMisraNode implements CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     if (crashedNode == parent) {
+      if (terminated) {
+        experimentLogger.warn(String.format("%d notfified crash after termination.", communicationLayer.getID()));
+      }
+
       safraNode.setActive(true, "Processing crash");
       OurTimer timer = new OurTimer();
       if (terminated) {  // No node triggering activity can fail after termination has been detected
