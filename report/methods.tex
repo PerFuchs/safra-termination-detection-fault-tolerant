@@ -100,9 +100,8 @@ This kind of fault detection is easy to implement and integrate with the system 
 
 As building a perfect fault detector is a well known and solved problem, but nonetheless, time-consuming, I decided to avoid implementing one.
 For this experiment, fault detection is simulated by sending \co{CRASH} messages from crashing nodes to their neighbours. 
-This leads to a realistic fault detection model because these messages are sent asynchronously through the same channels used by all other messages. 
-Hence, closely imitating a perfect failure detector based on heartbeats. 
-In particular, a fault is detected \textit{eventually after} it happened as with every failure detector.
+These crash messages are send through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with them and this would exclude situations where a basic messag is received after the crash of the sender has been detected.
+
 \co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.  
 
 \subsection{Offline Analysis}
