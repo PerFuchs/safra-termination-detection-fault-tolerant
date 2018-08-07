@@ -292,4 +292,19 @@ public class CommunicationLayer {
   public void setCrashSimulator(CrashSimulator crashSimulator) {
     this.crashSimulator = crashSimulator;
   }
+
+  public void sendMessage(Message message) throws IOException {
+    // TODO
+    crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
+    if (!crashed) {
+      if (message instanceof BasicMessage) {
+        safraNode.handleSendingBasicMessage(message.getReceiver());
+      }
+
+    }
+  }
+
+  public List<Integer> getNeighbours() {
+    return network.getNeighbours(this.getID());
+  }
 }
