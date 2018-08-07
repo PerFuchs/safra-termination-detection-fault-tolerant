@@ -79,8 +79,14 @@ The number of tokens send in total and after termination is presented in \cref{f
 \end{sidewaysfigure}
 
 The key observation is that SafraFS and SafraFT behave highly similiar.
-There is no notable difference between the medians, the variance and the ratio between total tokens and tokens after termination for the same network size - except for a unusual high variance in tokens after termination SafraFS for 1000 nodes and a high variance in total tokens for SafraFS for 2000 nodes % TODO is that a dirty experiment - can it be fixed by repeting it?
-As one would expect, the number of tokens seems to grow linearly with the network size.
+Nonetheless, there are small differences.
+SafraFT sends slightly less tokens.
+The biggest difference is around 30 tokens out of roughly 1000 tokens for a network with the size of thousand.
+% TODO results for 2000
+Also the results for SafraFS show a slightly higher variance.
+Most likely these differences are caused by implemenation details and not generalizable.
+
+As one would expect, the number of tokens grows linearly with the network size.
 Note that the first network size is 5 times smaller than the second for bigger networks the  size doubles for each run.
 
 The bit complexity of SafraFS is constant.
@@ -103,6 +109,7 @@ Secondly, total time is wall time between two events and processing times are ac
 One particular example for when this leads to differences is that time spent concurrently by two processes counts double in processing time metrics but only once in wall time metrics.
 
 \begin{table}
+	\centering
 	\begin{tabular}{rrrrrr}%
 		\toprule
 		\multicolumn{1}{c}{Network} &
@@ -113,15 +120,16 @@ One particular example for when this leads to differences is that time spent con
 		\multicolumn{1}{c}{Overhead FT} \\
 		\midrule
 		\csvreader[head to column names]{figures/processing-times.csv}{}
-		{\\\networkSize & \basic & \FS & \FSoverhead & \FT & \FToverhead}
+		{\\\networkSize & \basic & \FS & \FSoverhead \% & \FT & \FToverhead \%}
 		\\\bottomrule
 	\end{tabular}
 	\caption{Total processing times and processing times after termination (in braces) in seconds and overhead caused by processing Safa's methods in percent}
 	\label{table:processing-times}
 \end{table}
+% TODO add percent sign to overhead numbers
 
-One can observe in \cref{table:processing-times} that SafraFT uses much more processing time than SafraFS and most of this time is spent between actual terminatio and termination detection.
-Furthermore, one sees that while SafraFS timing grow much slower in bigger networks than SafraFT timings and that the difference becomes bigger. 
+One can observe in \cref{table:processing-times} that SafraFT uses more processing time than SafraFS and much of this time is spent between actual termination and termination detection.
+Furthermore, one sees that SafraFS times grow less  than SafraFT times with increasing networks.z
 This hints for a change in time complexity between the two versions.
 
 A small subexperiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writting tokens onto the wire.
@@ -130,8 +138,11 @@ Therefore, I believe that these differences are caused by the higher bit complex
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the change of time complexity.
 The time complexity would change because the increase in network size leads to more token being sent (as in SafraFS) but also to bigger tokens being sent.
 
-Most of the additional processing time for SafraFT is spent after termination.
-By the hypothesis introduced in the last paragraph, this is explained by most tokens being sent after termination (see \cref{fig:tokens-and-tokens-after}).
+The difference in processing time spent after termination is higher than the difference in total processing time.
+The first reason for this is that most tokens are sent after termination (see \cref{fig:tokens-and-tokens-after}).
+A second reason is that much of the total processing time is spent in the methods handling receive and sending of basic messages because they are called that often.
+These do not change that significantly between both Safra versions.
+Hence, the increase of processing time to send tokens shows less in the total times.
 
 The processing time \cref{table:processing-times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
 Although, SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of % TODO percent
@@ -157,16 +168,22 @@ Although, SafraFT uses significantly more time, the overhead on the processing t
 \end{table}
 
 The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times}.
-Again the majority of this time is spent after actual termination for the same reason as before.
-I would like to note that the low processing time overhead of Safra (maximum of %TODO) 
-is not in contradiction to the large amount of wall time spent after termination (maximum of %TODO).
+An exception from this pattern is the strong rise of total time for SafraFT in networks with 250 nodes.
+% TODO might be because of?
+
+For SafraFS roughly half of the time is spent after termination for small networks.
+In big networks the part of time spent after termination is lower because the fraction spent by the basic algorithms becomes dominant. 
+
+The systems using SafraFT spent the majority of their time to detect termination because of the already noted higher time complexity.
+
+I would like to note that the low processing time overhead of Safra is not in contradiction to the large amount of wall time spent after termination.
 These seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active in the beginning that is when it accumulates a lot of processing time; while Safra causes a lot of idle time at the end when all processes wait for their predecessor to pass on the token. 
 This idle time is not included in processing time but wall time does include it.
 
 To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes a higher time complexity which leads to a later termination detection. 
 Still, SafraFT causes only a moderate processing time overhead between %TODO.
 
-% TODO not most of processing, total time is spent after termination just slightly half of it
+
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs under the presence of node crashes.
 I run to highly different scenarios: one considering networks with 1 to 5 nodes failing and one with 90\% of all nodes crashing.
@@ -305,4 +322,4 @@ Less processing time after termination is spent than for fault free networks bec
 
 
 
-
+	

@@ -25,7 +25,7 @@ expected_configurations = {}
 
 for network_size in [50, 250, 500, 1000, 2000]:
   for fault_group in ['0 fs', '0', '5n', '90']:
-    expected_configurations[(network_size, fault_group)] = 40
+    expected_configurations[(network_size, fault_group)] = 100
 
 for c in configurations:
   expected_configurations[(c.number_of_nodes, c.fault_group)] = expected_configurations[
