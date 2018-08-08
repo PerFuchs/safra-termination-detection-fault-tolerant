@@ -20,7 +20,7 @@ def compare_safra_versions(configurations):
 
 
 def present_processing_times(configurations):
-  headers = ['networkSize', 'basic', 'FT', 'FS', 'difference', 'FSoverhead', 'FToverhead']
+  headers = ['networkSize', 'basic', 'FT', 'FS', 'difference', 'FSoverhead', 'FToverhead', 'FSAfter', 'FTAfter']
 
   rows = []
   for i, (network_size, (ft_configuration, fs_configuration)) in enumerate(configurations.items()):
@@ -39,9 +39,10 @@ def present_processing_times(configurations):
     fs_overhead = round(fs_safra_time_mean / basic_time_mean * 100, 2)
 
     rows.append([network_size,
-                 basic_time_mean, ft_safra_time_mean_col, fs_safra_time_mean_col,
+                 basic_time_mean, ft_safra_time_mean, fs_safra_time_mean,
                  safra_time_difference,
-                 fs_overhead, ft_overhead])
+                 fs_overhead, ft_overhead,
+                 fs_safra_time_mean_after, ft_safra_time_mean_after])
 
   write_csv('../report/figures/processing-times.csv', headers, rows)
 

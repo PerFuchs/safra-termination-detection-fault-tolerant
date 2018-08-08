@@ -24,7 +24,6 @@ The raw data including a manual how to interpret it can be found TODO here.
 	\end{tabular}
 	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple virtual instances in their own processes where run (columm '\#Instances / DAS-4 node`). The amount of physical node equates to network size divided by instances.}
 	\label{table:runs}
-	% TODO include number of nodes and number of instances per node
 \end{table}
 
 \subsection{Correctness of SafraFT}
@@ -56,9 +55,15 @@ By sending out \co{REQUEST} message, it might activate other nodes again.
 
 To conclude, the definition of termination that our algorithm is build upon does not fully capture our choice of basic algorithm which could lead to an early detection of termination.
 
-To verify if situations like this actual occur during the experiment, I analysed the logs generated according to both defintions of termination - the one used to develop SafraFT and the same definition but extended with the assumption that termination is postponed until the last crash leading to activity in the basic algorithm has been detected.
+To verify if situations like this actual occur during the experiment, I analysed the logs generated according to the definition of termination used to develop SafraFT (see above) and the following definition:
+\begin{enumerate}
+	\item All nodes are passive
+	\item No messages are in the channels
+	\item Termination is postponed until the last node failure that leads to activity is detected
+\end{enumerate}
+\label{extended-definition}
 
-As stated above, SafraFT did never detect termination too early according to the first definition.
+As stated above, SafraFT did never detect termination too early according to its definition.
 According to the extended definition it detects termination to early in %TODO out of % TODO runs.
 However, due to fact that repairing the sink tree after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes only in % TODO of these cases that leads to the situation that basic activity happened after detected
 termination.
@@ -78,16 +83,18 @@ The number of tokens send in total and after termination is presented in \cref{f
 	\label{fig:tokens-and-tokens-after}
 \end{sidewaysfigure}
 
-The key observation is that SafraFS and SafraFT behave highly similiar.
-Nonetheless, there are small differences.
-SafraFT sends slightly less tokens.
-The biggest difference is around 30 tokens out of roughly 1000 tokens for a network with the size of thousand.
-% TODO results for 2000
+The key observation is that SafraFS and SafraFT behave highly similiar except for networks with 2000 nodes where SafraFS results show much more variance and some extraordinar outliers.
+For all other network sizes the differences are small.
+SafraFT sends slightly less tokens in average.
 Also the results for SafraFS show a slightly higher variance.
 Most likely these differences are caused by implemenation details and not generalizable.
 
-As one would expect, the number of tokens grows linearly with the network size.
+As one would expect, the number of tokens grows linearly with the network size, again with 2000 node networks being an exception.
 Note that the first network size is 5 times smaller than the second for bigger networks the  size doubles for each run.
+
+The exceptional results for networks with 2000 nodes might be caused by the fact that Chandy Misra does not scale linearly with the network size. 
+This does not directly effect the number of tokens. 
+Therefore, it does not show for smaller networks but only with 2000 nodes.
 
 The bit complexity of SafraFS is constant.
 In this experiment each token of SafraFS contains 12 bytes.
@@ -110,26 +117,28 @@ One particular example for when this leads to differences is that time spent con
 
 \begin{table}
 	\centering
-	\begin{tabular}{rrrrrr}%
+	\begin{tabular}{rrrrrr||rr}%
 		\toprule
 		\multicolumn{1}{c}{Network} &
 		\multicolumn{1}{c}{Basic} &
 		\multicolumn{1}{c}{Safra FS} &
-		\multicolumn{1}{c}{Overhead FS} &
 		\multicolumn{1}{c}{Safra FT} &
-		\multicolumn{1}{c}{Overhead FT} \\
+		\multicolumn{1}{c}{Overhead FS} &
+		\multicolumn{1}{c||}{Overhead FT} &
+		\multicolumn{1}{c}{Safra FS}   &
+		\multicolumn{1}{c}{Safra FT} 
+		 \\
 		\midrule
 		\csvreader[head to column names]{figures/processing-times.csv}{}
-		{\\\networkSize & \basic & \FS & \FSoverhead \% & \FT & \FToverhead \%}
+		{\\\networkSize & \basic & \FS & \FT  & \FSoverhead \% & \FToverhead \% & \FSAfter & \FTAfter}
 		\\\bottomrule
 	\end{tabular}
-	\caption{Total processing times and processing times after termination (in braces) in seconds and overhead caused by processing Safa's methods in percent}
+	\caption{Total processing times (left) and processing times after termination (right) in seconds and overhead over basic algorithm caused by Safa in percent}
 	\label{table:processing-times}
 \end{table}
-% TODO add percent sign to overhead numbers
 
-One can observe in \cref{table:processing-times} that SafraFT uses more processing time than SafraFS and much of this time is spent between actual termination and termination detection.
-Furthermore, one sees that SafraFS times grow less  than SafraFT times with increasing networks.z
+One can observe in \cref{table:processing-times} that SafraFT uses more processing time than SafraFS and much of the additional time is spent between actual termination and termination detection.
+Furthermore, one sees that SafraFS times roughly linear with the nework size while SafraFT timings show nearly three fold increase for each network size.
 This hints for a change in time complexity between the two versions.
 
 A small subexperiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writting tokens onto the wire.
@@ -138,38 +147,34 @@ Therefore, I believe that these differences are caused by the higher bit complex
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the change of time complexity.
 The time complexity would change because the increase in network size leads to more token being sent (as in SafraFS) but also to bigger tokens being sent.
 
-The difference in processing time spent after termination is higher than the difference in total processing time.
-The first reason for this is that most tokens are sent after termination (see \cref{fig:tokens-and-tokens-after}).
-A second reason is that much of the total processing time is spent in the methods handling receive and sending of basic messages because they are called that often.
-These do not change that significantly between both Safra versions.
-Hence, the increase of processing time to send tokens shows less in the total times.
-
 The processing time \cref{table:processing-times} also presents a comparision of the time spent for the basic algorithm and both Safra versions.
-Although, SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of % TODO percent
+Although, SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of 4.26\% for networks with 1000 50 nodes.
+% number
 \\
 \begin{table}
 	\centering
-	\begin{tabular}{rrrrrrr}%
+	\begin{tabular}{rrrr||rrr}%
 		\toprule
 		\multicolumn{1}{c}{Network} &
 		\multicolumn{1}{c}{Safra FS} &
 		\multicolumn{1}{c}{Safra FT} &
-		\multicolumn{1}{c}{$\Delta$} &
-		\multicolumn{1}{c}{Safra FS after} &
-		\multicolumn{1}{c}{Safra FT after} &
+		\multicolumn{1}{c||}{$\Delta$} &
+		\multicolumn{1}{c}{SafraFS}  &
+		\multicolumn{1}{c}{SafraFT}  &
 		\multicolumn{1}{c}{$\Delta$}  \\
 		\midrule
 		\csvreader[head to column names]{figures/total-times.csv}{}
 		{\\\networkSize & \FS & \FT & \difference & \FSAfter & \FTAfter & \differenceAfter}
 		\\\bottomrule
 	\end{tabular}
-	\caption{Wall times total and after termination for SafraFT and SafraFS in seconds with ratios}
+	\caption{Wall times total (left) and after termination (right) for SafraFT and SafraFS in seconds with ratios}
 	\label{table:total-times}
 \end{table}
 
 The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times}.
-An exception from this pattern is the strong rise of total time for SafraFT in networks with 250 nodes.
-% TODO might be because of?
+Networks with 250 nodes show an exceptionally high ratio of 2.58
+%number
+between SafraFS and SafraFT
 
 For SafraFS roughly half of the time is spent after termination for small networks.
 In big networks the part of time spent after termination is lower because the fraction spent by the basic algorithms becomes dominant. 
@@ -181,20 +186,21 @@ These seemingly opposing results arise from the difference between wall time and
 This idle time is not included in processing time but wall time does include it.
 
 To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes a higher time complexity which leads to a later termination detection. 
-Still, SafraFT causes only a moderate processing time overhead between %TODO.
-
+Still, SafraFT causes only a moderate processing time overheads between 1.44\% and 2.02\%.
+%number
 
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs under the presence of node crashes.
 I run two highly different scenarios: one considering networks with 1 to 5 nodes failing and one with 90\% of all nodes crashing.
 These scenarios are chosen to show SafraFT in both the realistic case of a low number of faults to handle, as well as, the an extreme case; with the aim to confirm that SafraFT handles both cases correctly and without unreasonable deterioration in any metric.
 
-% TODO token size is missing
+I used the extended definition of termination to determine point of time of actual termination to generate the metrics shown in this section.
+
 \subsubsection{Tokens}
 \label{ssec:tokens-faulty}
 For both the networks where between 1 and 5 nodes failed, as well as, for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
-Runs with 90\% failure produced event more tokens than runs with only 1 to 5 node failing.
-The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:tokens-faulty}. % Table presents comparision with 0 configuration
+Runs with 90\% failure produced even more tokens than runs with only 1 to 5 node failing - except in networks of 2000 nodes where 5n exhibits a higher token sent average.
+The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:tokens-faulty}.
 
 \begin{sidewaysfigure}[ht]
 	\includegraphics{figures/tokens-and-tokens-after-faulty.png}
@@ -211,7 +217,7 @@ The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:
 		\multicolumn{1}{c}{5n} &
 		\multicolumn{1}{c}{$\Delta$} &
 		\multicolumn{1}{c}{90\%} &
-		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c||}{$\Delta$} &
 		\multicolumn{1}{c}{No faults} &
 		\multicolumn{1}{c}{5n} &
 		\multicolumn{1}{c}{$\Delta$} &
@@ -241,12 +247,14 @@ A likely explanation is that the low survival rate of 1 out of 10 instances lead
 
 Even though, only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
 That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty})
+As mentioned above there is one exception: network sizes of 2000 causes more token to be generated in 5n networks than in networks with 90\% node failure.
 
 Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
 
-The network size has no clear influence on the overhead in the number of tokens send before or after termination for 1 to 5 failing nodes.
+The network size has no clear influence on the overhead in the number of tokens send before or after termination for 1 to 5 failing nodes up to 500 nodes. 
+After, increasing networks lead to higher overheads.
 
-The size of networks with 90\% node failures leads is slightly positvely correlated to the overhead of tokens in total but negatively correlated to the overhead in tokens ater termination.
+The size of networks with 90\% node failures is slightly positvely correlated to the overhead of tokens in total and has no influence on the overhead of tokens after termination.
     
 \subsubsection{Backup tokens}
 The average amount of backup tokens sent for either fault simulation or network size is lower than the number of faults.
@@ -260,10 +268,37 @@ After, issueing the backup token \co{B} fails on detection \co{A} issues a backu
 Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.  
 
 
+\subsubsection{Token size}
+\begin{table}
+	\centering
+	\begin{tabular}{rrrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$}  \\
+		\midrule
+		\csvreader[head to column names]{figures/token-sizes-faulty.csv}{}
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety }
+		\\\bottomrule
+	\end{tabular}
+	\caption{Token size averages in bytes for both fault scenarios compared to token size with zero faults.}
+	\label{table:processing-times-faulty}
+\end{table}
+
+The average token size increases with faults because the IDs of faulty nodes are propagated by the token.
+
+The influence on token size is constant 8 bytes for networks with 1 to 5 failing nodes.
+
+90\% node failure leads to linear increase of token bytes to the network size of a factor 1.15.
+
+
 \subsubsection{Processing Time}
 The observations of this chapter are backed by \cref{table:processing-times-faulty}.
 
-As for tokens, one can see an increase in processing times before termination under the presents of faults compared to fault free runs. Which is no surprise because more tokens were send.
+As for tokens, one can see an increase in processing times before termination under the presence of faults compared to fault free runs. Which is no surprise because more tokens were send.
 
 For runs with 1 to 5 failing node a higher variability in the processing times before and after termination becomes apparent. 
 Most likely this is because of the higher diversity of scenarios possible if some nodes fail  as explained in \cref{ssec:tokens-faulty}.
@@ -274,13 +309,9 @@ The variability for processing time before or after termination is not raised co
 The processing time taken is even higher than the one for less faulty networks.
 Less processing time after termination is spent than for fault free networks because less tokens need to be send.
 
-An interesting observation is that the difference from fault free processing time to processing time with faults does not increase with the network size. 
-For the 5n scenario network size does not influence the difference in processing time.
-With 90\% node failure the difference sinks.
+An interesting observation is that the difference from fault free processing time to processing time with faults does not necesseraly increase with the network size:
+with 90\% node failure the differences sink.
 
-% TODO transpose these tables
-
-% TODO put differences togeether with number and put after extra?
 \begin{table}
 	\centering
 	\begin{tabular}{rrrrrr||rrrrr}%
@@ -290,7 +321,7 @@ With 90\% node failure the difference sinks.
 		\multicolumn{1}{c}{5n} &
 		\multicolumn{1}{c}{$\Delta$} &
 		\multicolumn{1}{c}{90\%} &
-		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c||}{$\Delta$} &
 		\multicolumn{1}{c}{No faults} &
 		\multicolumn{1}{c}{5n} &
 		\multicolumn{1}{c}{$\Delta$} &
@@ -306,7 +337,7 @@ With 90\% node failure the difference sinks.
 	\label{table:processing-times-faulty}
 \end{table}
     
- \subsection{Total time}
+ \subsubsection{Total time}
  Total time in faulty networks is presented in  \cref{table:total-times-faulty}.
  In line with the observations from processing time section, one observes:
  \begin{itemize}
@@ -315,9 +346,8 @@ With 90\% node failure the difference sinks.
  	\item less time spent after termination by highly faulty networks
  \end{itemize}
  
- There is no clear realtionship between network size and the overhead caused by the 5n sceanrio.
- 
- For network with 90\% node failure the overhead decreases with the size for total time, as well as, for time after termination. 
+ For network with 90\% node failure the overhead for total time decreases for network sizes between 50 and 1000 nodes and increases to its maximum for 2000 nodes.
+ The overhead of time after termination sinks with higher network sizes.
  \begin{table}
  	\centering
  	\begin{tabular}{rrrrrr||rrrrr}%
@@ -327,7 +357,7 @@ With 90\% node failure the difference sinks.
  		\multicolumn{1}{c}{5n} &
  		\multicolumn{1}{c}{$\Delta$} &
  		\multicolumn{1}{c}{90\%} &
- 		\multicolumn{1}{c}{$\Delta$} &
+ 		\multicolumn{1}{c||}{$\Delta$} &
  		\multicolumn{1}{c}{No faults} &
  		\multicolumn{1}{c}{5n} &
  		\multicolumn{1}{c}{$\Delta$} &

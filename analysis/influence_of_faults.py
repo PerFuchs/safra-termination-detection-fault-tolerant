@@ -26,12 +26,14 @@ def analyse_influence_of_faults(configurations):
   present_processing_times(grouped_by_fault_group_sorted)
   present_total_times(grouped_by_fault_group_sorted)
 
+  present_token_sizes_table(grouped_by_fault_group_sorted)
+
 
 def present_processing_times_table(configurations):
   headers =  ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
     , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
   rows = []
-  network_sizes = 4
+  network_sizes = 5
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
     c_5n = configurations['5n'][i]
@@ -67,7 +69,7 @@ def present_total_times_table(configurations):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
              , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
-  network_sizes = 4
+  network_sizes = 5
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -104,7 +106,7 @@ def present_token_table(configurations):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
     , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
-  network_sizes = 4
+  network_sizes = 5
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -175,3 +177,32 @@ def present_token_and_token_after_termination(configurations):
                                            'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(140,255,0)'))
 
   plotly.offline.plot(graphing.hide_layout(data), filename='../graphs/tokens_and_tokens_after_faulty.html')
+
+
+def present_token_sizes_table(configurations):
+  headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+
+  network_sizes = 5
+  rows = []
+  for i in range(network_sizes):
+    c_0 = configurations['0'][i]
+    c_5n = configurations['5n'][i]
+    c_90 = configurations['90'][i]
+
+    mean_0 = round(statistics.mean(c_0.get_token_bytes()))
+
+    mean_5n = round(statistics.mean(c_5n.get_token_bytes()))
+
+    mean_90 = round(statistics.mean(c_90.get_token_bytes()))
+
+    overhead_5n = round(mean_5n / mean_0, 2)
+
+    overhead_90 = round(mean_90 / mean_0, 2)
+
+    rows.append([c_0.number_of_nodes,
+                 mean_0,
+                 mean_5n, overhead_5n,
+                 mean_90, overhead_90])
+
+  write_csv('../report/figures/token-sizes-faulty.csv', headers, rows)
+

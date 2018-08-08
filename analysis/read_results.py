@@ -84,7 +84,7 @@ class Repetition:
               'Fault percentage of %f but aimed for %f' % (real_fault_percentage, fault_percentage))
           if self.number_of_nodes_crashed == 0 and fault_percentage > 0:
             self.valid = False
-            self.warnings.append('No faults but aimed for 1 to 5.')
+            self.errors.append('No faults but aimed for 1 to 5.')
         break  # There should be only one line
 
     logs = len(list(filter(lambda f: f.endswith('.log'), listdir(folder))))
