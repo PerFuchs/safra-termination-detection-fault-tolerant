@@ -55,7 +55,8 @@ However, if they are part of an affected subtree (e.g. grandchildren of the cras
 These invalid paths are corrected when the grandchildren are reached by the \co{REQUEST} message of their parent because on the receipt they send \co{REQUEST} messages which reset all nodes considering them parents. 
 This behaviour of introducing invalid paths that are corrected later might lead to a bad theoretical message complexity but did not hinder the experiments.
 
-The presented fault tolerant Chandy Misra algorithm could be incorrect as it calculated the wrong tree in %TODO out of TODO experiments runs.
+The presented fault tolerant Chandy Misra algorithm could be incorrect as it calculated the wrong tree in 12 out of 1500, 
+%number
 Unfortunately, I could not fix it in time for the final experiment runs. 
 However, this does not influence the evaluation of SafraFT because the correctness check for SafraFT and Chandy Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:verification}).
 The verification of SafraFT does show that SafraFT detected termination correctly in these cases and did not cause the corrupted Chandy Misra result.
