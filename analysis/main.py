@@ -63,7 +63,7 @@ analyse_influence_of_network_size(configurations)
 analyse_influence_of_faults(configurations)
 
 fields = ['tokens', 'tokens_after_termination', 'number_of_nodes_crashed', 'safra_times', 'basic_times',
-          'safra_times_after_termination', 'total_times', 'token_bytes']
+          'safra_times_after_termination', 'total_times', 'token_bytes', 'backup_tokens']
 data = defaultdict(lambda: list())
 
 for f in fields:

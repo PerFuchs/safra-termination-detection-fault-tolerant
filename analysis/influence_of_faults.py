@@ -28,7 +28,8 @@ def analyse_influence_of_faults(configurations):
 
 
 def present_processing_times_table(configurations):
-  headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+  headers =  ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
+    , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
   rows = []
   network_sizes = 4
   for i in range(network_sizes):
@@ -38,34 +39,33 @@ def present_processing_times_table(configurations):
 
     no_faults_mean = round(statistics.mean(c_0.get_safra_times()), 3)
     no_faults_mean_after = round(statistics.mean(c_0.get_safra_times_after_termination()), 3)
-    no_faults_mean_col = '%.03f (%.03f)' % (no_faults_mean, no_faults_mean_after)
 
     mean_5n = round(statistics.mean(c_5n.get_safra_times()), 3)
     mean_5n_after = round(statistics.mean(c_5n.get_safra_times_after_termination()), 3)
-    mean_5n_col = '%.03f (%.03f)' % (mean_5n, mean_5n_after)
 
     mean_90 = round(statistics.mean(c_90.get_safra_times()), 3)
     mean_90_after = round(statistics.mean(c_90.get_safra_times_after_termination()), 3)
-    mean_90_col = '%.03f (%.03f)' % (mean_90, mean_90_after)
 
     overhead_5n = round(mean_5n / no_faults_mean, 2)
     overhead_5n_after = round(mean_5n_after / no_faults_mean_after, 2)
-    overhead_5n_col = '%.02f (%.02f)' % (overhead_5n, overhead_5n_after)
 
     overhead_90 = round(mean_90 / no_faults_mean, 2)
     overhead_90_after = round(mean_90_after / no_faults_mean_after, 2)
-    overhead_90_col = '%.02f (%.02f)' % (overhead_90, overhead_90_after)
 
     rows.append([c_0.number_of_nodes,
-                 no_faults_mean_col, mean_5n_col, overhead_5n_col,
-                 mean_90_col,
-                 overhead_90_col])
+                 no_faults_mean,
+                 mean_5n, overhead_5n,
+                 mean_90, overhead_90,
+                 no_faults_mean_after,
+                 mean_5n_after, overhead_5n_after,
+                 mean_90_after, overhead_90_after])
 
   write_csv('../report/figures/processing-times-faulty.csv', headers, rows)
 
 
 def present_total_times_table(configurations):
-  headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+  headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
+             , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
   network_sizes = 4
   rows = []
@@ -76,34 +76,33 @@ def present_total_times_table(configurations):
 
     mean_0 = round(statistics.mean(c_0.get_average_total_times()), 3)
     mean_0_after = round(statistics.mean(c_0.get_total_times_after_termination()), 3)
-    mean_0_col = '%.03f (%.03f)' % (mean_0, mean_0_after)
 
     mean_5n = round(statistics.mean(c_5n.get_average_total_times()), 3)
     mean_5n_after = round(statistics.mean(c_5n.get_total_times_after_termination()), 3)
-    mean_5n_col = '%.03f (%.03f)' % (mean_5n, mean_5n_after)
 
     mean_90 = round(statistics.mean(c_90.get_average_total_times()), 3)
     mean_90_after = round(statistics.mean(c_90.get_total_times_after_termination()), 3)
-    mean_90_col = '%.03f (%.03f)' % (mean_90, mean_90_after)
 
     overhead_5n = round(mean_5n / mean_0, 2)
     overhead_5n_after = round(mean_5n_after / mean_0_after, 2)
-    overhead_5n_col = '%.03f (%.03f)' % (overhead_5n, overhead_5n_after)
 
     overhead_90 = round(mean_90 / mean_0, 2)
     overhead_90_after = round(mean_90_after / mean_0_after, 2)
-    overhead_90_col = '%.03f (%.03f)' % (overhead_90, overhead_90_after)
 
     rows.append([c_0.number_of_nodes,
-                 mean_0_col,
-                 mean_5n_col, overhead_5n_col,
-                 mean_90_col, overhead_90_col])
+                 mean_0,
+                 mean_5n, overhead_5n,
+                 mean_90, overhead_90,
+                 mean_0_after,
+                 mean_5n_after, overhead_5n_after,
+                 mean_90_after, overhead_90_after])
 
   write_csv('../report/figures/total-times-faulty.csv', headers, rows)
 
 
 def present_token_table(configurations):
-  headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
+  headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
+    , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
   network_sizes = 4
   rows = []
@@ -114,28 +113,26 @@ def present_token_table(configurations):
 
     mean_0 = round(statistics.mean(c_0.get_tokens()))
     mean_0_after = round(statistics.mean(c_0.get_tokens_after_termination()))
-    mean_0_col = '%i (%i)' % (mean_0, mean_0_after)
 
     mean_5n = round(statistics.mean(c_5n.get_tokens()))
     mean_5n_after = round(statistics.mean(c_5n.get_tokens_after_termination()))
-    mean_5n_col = '%i (%i)' % (mean_5n, mean_5n_after)
 
     mean_90 = round(statistics.mean(c_90.get_tokens()))
     mean_90_after = round(statistics.mean(c_90.get_tokens_after_termination()))
-    mean_90_col = '%i (%i)' % (mean_90, mean_90_after)
 
     overhead_5n = round(mean_5n / mean_0, 2)
     overhead_5n_after = round(mean_5n_after / mean_0_after, 2)
-    overhead_5n_col = '%.02f (%.02f)' % (overhead_5n, overhead_5n_after)
 
     overhead_90 = round(mean_90 / mean_0, 2)
     overhead_90_after = round(mean_90_after / mean_0_after, 2)
-    overhead_90_col = '%.02f (%.02f)' % (overhead_90, overhead_90_after)
 
     rows.append([c_0.number_of_nodes,
-                 mean_0_col,
-                 mean_5n_col, overhead_5n_col,
-                 mean_90_col, overhead_90_col])
+                 mean_0,
+                 mean_5n, overhead_5n,
+                 mean_90, overhead_90,
+                 mean_0_after,
+                 mean_5n_after, overhead_5n_after,
+                 mean_90_after, overhead_90_after])
 
   write_csv('../report/figures/tokens-faulty.csv', headers, rows)
 

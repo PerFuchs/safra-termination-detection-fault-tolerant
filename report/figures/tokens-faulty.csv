@@ -1,5 +1,5 @@
-networkSize,noFaults,fiveN,differenceFiveN,ninety,differenceNinety
-50,61 (44),101 (52),1.66 (1.18),106 (13),1.74 (0.30)
-250,269 (237),465 (314),1.73 (1.32),542 (66),2.01 (0.28)
-500,520 (490),863 (599),1.66 (1.22),1098 (133),2.11 (0.27)
-1000,1017 (989),1944 (1392),1.91 (1.41),2181 (244),2.14 (0.25)
+networkSize,noFaults,fiveN,differenceFiveN,ninety,differenceNinety,noFaultsAfter,fiveNAfter,differenceFiveNAfter,ninetyAfter,differenceNinetyAfter
+50,61,101,1.66,106,1.74,44,52,1.18,13,0.3
+250,271,465,1.72,542,2.0,239,314,1.31,66,0.28
+500,522,863,1.65,1096,2.1,489,599,1.22,137,0.28
+1000,1020,1944,1.91,2189,2.15,988,1392,1.41,246,0.25
