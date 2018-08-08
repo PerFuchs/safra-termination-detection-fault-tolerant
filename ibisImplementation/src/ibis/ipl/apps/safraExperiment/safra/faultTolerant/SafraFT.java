@@ -169,7 +169,7 @@ public class SafraFT implements Safra, CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     OurTimer timer = new OurTimer();
-    if (!crashed.contains(crashedNode) && !report.contains(crashedNode)) {
+    if (!crashed.contains(crashedNode) && !report.contains(crashedNode) && !terminationDetected) {
       report.add(crashedNode);
       if (crashedNode == nextNode) {
         newSuccessor();
