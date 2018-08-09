@@ -17,7 +17,7 @@ The definition assumes passive nodes only become active when they receive a basi
 In reality, nodes can also change to an active state when they detect the crash of another node and need to take corrective actions.
 
 When I realized this, I extended the definition of termination as described in \label{extended-definition} and evaluated the results of the experiment according to that extension.
-This second evaluation showed that this does not happen often (12 out of 1500 runs) and only in 9 of these cases it leads to a corrupted result of the basic algorithm.
+This second evaluation showed that this does not happen often (\OutputFileNum{figures/early-termination.txt} out of 1000 runs) and only in \OutputFileNum{figures/early-termination-corrupted.txt} of these cases it leads to a corrupted result of the basic algorithm.
 %number
 
 Such cases are unlikely in praxis because it is less likely there than in our experiment that a fault happens just before termination because in our experiment many faults are triggered when a token is forwarded or received while in praxis most fault ought to happen within the basic algorithm or idle time because the vast majority of the time is spent for these purposes.
@@ -31,8 +31,7 @@ This higher bit complexity is the reason why SafraFT takes longer to detect term
 I would like to point out that my experimental setup imposes that the time taken by SafraFT to detect termination is unreasonably long.
 This is because Chandy Misra completes its task in no time and then SafraFT starts the seemingly long process of completing a token round.
 If I had chosen a basic algorithm that takes multiple hours to complete, the seconds taken by SafraFT to detect termination would be seen in a different perspective.
-Furthermore, the low processing time overhead (less than 5\%) of SafraFT plays a bigger role in long-running jobs.
-%number
+Furthermore, the low processing time overhead (less than \OutputFileNum{figures/less-than-processing-time-overhead.txt}\%) of SafraFT plays a bigger role in long-running jobs.
 
 Towards SafraFT performance in the presence of faults, I conclude that the number of backup tokens issued is not limited by the number of faults but the average is lower than the number of faults.
 Also, the increase in bytes per token is only constant (8 bytes) for a few faults and grows only linearly with the network size for 90\% node failure.

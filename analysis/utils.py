@@ -31,3 +31,8 @@ def write_csv(file_name, headers, rows):
     writer.writerow(headers)
     for r in rows:
       writer.writerow(r)
+
+
+def write_string(file_name, s):
+  with open(file_name, 'w') as file:
+    file.write(s)

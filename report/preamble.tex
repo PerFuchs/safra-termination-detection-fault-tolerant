@@ -30,6 +30,7 @@
 \renewcommand{\labelitemi}{$-$}
 \usepackage{booktabs}
 \usepackage{csvsimple}
+\usepackage{catchfile}
 
 \usepackage{pdflscape}
 \usepackage{rotating}
@@ -110,3 +111,9 @@
 
 % rule only in nonfloat pages
 \renewcommand{\headrulewidth}{\iffloatpage{0pt}{0.4pt}}
+
+\newcommand*\OutputFileNum[1]{%
+	\CatchFileDef{\tempnum}{#1}{}%
+	\tempnum\unskip%
+}
+
