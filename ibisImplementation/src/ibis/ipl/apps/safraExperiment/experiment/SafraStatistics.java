@@ -218,10 +218,10 @@ public class SafraStatistics {
 
   /**
    * Determines if the basic algorithm has terminated.
-   * <p>
+   *
    * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
    * messages from and to crashed nodes.
-   * <p>
+   *
    * Also termination cannot be reached before final fault. Furthermore, termination cannot be reached before the
    * last event of a node detecting it's parent crashing (and repairing this)
    *
