@@ -123,7 +123,9 @@ Possible errors:
      * This is either a bug in Safra or a node crash has been detected just before announce was called and kicked other nodes
        back into action after announce has been called (see report for more information on this topic). 
        Further information is supplied in the error file and will include all parent crash events.
-
+ * "Termination wasn't detected in 1:30 minutes." 
+   * Most likely a bug in Safra because no run took so long.
+   
 Each run also contains a folder called `original_termination_definition` which
 contains the results of analysing the event logs by the original, none extended  definition
 of termination. If these folder contain an error file with the message that "Announce was called before actual termination" this
