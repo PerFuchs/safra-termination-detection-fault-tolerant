@@ -39,7 +39,7 @@ public class OnlineExperiment extends Experiment {
   private int nodeID;
 
   public OnlineExperiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashSimulator crashSimulator, boolean isFaultTolerant) throws IOException {
-    super(outputFolder, outputFolder, communicationLayer.getIbisCount(), isFaultTolerant);
+    super(outputFolder, outputFolder, communicationLayer.getIbisCount(), isFaultTolerant, TerminationDefinitions.EXTENDED);
     this.outputFolder = outputFolder;
     this.communicationLayer = communicationLayer;
     this.network = network;
@@ -86,7 +86,7 @@ public class OnlineExperiment extends Experiment {
 
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes, Set<Integer> nodesExpectedToCrash) throws IOException {
     Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
-    Tree expectedTree = readNetwork().getSinkTree(crashedNodes);
+    Tree expectedTree = network.getSinkTree(crashedNodes);
 
     if (expectedTree == null && !nodesExpectedToCrash.equals(crashedNodes)) {
       // Some nodes were expected to crash but did not. Now these have no connection to root

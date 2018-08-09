@@ -20,8 +20,10 @@ public class SafraStatistics {
   private int tokenSend;
   private long tokenBytes;
   private Set<Integer> crashedNodes = new HashSet<>();
+  private final TerminationDefinitions terminationDefinition;
 
-  public SafraStatistics(Experiment experiment, int numberOfNodes, List<Event> events) throws IOException {
+  public SafraStatistics(Experiment experiment, int numberOfNodes, List<Event> events, TerminationDefinitions terminationDefinition) throws IOException {
+    this.terminationDefinition = terminationDefinition;
     Collections.sort(events);
     logger.trace("Events sorted");
 
@@ -78,6 +80,15 @@ public class SafraStatistics {
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
+      if (terminated && terminationDefinition == TerminationDefinitions.NORMAL&& (e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
+
+        // This is not done for the extended definition because these warnings can be spurious in this case e.g.
+        // node X crashes, node Y get's a message from X and its fault detector did not detect the crash yet. Node Y
+        // will become active. This is hard to verify because it needs to follow causal relations.
+        // However, it is a good estimation to when the normal termination detection falls short.
+        logger.info(String.format("Basic event happened  on node %d after termination detection would be legal by normal definition: %s", e.getNode(), e.getEvent()));
+        experiment.writeToWarnFile(String.format("Basic event happened  on node %d after termination detection would be legal by normal definition: %s", e.getNode(), e.getEvent()));
+      }
       if (e == lastParentCrashDetected) {
         lastParentCrashDetectedEncountered = true;
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);
@@ -210,7 +221,7 @@ public class SafraStatistics {
     message.append('\n');
 
     message.append("Last basic event before announce was: ");
-    message.append(lastBasicEvent.toString());
+    message.append(lastBasicEvent);
     message.append('\n');
 
     return message.toString();
@@ -222,13 +233,10 @@ public class SafraStatistics {
    * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
    * messages from and to crashed nodes.
    *
-   * Also termination cannot be reached before final fault. Furthermore, termination cannot be reached before the
-   * last event of a node detecting it's parent crashing (and repairing this)
-   *
-   * @return if the system has terminated.
+   * Depending on the value of terminationDefinition also checks if the last parent crash occurred.
    */
   private boolean hasTerminated(int[][] nodeSums, boolean[] nodeActiveStatus, Set<Integer> currentlyCrashedNodes, boolean lastParentCrashEventEncountered) {
-    if (!lastParentCrashEventEncountered) {
+    if (!lastParentCrashEventEncountered && terminationDefinition == TerminationDefinitions.EXTENDED) {
       return false;
     }
     logger.trace("Trying active");

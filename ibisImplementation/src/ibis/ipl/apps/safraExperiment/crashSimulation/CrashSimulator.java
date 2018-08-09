@@ -60,7 +60,7 @@ public class CrashSimulator {
     if (crashingNodes.contains(me)) {
       CrashPoint crashPoint = crashPoints[r.nextInt(crashPoints.length)];
 
-      // Do not choose backup token related crash points as single crash point as the happend to seldom.
+      // Do not choose backup token related crash points as single crash point as the happened to seldom.
       while (crashPoint == CrashPoint.BEFORE_SENDING_BACKUP_TOKEN || crashPoint == CrashPoint.AFTER_SENDING_BACKUP_TOKEN ) {
         crashPoint = crashPoints[r.nextInt(crashPoints.length)];
       }

@@ -18,17 +18,19 @@ public abstract class Experiment {
 
   private final Path analysisFolder;
   private final Path outputFolder;
+  private final TerminationDefinitions terminationDefinition;
   private int nodeCount;
   private final boolean isFaultTolerant;
 
   private List<Event> events;
   private SafraStatistics safraStatistics;
 
-  Experiment(Path analysisFolder, Path outputFolder, int nodeCount, boolean isFaultTolerant) {
+  Experiment(Path analysisFolder, Path outputFolder, int nodeCount, boolean isFaultTolerant, TerminationDefinitions terminationDefinition) {
     this.analysisFolder = analysisFolder;
     this.outputFolder = outputFolder;
     this.nodeCount = nodeCount;
     this.isFaultTolerant = isFaultTolerant;
+    this.terminationDefinition = terminationDefinition;
   }
 
   static void writeToFile(Path filePath, String line) throws IOException {
@@ -130,7 +132,7 @@ public abstract class Experiment {
 
   public SafraStatistics getSafraStatistics() throws IOException {
     if (safraStatistics == null) {
-      safraStatistics = new SafraStatistics(this, nodeCount, getEvents());
+      safraStatistics = new SafraStatistics(this, nodeCount, getEvents(), terminationDefinition);
     }
     return safraStatistics;
   }

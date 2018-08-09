@@ -1,5 +1,6 @@
 import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.OfflineExperiment;
+import ibis.ipl.apps.safraExperiment.experiment.TerminationDefinitions;
 import org.apache.log4j.BasicConfigurator;
 
 import java.io.File;
@@ -11,12 +12,12 @@ import java.nio.file.Paths;
 public class AnalysisOnly {
   private Path reanalysisFolder;
 
-  public AnalysisOnly(Path repetitionFolder, int networkSize, boolean isFaultTolerant) throws IOException {
-    this.reanalysisFolder = Paths.get(repetitionFolder.toString(), "reanalysis");
+  public AnalysisOnly(Path repetitionFolder, String renalysisFolderName, int networkSize, boolean isFaultTolerant, TerminationDefinitions terminationDefinition) throws IOException {
+    this.reanalysisFolder = Paths.get(repetitionFolder.toString(), renalysisFolderName);
 
     setupReanalysisFolder();
 
-    Experiment experiment = new OfflineExperiment(repetitionFolder, reanalysisFolder, networkSize, isFaultTolerant);
+    Experiment experiment = new OfflineExperiment(repetitionFolder, reanalysisFolder, networkSize, isFaultTolerant, terminationDefinition);
     experiment.writeSafraStatitistics();
   }
 
@@ -24,11 +25,23 @@ public class AnalysisOnly {
     BasicConfigurator.configure();
 
     File experimentFolder = new File(args[0]);
+    String reanalysisFolder = args[1];
+    String offlineTerminationDefinition = args[2];
+    TerminationDefinitions terminationDefinition = null;
+    if (offlineTerminationDefinition.equals("normal")) {
+      terminationDefinition = TerminationDefinitions.NORMAL;
+    } else if (offlineTerminationDefinition.equals("extended")) {
+      terminationDefinition = TerminationDefinitions.EXTENDED;
+    } else {
+      throw new IllegalArgumentException("Unknown termination definition");
+    }
 
     for (File configurationFolder : experimentFolder.listFiles()) {
       if (configurationFolder.getName().endsWith(".run")) {
         for (File repititionFolder : configurationFolder.listFiles()) {
-          AnalysisOnly analysis = new AnalysisOnly(Paths.get(repititionFolder.getAbsolutePath()), getNetworkSize(configurationFolder), getFaultTolerance(configurationFolder));
+          if (repititionFolder.isDirectory()) {
+            AnalysisOnly analysis = new AnalysisOnly(Paths.get(repititionFolder.getAbsolutePath()), reanalysisFolder, getNetworkSize(configurationFolder), getFaultTolerance(configurationFolder), terminationDefinition);
+          }
         }
       }
     }
@@ -51,9 +64,9 @@ public class AnalysisOnly {
 
   static void deleteFolder(File folder) {
     File[] files = folder.listFiles();
-    if(files!=null) {
-      for(File f: files) {
-        if(f.isDirectory()) {
+    if (files != null) {
+      for (File f : files) {
+        if (f.isDirectory()) {
           deleteFolder(f);
         } else {
           f.delete();
