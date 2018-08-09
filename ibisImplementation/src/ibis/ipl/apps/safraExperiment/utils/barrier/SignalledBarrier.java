@@ -9,11 +9,11 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Barrier based on IBIS signals works up to at least 200 instances.
- * <p>
- * Does not scale up to 2000 instances.
- * <p>
- * Used to speed up small test runs compared to if TimerBarrier were used.
+ * Barrier based on IBIS signals works up to at least 200 instances is faster than a message based barrier.
+ *
+ * All node but the root send a "BARRIER" signal to the root node, when the root node received a signal from all nodes
+ * it breaks the barrier and sends a "BARRIER" signal to all other nodes. When the other nodes receive the signal they
+ * break the barrier.
  */
 public class SignalledBarrier implements Barrier {
   private String name;

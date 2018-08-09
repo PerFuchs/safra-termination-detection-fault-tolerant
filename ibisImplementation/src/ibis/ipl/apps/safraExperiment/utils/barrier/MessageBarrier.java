@@ -8,6 +8,14 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Message based barrier.
+ *
+ * Uses the ring based traversal algorithm to stop all instances until all instances reached the await statement.
+ * When a nodes receives a BARRIER message for the first time it fowards it when it reaches the await call. When
+ * a node receives a barrier message for the second time, it knows all nodes must have reached await and breaks the
+ * barrier itself. Only the root node sends a BARRIER message when it arrives the await call.
+ */
 public class MessageBarrier implements Barrier {
   private static Logger logger = Logger.getLogger(MessageBarrier.class);
 

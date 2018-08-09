@@ -9,6 +9,13 @@ import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import java.io.IOException;
 import java.util.*;
 
+
+/**
+ * Builds a signal barrier if these are working for the current network size (signal become unreliable after a certain
+ * network size), otherwise it builds an message based barrier which is slower but more reliable.
+ *
+ * Also forwards signals and messages to the correct barrier.
+ */
 public class BarrierFactory implements Observer {
   private final Registry registry;
   private final CommunicationLayer communicationLayer;
