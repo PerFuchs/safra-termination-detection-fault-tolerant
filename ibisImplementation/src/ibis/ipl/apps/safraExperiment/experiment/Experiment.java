@@ -13,6 +13,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Collection of code to analyse the produced event logs.
+ */
 public abstract class Experiment {
   private static final Logger logger = Logger.getLogger(Experiment.class);
 

@@ -21,6 +21,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Drives result verification after each experiment run.
+ *
+ * * Verifies no errors are in the event log
+ * * Verifies Chandy Misra result
+ * * Generates statistics about Safra and warns if announce has been called to early
+ * * Generates and write statistic about the networks
+ */
 public class OnlineExperiment extends Experiment {
   private static Logger logger = Logger.getLogger(OnlineExperiment.class);
 
