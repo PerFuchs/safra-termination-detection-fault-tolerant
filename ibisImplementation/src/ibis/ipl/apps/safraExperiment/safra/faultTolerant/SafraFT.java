@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.Semaphore;
 
 
-public class SafraFT implements Observer, Safra, CrashHandler {
+public class SafraFT implements Safra, CrashHandler {
   private final static Logger logger = Logger.getLogger(SafraFT.class);
   private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
@@ -42,17 +42,13 @@ public class SafraFT implements Observer, Safra, CrashHandler {
   private final CrashSimulator crashSimulator;
 
   private CommunicationLayer communicationLayer;
-  private final Registry registry;
 
   private boolean terminationDetected = false;
 
-  public SafraFT(Registry registry,
-                 SignalPollerThread signalHandler,
-                 CommunicationLayer communicationLayer,
+  public SafraFT(CommunicationLayer communicationLayer,
                  CrashSimulator crashSimulator,
                  CrashDetector crashDetector,
                  boolean isBasicInitiator) throws IOException {
-    this.registry = registry;
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
 
@@ -81,7 +77,6 @@ public class SafraFT implements Observer, Safra, CrashHandler {
       setActive(true, "Initiator");
     }
 
-    signalHandler.addObserver(this);
     crashDetector.addHandler(this);
   }
 
@@ -174,10 +169,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d notfified crash after termination.", communicationLayer.getID()));
-    }
-    if (!crashed.contains(crashedNode) && !report.contains(crashedNode)) {
+    if (!crashed.contains(crashedNode) && !report.contains(crashedNode) && !terminationDetected) {
       report.add(crashedNode);
       if (crashedNode == nextNode) {
         newSuccessor();
@@ -219,9 +211,6 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   public synchronized void receiveToken(Token token) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
-    }
     if (!(token instanceof TokenFT)) {
       throw new IllegalStateException("None TokenFT used with SafraFT");
     }
@@ -229,6 +218,9 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
     TokenFT t = (TokenFT) token;
     if (t.sequenceNumber == getSequenceNumber() + 1) {
+      if (terminationDetected) {
+        experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+      }
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);
       this.token = t;
@@ -294,7 +286,7 @@ public class SafraFT implements Observer, Safra, CrashHandler {
 
   private synchronized void announce() throws IOException {
     experimentLogger.info(String.format("%s %d", Event.getAnnounceEvent(), communicationLayer.getID()));
-    IbisSignal.signal(registry, communicationLayer.getIbises(), new IbisSignal("safra", "announce"));
+    handleAnnounce();
   }
 
   public void await() throws InterruptedException {
@@ -321,16 +313,12 @@ public class SafraFT implements Observer, Safra, CrashHandler {
     }
   }
 
-
-  @Override
-  public synchronized void update(Observable observable, Object o) {
-    if (o instanceof IbisSignal) {
-      IbisSignal signal = (IbisSignal) o;
-      if (signal.module.equals("safra") && signal.name.equals("announce")) {
-        logger.debug(String.format("%d got announce signal", communicationLayer.getID()));
+  public synchronized void handleAnnounce() throws IOException {
+    if (!terminationDetected) {
+      logger.debug(String.format("%d got announce signal", communicationLayer.getID()));
+        communicationLayer.sendAnnounce((communicationLayer.getID() + 1) % communicationLayer.getIbisCount());
         terminationDetected = true;
         semaphore.release();
-      }
     }
   }
 

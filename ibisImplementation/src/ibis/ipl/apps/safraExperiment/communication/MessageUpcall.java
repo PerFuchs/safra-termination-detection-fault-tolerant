@@ -88,8 +88,21 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         readMessage.finish();
         barrierFactory.handleBarrierMessage(name);
         break;
+      case FLOOD:
+        String payload = readMessage.readString();
+        readMessage.finish();
+        if (payload.equals("safra:announce")) {
+          safraNode.handleAnnounce();
+        }
+        communicationLayer.floodMessage(payload);
+        break;
+      case ANNOUNCE:
+        readMessage.finish();
+        safraNode.handleAnnounce();
+        break;
       default:
         throw new IOException("Got message of unknown type.");
+
     }
   }
 

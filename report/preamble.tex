@@ -1,0 +1,119 @@
+%!TEX root = ./master.tex
+
+\renewcommand{\cite}[2][]{%
+\ifx&#2&
+    \parentcite{#1}%
+\else
+    \parencite[#1]{#2}%
+\fi
+}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage[activate]{microtype}
+\usepackage{longtable}
+\usepackage[american]{babel}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nth}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage[inline]{enumitem}
+\setlist{noitemsep}
+\renewcommand{\labelitemi}{$-$}
+\usepackage{booktabs}
+\usepackage{csvsimple}
+\usepackage{catchfile}
+
+\usepackage{pdflscape}
+\usepackage{rotating}
+
+
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{stmaryrd}
+\usepackage{tabularx}
+
+\usepackage[
+	pdftitle={},
+	pdfauthor={},
+	pdfcreator={pdflatex, LaTeX with KOMA-Script},
+	pdfpagemode=UseOutlines,
+	pdfdisplaydoctitle=true,
+	pdflang={english}
+]{hyperref}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	citecolor=black,
+	filecolor=black,
+	menucolor=black,
+	urlcolor=black,
+	linktocpage=true,
+	bookmarksnumbered=true,
+	linktoc=all
+}
+
+\definecolor{background}{HTML}{EEEEEE}
+
+\lstset{
+	language=R, 
+	showstringspaces=false, 
+	frame=single, 
+	% backgroundcolor=\color{background},
+	breaklines=true, 
+	% numbers=left, 
+	rulecolor=\color{black}, 
+	basicstyle=\normalfont\ttfamily,
+} 
+
+\usepackage[
+	backend=biber,
+	bibwarn=true,
+	bibencoding=utf8,
+	sortlocale=en_US,
+	style=apa
+]{biblatex}
+
+\DeclareLanguageMapping{american}{american-apa}
+
+\renewcommand{\cite}{\parencite}
+
+\usepackage{suffix}
+\usepackage{cleveref}
+
+\usepackage[printonlyused]{acronym}
+
+\usepackage{setspace}
+
+\parindent 8pt
+
+\usepackage{tablefootnote}
+
+\newcommand{\co}[1]{\texttt{#1}}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % clear all fields
+
+\setlength{\textheight}{8.8in}
+
+
+\fancyfoot[C]{\thepage}
+
+% rule only in nonfloat pages
+\renewcommand{\headrulewidth}{\iffloatpage{0pt}{0.4pt}}
+
+\newcommand*\OutputFileNum[1]{%
+	\CatchFileDef{\tempnum}{#1}{}%
+	\tempnum\unskip%
+}
+

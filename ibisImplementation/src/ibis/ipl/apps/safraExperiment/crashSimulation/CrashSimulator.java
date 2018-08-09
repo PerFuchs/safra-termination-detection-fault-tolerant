@@ -104,6 +104,10 @@ public class CrashSimulator {
     communicationLayer.crash();
   }
 
+  public boolean couldCrash() {
+    return crashingNodes.contains(communicationLayer.getID());
+  }
+
   public Set<Integer> getCrashingNodes() {
     return crashingNodes;
   }

@@ -78,12 +78,6 @@ public class SafraStatistics {
     for (Event e : events) {
 //      logger.trace(i++);
       logger.trace(String.format("Processing event %d %s", e.getNode(), e.getEvent()));
-      if (terminated && (e.isActiveStatusChange() || e.isMessageCounterUpdate())) {
-        // These are only warnings because they could be caused by a message of a node that crashed already.
-        // Then they should be ignored by the offline termination detection.
-        logger.info(String.format("Basic event happened  on node %d after termination: %s", e.getNode(), e.getEvent()));
-        experiment.writeToWarnFile(String.format("Basic event happened  on node %d after termination: %s", e.getNode(), e.getEvent()));
-      }
       if (e == lastParentCrashDetected) {
         lastParentCrashDetectedEncountered = true;
         terminated |= hasTerminated(nodeSums, nodeActiveStatus, currentlyCrashedNodes, lastParentCrashDetectedEncountered);
@@ -216,7 +210,7 @@ public class SafraStatistics {
     message.append('\n');
 
     message.append("Last basic event before announce was: ");
-    message.append(lastBasicEvent);
+    message.append(lastBasicEvent.toString());
     message.append('\n');
 
     return message.toString();
@@ -224,9 +218,14 @@ public class SafraStatistics {
 
   /**
    * Determines if the basic algorithm has terminated.
-   * <p>
+   *
    * Checks if all nodes are passive and the sum of all send and received messages in the system is zero ignoring
    * messages from and to crashed nodes.
+   *
+   * Also termination cannot be reached before final fault. Furthermore, termination cannot be reached before the
+   * last event of a node detecting it's parent crashing (and repairing this)
+   *
+   * @return if the system has terminated.
    */
   private boolean hasTerminated(int[][] nodeSums, boolean[] nodeActiveStatus, Set<Integer> currentlyCrashedNodes, boolean lastParentCrashEventEncountered) {
     if (!lastParentCrashEventEncountered) {

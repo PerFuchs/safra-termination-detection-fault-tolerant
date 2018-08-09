@@ -8,7 +8,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
-import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
+import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.network.Tree;
@@ -25,6 +25,7 @@ import org.apache.log4j.*;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 
@@ -54,7 +55,7 @@ class IbisNode {
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
       Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
-      Logger.getLogger(MessageBarrier.class).setLevel(Level.TRACE);
+      Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
       Logger.getLogger(Tree.class).setLevel(Level.INFO);
 
       IbisCapabilities s = new IbisCapabilities(IbisCapabilities.TERMINATION, IbisCapabilities.MEMBERSHIP_TOTALLY_ORDERED, IbisCapabilities.CLOSED_WORLD, IbisCapabilities.ELECTIONS_STRICT, IbisCapabilities.SIGNALS);
@@ -74,7 +75,7 @@ class IbisNode {
       logger.trace(String.format("%s Pool closed", ibis.identifier().toString()));
 
       SynchronizedRandom synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
-      logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));  // To control all chose the same seed.
+      logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
 
       CommunicationLayer communicationLayer = new CommunicationLayer(ibis, registry, porttype);
 
@@ -105,14 +106,14 @@ class IbisNode {
 
       Safra safraNode;
       if (faultTolerant) {
-        safraNode = new SafraFT(registry, signalHandler, communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
+        safraNode = new SafraFT(communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
       } else {
-        safraNode = new SafraFS(registry, signalHandler, communicationLayer, communicationLayer.isRoot());
+        safraNode = new SafraFS(communicationLayer, communicationLayer.isRoot());
       }
 
       ChandyMisraNode chandyMisraNode = new ChandyMisraNode(communicationLayer, network, crashDetector, safraNode);
 
-      communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+      communicationLayer.connectIbises(network, chandyMisraNode, safraNode, crashDetector, barrierFactory, crashSimulator);
       logger.debug(String.format("%04d connected communication layer", communicationLayer.getID()));
 
       barrierFactory.getBarrier("Connected").await();
@@ -126,15 +127,15 @@ class IbisNode {
       totalTime.stopAndCreateTotalTimeSpentEvent();
 
       experiment.writeChandyMisraResults(chandyMisraNode);
+      Thread.sleep(5000);  // Give events after termination a chance to be looged
       experiment.finalizeExperimentLogger();
 
-      logger.debug(String.format("%04d Finished writting results", communicationLayer.getID()));
+      logger.debug(String.format("%04d Finished writing results", communicationLayer.getID()));
       barrierFactory.getBarrier("ResultsWritten").await();
 
       if (communicationLayer.isRoot()) {
         logger.debug("Starting verfication and output processing.");
         // Takes a long time for big networks skip it for them
-        experiment.writeNetwork();
         if (communicationLayer.getIbisCount() <= 500) {
           experiment.writeNetworkStatistics(network);
         }
@@ -155,8 +156,8 @@ class IbisNode {
         // Copy the output log file
         Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
       }
-
       barrierFactory.getBarrier("Done").await();
+
       registry.terminate();
       registry.waitUntilTerminated();
 

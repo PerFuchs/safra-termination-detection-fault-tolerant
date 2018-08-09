@@ -26,12 +26,14 @@ public class CommunicationLayer {
   private CrashSimulator crashSimulator;
   private int me;
   private Map<Integer, SendPort> sendPorts = new HashMap<>();
+  private Map<Integer, SendPort> crashSendPorts = new HashMap<>();
   private Map<Integer, ReceivePort> receivePorts = new HashMap<>();
   private Map<Integer, MessageUpcall> messageUpcalls = new HashMap<>();
 
   private boolean crashed;
   private Network network;
   private Safra safraNode;
+  private Set<String> floodPayloadSeen = new HashSet<>();
 
   public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) {
     this.ibis = ibis;
@@ -58,7 +60,37 @@ public class CommunicationLayer {
     return "Receive" + i;
   }
 
-  private void createdSendPort(int receiver, String receiverPortName) throws IOException {
+  private String getCrashPortName() {
+    return "CrashPort";
+  }
+
+  public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory, CrashSimulator crashSimulator) throws IOException {
+    this.network = network;
+    this.safraNode = safraNode;
+
+    setupGeneralReceivePort(chandyMisraNode, safraNode, crashDetector, barrierFactory);
+    setupCrashReceivePort(chandyMisraNode, safraNode, crashDetector, barrierFactory);
+
+    List<Integer> neighbours = network.getNeighbours(getID());
+    for (int i : neighbours) {
+      String name = getReceivePortName(i);
+
+      MessageUpcall mu = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+      messageUpcalls.put(i, mu);
+
+      ReceivePort p = setupReceivePort(name, mu);
+      receivePorts.put(i, p);
+    }
+
+    for (int i : neighbours) {
+      createSendPort(i, getReceivePortName(getID()));
+      if (crashSimulator.couldCrash()) {
+        createCrashSendPort(i);
+      }
+    }
+  }
+
+  private void createSendPort(int receiver, String receiverPortName) throws IOException {
     IbisIdentifier id = ibises[receiver];
     String name = "Send" + receiver;
     SendPort p = ibis.createSendPort(portType, name);
@@ -66,43 +98,35 @@ public class CommunicationLayer {
     p.connect(id, receiverPortName);
   }
 
-  public void connectIbises(Network network,
-                            ChandyMisraNode chandyMisraNode,
-                            Safra safraNode,
-                            CrashDetector crashDetector,
-                            BarrierFactory barrierFactory) throws IOException {
-    this.network = network;
-    this.safraNode = safraNode;
-    List<Integer> neighbours = network.getNeighbours(getID());
+  private void createCrashSendPort(int receiver) throws IOException {
+    IbisIdentifier id = ibises[receiver];
+    String name = "CrashSend" + receiver;
+    SendPort p = ibis.createSendPort(portType, name);
+    crashSendPorts.put(receiver, p);
+    p.connect(id, getCrashPortName());
+  }
 
-    MessageUpcall generalUpcall = new MessageUpcall(
-        this,
-        chandyMisraNode,
-        safraNode,
-        crashDetector,
-        barrierFactory);
+  private void setupCrashReceivePort(ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) throws IOException {
+    MessageUpcall upcall = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+    messageUpcalls.put(-2, upcall);
+
+    ReceivePort crashReceivePort = setupReceivePort(getCrashPortName(), upcall);
+    receivePorts.put(-2, crashReceivePort);
+  }
+
+  private void setupGeneralReceivePort(ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) throws IOException {
+    MessageUpcall generalUpcall = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
     messageUpcalls.put(-1, generalUpcall);
 
-    ReceivePort generalReceivePort = ibis.createReceivePort(portType, getGeneralReceivePortName(), generalUpcall);
+    ReceivePort generalReceivePort = setupReceivePort(getGeneralReceivePortName(), generalUpcall);
     receivePorts.put(-1, generalReceivePort);
-    generalReceivePort.enableConnections();
-    generalReceivePort.enableMessageUpcalls();
+  }
 
-    for (int i : neighbours) {
-      String name = getReceivePortName(i);
-
-      MessageUpcall mu = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
-      messageUpcalls.put(i, mu);
-
-      ReceivePort p = ibis.createReceivePort(portType, name, mu);
-      receivePorts.put(i, p);
-      p.enableConnections();
-      p.enableMessageUpcalls();
-    }
-
-    for (int i : neighbours) {
-      createdSendPort(i, getReceivePortName(getID()));
-    }
+  private ReceivePort setupReceivePort(String name, MessageUpcall upcall) throws IOException {
+    ReceivePort receivePort = ibis.createReceivePort(portType, name, upcall);
+    receivePort.enableConnections();
+    receivePort.enableMessageUpcalls();
+    return receivePort;
   }
 
   public int getRoot() {
@@ -118,11 +142,10 @@ public class CommunicationLayer {
   }
 
   /**
-   *
    * @param dm
    * @param receiver
    * @param basicTimer used to time the basic algorithm. Is stopped while Safra processes the send event.
-   * * @throws IOException
+   *                   * @throws IOException
    */
   public void sendDistanceMessage(DistanceMessage dm, int receiver, OurTimer basicTimer) throws IOException {
     crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
@@ -151,16 +174,11 @@ public class CommunicationLayer {
     }
   }
 
-  // TODO failure detector only works for local failures
   public void broadcastCrashMessage() throws IOException {
     for (ReceivePort rp : receivePorts.values()) {
       SendPortIdentifier[] sids = rp.connectedTo();
       for (SendPortIdentifier sid : sids) {
         int id = Arrays.binarySearch(ibises, sid.ibisIdentifier());
-        if (!sendPorts.containsKey(id)) {
-          logger.debug(String.format("%d Creating new send port to %d.", getID(), id));
-          createdSendPort(id, getGeneralReceivePortName());
-        }
         sendCrashMessage(id);
       }
     }
@@ -168,11 +186,11 @@ public class CommunicationLayer {
 
   public void sendCrashMessage(int receiver) throws IOException {
     logger.trace(String.format("%d sending crash message to %d", getID(), receiver));
-    if (!sendPorts.containsKey(receiver)) {
+    if (!crashSendPorts.containsKey(receiver)) {
       logger.debug(String.format("%d Creating new send port to %d.", getID(), receiver));
-      createdSendPort(receiver, getGeneralReceivePortName());
+      createCrashSendPort(receiver);
     }
-    SendPort sendPort = sendPorts.get(receiver);
+    SendPort sendPort = crashSendPorts.get(receiver);
     WriteMessage m = sendPort.newMessage();
     m.writeInt(MessageTypes.CRASHED.ordinal());
     m.send();
@@ -236,7 +254,7 @@ public class CommunicationLayer {
       logger.debug(String.format("%d sending token to %d", getID(), receiver));
       if (!sendPorts.containsKey(receiver)) {
         logger.debug(String.format("%d Creating new send port to %d.", getID(), receiver));
-        createdSendPort(receiver, getGeneralReceivePortName());
+        createSendPort(receiver, getGeneralReceivePortName());
       }
       SendPort sendPort = sendPorts.get(receiver);
       WriteMessage m = sendPort.newMessage();
@@ -246,6 +264,30 @@ public class CommunicationLayer {
       m.finish();
     }
   }
+
+  public void sendAnnounce(int receiver) throws IOException {
+    SendPort sendPort = sendPorts.get(receiver);
+    WriteMessage m = sendPort.newMessage();
+    m.writeInt(MessageTypes.ANNOUNCE.ordinal());
+    m.send();
+    m.finish();
+  }
+
+  void floodMessage(String payload) throws IOException {
+    if (!floodPayloadSeen.contains(payload)) {
+      floodPayloadSeen.add(payload);
+      logger.debug(String.format("%d flooding payload", getID()));
+      for (SendPort sp : sendPorts.values()) {
+        WriteMessage m = sp.newMessage();
+        m.writeInt(MessageTypes.FLOOD.ordinal());
+        m.writeString(payload);
+        m.send();
+        m.finish();
+      }
+    }
+  }
+
+
 
   public void setCrashSimulator(CrashSimulator crashSimulator) {
     this.crashSimulator = crashSimulator;
