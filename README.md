@@ -84,3 +84,48 @@ It cannot verify the ChandyMisra result because the network is not saved with th
 analysis the event log for correct termination detection. This main class is used to verify the logs against
 the second definition of termination.
 
+
+## Output format
+
+Before one reads this section, one should read the report as it contains important information on how to interpret
+the experiments. The gist is, that the normal definition of termination that all nodes are passive and no messages
+are in the channels, does not fully cover the reality in presence of faults. Therefore, the experiment has been
+analysis by an extended definition of termination which covers most of these cases.
+
+The experiment consists out of different configuration, each configuration is
+defined by its network size, node fault percentage and the used Safra version.
+For each of these configurations multiple repetitions exists. Each repetition
+presents a single run of the Chandy Misra with Safra as termination detection 
+algorithm.
+
+All output of the experiment lays within a folder I call `experimentFolder`.
+In that folder one or multiple folders for each configurations exist.
+They are named by `<network-size>-<fault-percentage|'fs'>-<...>.run`
+the first two parts of the name describe the configuration represented, 
+the three points can be any name, they end with the suffix `.run`.
+These folders contain repetitions - folders which are named by increasing numbers
+from 1. These folders contain the actual results of all runs.
+
+The results from a single run include four kind of files:
+ * `<node-number>.chandyMisra` contains the output of the Chandy Misra algorithm: <nodeNumber> <distance> <parent>
+ * `<node-number>.log` a timestamped log of all relevant events on a single node e.g. sending of a token or calling announce
+ * `.error` a line separated collection of all problems identified in this run a list of possible errors and there interpretation is given below
+ * `.warn` a line separated collection of less severed problems with a run. Meant to be reviewed in the case of errors.
+ * `safraStatistics.csv` The measured metrics in csv format.
+ 
+Possible errors:
+ * Chandy Misra miscalculated the sink tree
+   * Reason 1: Bug in Chandy Misra
+   * Termination has been detected to early and Chandy Misra could not finish in 
+     this case also the error "Announce was called before actual termination" is present
+ * "Announce was called before actual termination" announce has been called too early by Safra according
+   to the definition of termination used. 
+     * This is either a bug in Safra or a node crash has been detected just before announce was called and kicked other nodes
+       back into action after announce has been called (see report for more information on this topic). 
+       Further information is supplied in the error file and will include all parent crash events.
+
+Each run also contains a folder called `original_termination_definition` which
+contains the results of analysing the event logs by the original, none extended  definition
+of termination. If these folder contain an error file with the message that "Announce was called before actual termination" this
+would be a definite bug in Safra's algorithm.
+        
