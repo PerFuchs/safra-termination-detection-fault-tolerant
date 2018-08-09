@@ -78,7 +78,7 @@ public abstract class Experiment {
     writeToFile(Paths.get(outputFolder.toString(), ".warn"), line);
   }
 
-  void writeToErrorFile(String line)  throws  IOException {
+  public void writeToErrorFile(String line)  throws  IOException {
     writeToFile(Paths.get(outputFolder.toString(), ".error"), line);
   }
 

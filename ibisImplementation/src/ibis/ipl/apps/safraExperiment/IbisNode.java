@@ -17,6 +17,7 @@ import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
+import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
 import org.apache.log4j.*;
@@ -117,16 +118,27 @@ class IbisNode {
 
       barrierFactory.getBarrier("Connected").await();
 
-      OurTimer totalTime = new OurTimer();
-      safraNode.startAlgorithm();
-      chandyMisraNode.startAlgorithm();
+      long maxExperimentTime = 90000;
+      ThreadInteruptTimeout timeout = new ThreadInteruptTimeout(Thread.currentThread(), 90000);
+      Thread interuptThread = new Thread(timeout);
+      interuptThread.start();
 
-      safraNode.await();
+      try {
+        OurTimer totalTime = new OurTimer();
+        safraNode.startAlgorithm();
+        chandyMisraNode.startAlgorithm();
+
+        safraNode.await();
+        timeout.clear();
+        totalTime.stopAndCreateTotalTimeSpentEvent();
+      } catch (InterruptedException e){
+        logger.error("Termination wasn't detected in 1:30 minutes.");
+        experiment.writeToErrorFile("Termination wasn't detected in 1:30 minutes.");
+      }
       chandyMisraNode.terminate();
-      totalTime.stopAndCreateTotalTimeSpentEvent();
 
       experiment.writeChandyMisraResults(chandyMisraNode);
-      Thread.sleep(5000);  // Give events after termination a chance to be looged
+      Thread.sleep(5000);  // Give events after termination a chance to be logged
       experiment.finalizeExperimentLogger();
 
       logger.debug(String.format("%04d Finished writing results", communicationLayer.getID()));
