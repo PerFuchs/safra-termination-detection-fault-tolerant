@@ -16,6 +16,16 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * This is the sending part of the IPL wrapper, it exposes an interface where Ibises are referred to as numbers between
+ * 0 to <networkSize> - 1 to send messages to them. It hides the complexity of finding all ibises and assigning these
+ * numbers, as well as, the complexity of setting up channels between the ibises.
+ *
+ * The channels between Ibises are mostly setup statically, each ibis sets up channels as specified by a `Network` instance
+ * for the whole run. If an Ibises is expected to simulate a crash it also sets up channels to send crash notification
+ * to all neighbours. This is done to avoid transferring these messages in band and FIFO with all other messages.
+ * Channels to keep the undirected ring used by Safra intact are setup dynamically when they are needed.
+ */
 public class CommunicationLayer {
   private static Logger logger = Logger.getLogger(CommunicationLayer.class);
 
@@ -25,8 +35,8 @@ public class CommunicationLayer {
   private IbisIdentifier[] ibises;
   private CrashSimulator crashSimulator;
   private int me;
-  private Map<Integer, SendPort> sendPorts = new HashMap<>();
-  private Map<Integer, SendPort> crashSendPorts = new HashMap<>();
+  private Map<Integer, SendPort> sendPorts = new HashMap<>();       // Used for other messages
+  private Map<Integer, SendPort> crashSendPorts = new HashMap<>();  // Used to send crash notifications
   private Map<Integer, ReceivePort> receivePorts = new HashMap<>();
   private Map<Integer, MessageUpcall> messageUpcalls = new HashMap<>();
 
@@ -142,8 +152,6 @@ public class CommunicationLayer {
   }
 
   /**
-   * @param dm
-   * @param receiver
    * @param basicTimer used to time the basic algorithm. Is stopped while Safra processes the send event.
    *                   * @throws IOException
    */
@@ -167,6 +175,9 @@ public class CommunicationLayer {
     crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
   }
 
+  /**
+   * Informs the communication layer that this node has crashed and should not send or receive any messages anymore.
+   */
   public void crash() {
     this.crashed = true;
     for (MessageUpcall mu : messageUpcalls.values()) {
@@ -174,6 +185,10 @@ public class CommunicationLayer {
     }
   }
 
+  /**
+   * This is no actual broadcast. It only sends these messages to all neighbours
+   * @throws IOException
+   */
   public void broadcastCrashMessage() throws IOException {
     for (ReceivePort rp : receivePorts.values()) {
       SendPortIdentifier[] sids = rp.connectedTo();
@@ -196,8 +211,6 @@ public class CommunicationLayer {
     m.send();
     m.finish();
   }
-
-  // TODO exclude safrat time
 
   public void sendRequestMessage(int receiver) throws IOException {
     crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
