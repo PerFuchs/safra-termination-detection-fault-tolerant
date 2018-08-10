@@ -149,6 +149,7 @@ class IbisNode {
         // Takes a long time for big networks skip it for them
         if (communicationLayer.getIbisCount() <= 500) {
           experiment.writeNetworkStatistics(network);
+          network.writeToFile(outputFolder.resolve("network.txt"));
         }
         experiment.verify();
 

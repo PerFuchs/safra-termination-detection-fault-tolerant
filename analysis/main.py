@@ -39,6 +39,8 @@ for c in configurations:
     if r.errors or r.reanalysis_errors:
       print("Repetition: %s" % r.folder)
       r.print_errors()
+    if r.warnings:
+      print(r.warnings)
   print("Other runs with warnings %i / with reanalysis warnings %i" % (
   len(list(filter(lambda r: r.warnings, c.repetitions))),
   len(list(filter(lambda r: r.reanalysis_warnings, c.repetitions)))))

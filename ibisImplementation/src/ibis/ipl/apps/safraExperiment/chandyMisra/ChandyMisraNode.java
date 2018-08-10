@@ -123,13 +123,10 @@ public class ChandyMisraNode implements CrashHandler {
   private void handleRequestMessage(int origin, OurTimer timer) throws IOException {
     if (origin == parent) {
       logger.trace(String.format("%d got request message from parent %d", communicationLayer.getID(), origin));
-      int oldParent = parent;
       parent = -1;
       dist = -1;
       for (int neighbour : network.getNeighbours(me)) {
-        if (neighbour != oldParent) {
           sendRequestMessage(neighbour);
-        }
       }
     } else {
       if (dist != -1) {
