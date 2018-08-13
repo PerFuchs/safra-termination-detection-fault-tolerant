@@ -1,14 +1,12 @@
 package ibis.ipl.apps.safraExperiment;
 
-// File: $Id: IbisNode.java 6731 2007-11-05 22:38:04Z ndrost $
-
 import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.network.Tree;
@@ -18,15 +16,14 @@ import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
+import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
 import org.apache.log4j.*;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.text.ParseException;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 
@@ -51,7 +48,7 @@ class IbisNode {
       Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
       Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
       Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
-      Logger.getLogger(Experiment.class).setLevel(Level.INFO);
+      Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
       Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
       Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
       Logger.getLogger(Network.class).setLevel(Level.INFO);
@@ -103,7 +100,7 @@ class IbisNode {
       network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
       logger.trace("Constructed network");
 
-      Experiment experiment = new Experiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
+      OnlineExperiment experiment = new OnlineExperiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
 
       Safra safraNode;
       if (faultTolerant) {
@@ -119,25 +116,38 @@ class IbisNode {
 
       barrierFactory.getBarrier("Connected").await();
 
-      OurTimer totalTime = new OurTimer();
-      safraNode.startAlgorithm();
-      chandyMisraNode.startAlgorithm();
+      long maxExperimentTime = 90000;
+      ThreadInteruptTimeout timeout = new ThreadInteruptTimeout(Thread.currentThread(), 90000);
+      Thread interuptThread = new Thread(timeout);
+      interuptThread.start();
 
-      safraNode.await();
+      try {
+        OurTimer totalTime = new OurTimer();
+        safraNode.startAlgorithm();
+        chandyMisraNode.startAlgorithm();
+
+        safraNode.await();
+        timeout.clear();
+        totalTime.stopAndCreateTotalTimeSpentEvent();
+      } catch (InterruptedException e){
+        logger.error("Termination wasn't detected in 1:30 minutes.");
+        experiment.writeToErrorFile("Termination wasn't detected in 1:30 minutes.");
+      }
       chandyMisraNode.terminate();
-      totalTime.stopAndCreateTotalTimeSpentEvent();
 
       experiment.writeChandyMisraResults(chandyMisraNode);
+      Thread.sleep(5000);  // Give events after termination a chance to be logged
       experiment.finalizeExperimentLogger();
 
-      logger.debug(String.format("%04d Finished writting results", communicationLayer.getID()));
+      logger.debug(String.format("%04d Finished writing results", communicationLayer.getID()));
       barrierFactory.getBarrier("ResultsWritten").await();
 
       if (communicationLayer.isRoot()) {
         logger.debug("Starting verfication and output processing.");
+        experiment.writeNetwork();
         // Takes a long time for big networks skip it for them
         if (communicationLayer.getIbisCount() <= 500) {
-          experiment.writeNetworkStatistics(network);
+          experiment.printNetworkStatistics(network);
         }
         experiment.verify();
 

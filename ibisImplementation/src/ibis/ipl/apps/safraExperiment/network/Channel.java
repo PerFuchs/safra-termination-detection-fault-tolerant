@@ -8,6 +8,11 @@ public class Channel implements Comparable<Channel> {
   public final int dest;
   private int weight;
 
+  public static Channel fromString(String channel) {
+    String[] parts = channel.split(" ");
+    return new Channel(Integer.valueOf(parts[0]), Integer.valueOf(parts[1]), Integer.valueOf(parts[2]));
+  }
+
   public Channel(int src, int dest, int weigh) {
     this.src = src;
     this.dest = dest;
@@ -69,4 +74,9 @@ public class Channel implements Comparable<Channel> {
     }
     return sort;
   }
+
+  public String toString() {
+    return String.format("%d %d %d", src, dest, weight);
+  }
+
 }

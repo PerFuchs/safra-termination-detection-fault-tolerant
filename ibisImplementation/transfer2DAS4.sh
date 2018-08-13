@@ -1,2 +1,2 @@
 #!/usr/bin/env fish
-transfer.sh . ibisImplemenation
+transfer.sh . test

@@ -4,29 +4,50 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class Network {
   private final static Logger logger = Logger.getLogger(Network.class);
 
-  private final CommunicationLayer communicationLayer;
+  private final int nodeCount;
   private List<Channel> channels;
 
-  private Network(List<Channel> channels, CommunicationLayer communicationLayer) {
-    this.communicationLayer = communicationLayer;
+  private Network(List<Channel> channels, int nodeCount) {
+    this.nodeCount = nodeCount;
     this.channels = channels;
   }
 
-  private static Set<Integer> getAliveNodes(CommunicationLayer communicationLayer, Set<Integer> crashedNodes) {
+  /**
+   * Builds a network from Chandy Misra results.
+   *
+   * @param results
+   * @param channelWeights Channels to use the weighs from when building the network
+   */
+  public Network(Set<ChandyMisraResult> results, List<Channel> channelWeights) {
+    this.nodeCount = results.size();
+    channels = new LinkedList<>();
+    for (ChandyMisraResult r : results) {
+      if (r.parent != -1) {
+        channels.add(channelWeights.get(channelWeights.indexOf(new Channel(r.parent, r.node, -1))));
+        channels.add(channelWeights.get(channelWeights.indexOf(new Channel(r.node, r.parent, -1))));
+      }
+    }
+  }
+
+  private static Set<Integer> getAliveNodes(int nodeCount, Set<Integer> crashedNodes) {
     Set<Integer> aliveNodes = new HashSet<>();
-    for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
+    for (int i = 0; i < nodeCount; i++) {
       aliveNodes.add(i);
     }
     aliveNodes.removeAll(crashedNodes);
     return aliveNodes;
   }
 
-  private static List<Channel> getAliveChannel(List<Channel> channels, Set<Integer> crashedNodes) {
+  private static List<Channel> getAliveChannels(List<Channel> channels, Set<Integer> crashedNodes) {
     List<Channel> aliveChannels = new LinkedList<>(channels);
     for (Channel c : channels) {
       if (crashedNodes.contains(c.src) || crashedNodes.contains(c.dest)) {
@@ -38,16 +59,20 @@ public class Network {
 
   public Tree getMinimumSpanningTree(Set<Integer> crashedNodes) {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
-    Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
-    List<Channel> aliveChannels = getAliveChannel(channels, crashedNodeNumbers);
-    return Tree.getMinimumSpanningTree(aliveChannels, communicationLayer.getRoot(), aliveNodes);
+    Set<Integer> aliveNodes = getAliveNodes(nodeCount, crashedNodeNumbers);
+    List<Channel> aliveChannels = getAliveChannels(channels, crashedNodeNumbers);
+    return Tree.getMinimumSpanningTree(aliveChannels, 0, aliveNodes);
   }
 
   public Tree getSinkTree(Set<Integer> crashedNodes) {
     Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
-    Set<Integer> aliveNodes = getAliveNodes(communicationLayer, crashedNodeNumbers);
-    List<Channel> aliveChannels = getAliveChannel(channels, crashedNodeNumbers);
-    return Tree.getSinkTree(aliveChannels, communicationLayer.getRoot(), aliveNodes, new LinkedList<Integer>());
+    Set<Integer> aliveNodes = getAliveNodes(nodeCount, crashedNodeNumbers);
+    List<Channel> aliveChannels = getAliveChannels(channels, crashedNodeNumbers);
+    return Tree.getSinkTree(aliveChannels, 0, aliveNodes, new LinkedList<Integer>());
+  }
+
+  public Tree getSinkTree(int root) {
+    return Tree.getSinkTree(channels, root, getVertices(), new LinkedList<Integer>());
   }
 
   public Network combineWith(Network network, int weightMultiplier) {
@@ -85,7 +110,7 @@ public class Network {
     }
     channels.add(new Channel(0, communicationLayer.getIbisCount() - 1, 1));
     channels.add(new Channel(communicationLayer.getIbisCount() - 1, 0, 1));
-    return new Network(channels, communicationLayer);
+    return new Network(channels, communicationLayer.getIbisCount());
   }
 
   public static Network getLineNetwork(CommunicationLayer communicationLayer) {
@@ -103,7 +128,7 @@ public class Network {
       channels.add(new Channel(i, 0, 1000*i));
     }
 
-    return new Network(channels, communicationLayer);
+    return new Network(channels, communicationLayer.getIbisCount());
   }
 
   private static Set<Integer> connectedWith(List<Channel> channels, int node) {
@@ -143,15 +168,15 @@ public class Network {
     // Add heavyweight edges from the root to nodes that are unreachable when other nodes crash - because the root cannot
     // fail this guarantees the network stays connected with arbitrary failing nodes.
     List<Integer> unreachableVertices = new LinkedList<>();  // Output parameter from getSinkTree
-    Tree sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
+    Tree.getSinkTree(getAliveChannels(channels, nodesExpectedToCrash),
         root,
-        getAliveNodes(communicationLayer, nodesExpectedToCrash),
+        getAliveNodes(communicationLayer.getIbisCount(), nodesExpectedToCrash),
         unreachableVertices);
 
     // All nodes should have the same list to pick a random element from.
     Collections.sort(unreachableVertices);
 
-    while (sinkTree == null) {
+    while (!unreachableVertices.isEmpty()) {
       unreachableVertices.removeAll(nodesExpectedToCrash);
 
       int nodesToConnect = unreachableVertices.size() / 2;
@@ -166,18 +191,63 @@ public class Network {
       }
 
       unreachableVertices = new LinkedList<>();
-      sinkTree = Tree.getSinkTree(getAliveChannel(channels, nodesExpectedToCrash),
+      Tree.getSinkTree(getAliveChannels(channels, nodesExpectedToCrash),
           communicationLayer.getRoot(),
-          getAliveNodes(communicationLayer, nodesExpectedToCrash),
+          getAliveNodes(communicationLayer.getIbisCount(), nodesExpectedToCrash),
           unreachableVertices);
       Collections.sort(unreachableVertices);
     }
 
-    return new Network(channels, communicationLayer);
+    return new Network(channels, communicationLayer.getIbisCount());
+  }
+
+  public static Network fromFile(Path filePath) throws IOException {
+    List<Channel> channels = new LinkedList<>();
+
+    boolean networkSizeLine = true;
+    int networkSize = -1;
+    for (String line : Files.readAllLines(filePath, StandardCharsets.UTF_8)) {
+      if (networkSizeLine) {
+        networkSize = Integer.valueOf(line);
+        networkSizeLine = false;
+      } else {
+        channels.add(Channel.fromString(line));
+      }
+    }
+    return new Network(channels, networkSize);
   }
 
   public Set<Channel> getChannels() {
     return new HashSet<>(channels);
+  }
+
+  public void writeToFile(Path filePath) throws IOException {
+    StringBuilder network = new StringBuilder();
+    network.append(nodeCount).append('\n');
+    for (Channel c : channels) {
+      network.append(c.toString()).append('\n');
+    }
+
+    Files.write(filePath, network.toString().getBytes());
+  }
+
+  public boolean isSuperNetworkOf(Network other) {
+    return this.channels.containsAll(other.channels);
+  }
+
+  private Set<Integer> getVertices() {
+    Set<Integer> ret = new HashSet<>();
+    for (Channel c : channels) {
+      ret.add(c.src);
+      ret.add(c.dest);
+    }
+
+    return ret;
+  }
+
+
+  public Network getAliveNetwork(Set<Integer> crashedNodes) {
+    return new Network(getAliveChannels(this.channels, crashedNodes), nodeCount - crashedNodes.size());
   }
 }
 

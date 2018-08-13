@@ -7,7 +7,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -23,7 +23,7 @@ import java.util.concurrent.Semaphore;
 
 public class SafraFT implements Safra, CrashHandler {
   private final static Logger logger = Logger.getLogger(SafraFT.class);
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private Semaphore semaphore = new Semaphore(1, false);
 
@@ -169,10 +169,7 @@ public class SafraFT implements Safra, CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d notfified crash after termination.", communicationLayer.getID()));
-    }
-    if (!crashed.contains(crashedNode) && !report.contains(crashedNode)) {
+    if (!crashed.contains(crashedNode) && !report.contains(crashedNode) && !terminationDetected) {
       report.add(crashedNode);
       if (crashedNode == nextNode) {
         newSuccessor();
@@ -214,9 +211,6 @@ public class SafraFT implements Safra, CrashHandler {
 
   public synchronized void receiveToken(Token token) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
-    }
     if (!(token instanceof TokenFT)) {
       throw new IllegalStateException("None TokenFT used with SafraFT");
     }
@@ -224,6 +218,9 @@ public class SafraFT implements Safra, CrashHandler {
 
     TokenFT t = (TokenFT) token;
     if (t.sequenceNumber == getSequenceNumber() + 1) {
+      if (terminationDetected) {
+        experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+      }
       t.crashed.removeAll(crashed);
       crashed.addAll(t.crashed);
       this.token = t;

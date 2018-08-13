@@ -15,8 +15,6 @@ import java.util.Random;
  *
  * Uses elections to generate a seed out of the hashe's of the identifiers of 5 elections winners.
  * This is random as long as different nodes reach the elections first - first to contact a server for an election wins.
- *
- * Should be used after something that synchronizes all nodes to ensure many nodes could win the election.
  */
 public class SynchronizedRandom {
   private final static Logger logger = Logger.getLogger(SynchronizedRandom.class);

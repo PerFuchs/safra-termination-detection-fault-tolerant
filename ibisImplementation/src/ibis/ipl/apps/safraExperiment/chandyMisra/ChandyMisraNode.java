@@ -4,7 +4,7 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class ChandyMisraNode implements CrashHandler {
   private final static Logger logger = Logger.getLogger(ChandyMisraNode.class);
-  private final static Logger experimentLogger = Logger.getLogger(Experiment.experimentLoggerName);
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private Safra safraNode;
   private CommunicationLayer communicationLayer;
@@ -85,6 +85,10 @@ public class ChandyMisraNode implements CrashHandler {
 
   public synchronized void handleCrash(int crashedNode) throws IOException {
     if (crashedNode == parent) {
+      if (terminated) {
+        experimentLogger.warn(String.format("%d notfified crash after termination.", communicationLayer.getID()));
+      }
+
       safraNode.setActive(true, "Processing crash");
       OurTimer timer = new OurTimer();
       if (terminated) {  // No node triggering activity can fail after termination has been detected
@@ -119,13 +123,10 @@ public class ChandyMisraNode implements CrashHandler {
   private void handleRequestMessage(int origin, OurTimer timer) throws IOException {
     if (origin == parent) {
       logger.trace(String.format("%d got request message from parent %d", communicationLayer.getID(), origin));
-      int oldParent = parent;
       parent = -1;
       dist = -1;
       for (int neighbour : network.getNeighbours(me)) {
-        if (neighbour != oldParent) {
           sendRequestMessage(neighbour);
-        }
       }
     } else {
       if (dist != -1) {
