@@ -3,6 +3,10 @@ package ibis.ipl.apps.safraExperiment.experiment;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
+import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectChannelUsedException;
+import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectTreeException;
+import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectWeightException;
+import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.Verifier;
 import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
 import ibis.ipl.apps.safraExperiment.network.Channel;
 import ibis.ipl.apps.safraExperiment.network.Network;
@@ -16,14 +20,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Drives result verification after each experiment run.
- *
+ * <p>
  * * Verifies no errors are in the event log
  * * Verifies Chandy Misra result
  * * Generates statistics about Safra and warns if announce has been called to early
@@ -93,32 +94,28 @@ public class OnlineExperiment extends Experiment {
   }
 
   private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes, Set<Integer> nodesExpectedToCrash) throws IOException {
-    Tree tree = new Tree(communicationLayer, network, results, crashedNodes);
-    Tree expectedTree = network.getSinkTree(crashedNodes);
-
-    if (expectedTree == null && !nodesExpectedToCrash.equals(crashedNodes)) {
-      // Some nodes were expected to crash but did not. Now these have no connection to root
-      tree = new Tree(communicationLayer, network, results, nodesExpectedToCrash);
-      expectedTree = network.getSinkTree(nodesExpectedToCrash);
-      logger.info("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
-      writeToWarnFile("Some nodes were expected to crash but did not. Chandy Misra might constructs spuriously invalid results.");
+    Set<ChandyMisraResult> validResults = new HashSet<>();
+    for (ChandyMisraResult r : results) {
+      if (!crashedNodes.contains(r.node)) {
+        validResults.add(r);
+      }
     }
 
-    if (tree.equals(expectedTree) && tree.hasValidWeights()) {
-      logger.info("Constructed and expected tree are equal.");
+    try {
+      Verifier.check(validResults, network.getAliveNetwork(crashedNodes), communicationLayer.getRoot());
+      logger.info("Chandy Misra result is correct.");
       return true;
-    } else {
-      logger.info(String.format("Weights are: %d %d", tree.getWeight(), expectedTree.getWeight()));
-      if (!tree.hasValidWeights()) {
-        logger.error("Chandy Misra calculated invalid weights.");
-        writeToErrorFile("Chandy Misra calculated invalid weights.");
-      }
-      logger.error("Chandy Misra calculated incorrect result");
-      logger.error(String.format("Constructed tree: %s", tree.toString()));
-      logger.error(String.format("Expected tree: %s", expectedTree.toString()));
-
-      writeToErrorFile(String.format("Weights are: %d %d", tree.getWeight(), expectedTree.getWeight()));
-      writeToErrorFile("Chandy Misra calculated incorrect result");
+    } catch (IncorrectChannelUsedException e) {
+      logger.error("Chandy Misra uses non-existent channels");
+      writeToErrorFile("Chandy Misra uses non-existent channels");
+      return false;
+    } catch (IncorrectTreeException e) {
+      logger.error("Chandy Misra calculated an incorrect tree");
+      writeToErrorFile("Chandy Misra calculated an incorrect tree");
+      return false;
+    } catch (IncorrectWeightException e) {
+      logger.error("Chandy Misra calculated incorrect weights");
+      writeToErrorFile("Chandy Misra calculated incorrect weights");
       return false;
     }
   }
@@ -137,7 +134,7 @@ public class OnlineExperiment extends Experiment {
   /**
    * Needs to be called before readEvents because otherwise file writes from other DAS4 nodes won't be readable - the
    * files appear to be empty.
-   *
+   * <p>
    * The logger should not be used after.
    */
   public void finalizeExperimentLogger() {
@@ -147,36 +144,16 @@ public class OnlineExperiment extends Experiment {
     logger.trace(String.format("%04d finalized experiment logger.", communicationLayer.getID()));
   }
 
-  public void writeNetworkStatistics(Network network) throws IOException {
+  public void printNetworkStatistics(Network network) throws IOException {
     Tree sinkTree = network.getSinkTree(getSafraStatistics().getCrashedNodes());
-    if (sinkTree != null) {
-      Set<Channel> networkChannels = network.getChannels();
-      Set<Channel> sinkTreeChannels = sinkTree.getChannels();
+    Set<Channel> networkChannels = network.getChannels();
 
-      Set<Channel> noneSinkTreeChannels = new HashSet<>(networkChannels);
-      noneSinkTreeChannels.removeAll(sinkTreeChannels);
+    logger.info(String.format("Network Statistics: Number of channels %d", networkChannels.size()));
 
-      StringBuilder networkStatistics = new StringBuilder();
-      logger.info(String.format("Network Statistics: Channels: %d InTree: %d Other: %d", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
-      networkStatistics.append(String.format("%d;%d;%d\n", networkChannels.size(), sinkTreeChannels.size(), noneSinkTreeChannels.size()));
-
-      Map<Integer, Set<Integer>> levels = sinkTree.getLevels();
-      logger.info(String.format("Tree Statistics: Has %d levels", levels.size()));
-      networkStatistics.append(String.format("%d\n", levels.size()));
-      for (int level : levels.keySet()) {
-        logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
-        networkStatistics.append(String.format("%d;%d\n", level, levels.get(level).size()));
-      }
-
-      Files.write(Paths.get(outputFolder.toString(), "network.csv"), networkStatistics.toString().getBytes());
-    } else {
-      if (!getSafraStatistics().getCrashedNodes().equals(crashSimulator.getCrashingNodes())) {
-        logger.info("Could not construct sink tree because some nodes were expected to crash but did not.");
-        writeToWarnFile("Could not construct sink tree because some nodes were expected to crash but did not. No networks statistics were written.");
-      } else {
-        throw new IllegalStateException("Could not construct sink tree");
-      }
+    Map<Integer, Set<Integer>> levels = sinkTree.getLevels();
+    logger.info(String.format("Tree Statistics: Has %d levels", levels.size()));
+    for (int level : levels.keySet()) {
+      logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
     }
-
   }
 }

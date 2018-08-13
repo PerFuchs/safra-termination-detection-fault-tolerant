@@ -6,7 +6,6 @@ import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
@@ -25,7 +24,6 @@ import org.apache.log4j.*;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 
@@ -146,10 +144,10 @@ class IbisNode {
 
       if (communicationLayer.isRoot()) {
         logger.debug("Starting verfication and output processing.");
+        experiment.writeNetwork();
         // Takes a long time for big networks skip it for them
         if (communicationLayer.getIbisCount() <= 500) {
-          experiment.writeNetworkStatistics(network);
-          network.writeToFile(outputFolder.resolve("network.txt"));
+          experiment.printNetworkStatistics(network);
         }
         experiment.verify();
 

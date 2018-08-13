@@ -8,118 +8,11 @@ import java.util.*;
 public class Tree {
   private final static Logger logger = Logger.getLogger(Tree.class);
 
-  private LinkedList<Integer> badRoots = new LinkedList<>();
   private int root;
-  private Set<Channel> channels = new TreeSet<>();
+  private Set<Channel> channels;
   private final Set<Integer> vertices;
+  private final Map<Integer, Integer> distances = new HashMap<>();
 
-  /**
-   * Used to indicate that this tree was constructed from CM results with invalid calculated weights.
-   *
-   * This will not be visible in the weights of its channel as these are initialized according to the correct weights.
-   * This is because the CM result does not allow to recover weights for individual channels.
-   *
-   * This field is not used in compareTo or equal. It is up to the user to check it accordingly.
-   */
-  private boolean invalidWeights = false;
-
-  Tree(int root, Set<Channel> channels, Set<Integer> vertices) {
-    this.root = root;
-    this.channels = channels;
-    this.vertices = vertices;
-  }
-
-  public Tree(CommunicationLayer communicationLayer, Network network, List<ChandyMisraResult> results, Set<Integer> crashedNodes) {
-    // TODO does not detect unconnected vertices which are in a cycle. This does not influence detection of bad CM results but makes it harder to see why they are wrong.
-    this.root = communicationLayer.getRoot();
-    this.vertices = new HashSet<>();
-
-    for (ChandyMisraResult r : results) {
-      if (r.parent != -1 && !crashedNodes.contains(r.node)) {
-        vertices.add(r.node);
-        channels.add(new Channel(r.parent, r.node, network.getWeight(r.parent, r.node)));
-        if (crashedNodes.contains(r.parent)) {
-          badRoots.add(r.parent);
-        }
-      } else if (r.parent == -1 && r.node != 0 && !crashedNodes.contains(r.node)) {
-        System.out.println(String.format("Node: %d has no parent.", r.node));
-      }
-    }
-
-    // This takes a long time for big networks -> Skip it for them
-    if (communicationLayer.getIbisCount() <= 500) {
-      for (ChandyMisraResult r : results) {
-        if (!crashedNodes.contains(r.node)) {
-          int expectedDistance = getDistance(r.node);
-          if (expectedDistance != r.dist) {
-            invalidWeights = true;
-            System.out.println(String.format("Node %d has incorrect distance %d should be %d", r.node, r.dist, expectedDistance));
-          }
-        }
-      }
-    }
-
-  }
-
-  public int getWeight() {
-    int weight = 0;
-    for (Channel c : channels) {
-      weight += c.getWeight();
-    }
-    return weight;
-  }
-
-  private List<Channel> channelsFrom(int src) {
-    List<Channel> ret = new LinkedList<>();
-    for (Channel c : channels) {
-      if (c.src == src) {
-        ret.add(c);
-      }
-    }
-    return ret;
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder b = new StringBuilder();
-    Stack<Channel> work = new Stack<>();
-
-    work.addAll(channelsFrom(root));
-    b.append("Actual tree:\n");
-    while (!work.empty()) {
-      Channel c = work.pop();
-      b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
-      work.addAll(channelsFrom(c.dest));
-    }
-
-    b.append("Bad Trees:\n");
-    for (int badRoot : badRoots) {
-      LinkedList<Integer> visited = new LinkedList<>();
-      work.addAll(channelsFrom(badRoot));
-      while (!work.empty()) {
-        Channel c = work.pop();
-        if (!visited.contains(c.dest)) {
-          b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
-          work.addAll(channelsFrom(c.dest));
-          visited.add(c.dest);
-        } else {
-          b.append(String.format("Detected cycle at: %d", c.dest));
-        }
-      }
-    }
-    return b.toString();
-  }
-
-  public boolean equals(Object other) {
-    if (this == other) {
-      return true;
-    }
-    if (!(other instanceof Tree)) {
-      return false;
-    }
-    final Tree that = (Tree) other;
-    return root == that.root && channels.equals(that.channels);
-  }
 
   /**
    * Prims algorithm is used to build the expected spanning tree from given channels and vertices.
@@ -153,24 +46,6 @@ public class Tree {
       visited.add(lowestOutgoing.dest);
     }
     return new Tree(root, treeChannels, vertices);
-  }
-
-  private static List<Channel> channelsFrom(List<Channel> channels, int src) {
-    List<Channel> ret = new LinkedList<>();
-    for (Channel c : channels) {
-      if (c.src == src) {
-        ret.add(c);
-      }
-    }
-    return ret;
-  }
-
-  public Set<Channel> getChannels() {
-    return channels;
-  }
-
-  public boolean hasValidWeights() {
-    return !invalidWeights;
   }
 
   /**
@@ -266,8 +141,7 @@ public class Tree {
           unreachableVertices.add(node);
         }
       }
-      logger.debug("Could not construct sink tree because some nodes are not connected to root.");
-      return null;
+      logger.debug("Some vertices cannot be reached via this sink tree");
     }
 
     Set<Channel> treeChannels = new TreeSet<>();
@@ -277,11 +151,19 @@ public class Tree {
       if (v == root) {
         continue;
       }
-      int parent = parents.get(v);
-      treeChannels.add(channels.get(channels.indexOf(new Channel(parent, v, -1))));
+      if (parents.containsKey(v)) {
+        int parent = parents.get(v);
+        treeChannels.add(channels.get(channels.indexOf(new Channel(parent, v, -1))));
+      }
     }
 
     return new Tree(root, treeChannels, vertices);
+  }
+
+  private Tree(int root, Set<Channel> channels, Set<Integer> vertices) {
+    this.root = root;
+    this.channels = channels;
+    this.vertices = vertices;
   }
 
   public Map<Integer, Set<Integer>> getLevels() {
@@ -311,11 +193,17 @@ public class Tree {
     return -1;
   }
 
-  private int getDistance(int node) {
+  public int getDistance(int node) {
     return getDistance(root, node, 0);
   }
 
   private int getDistance(int currentNode, int node, int distance) {
+    if (distances.containsKey(node)) {
+      return distances.get(node);
+    } else {
+      distances.put(currentNode, distance);
+    }
+
     if (currentNode == node) {
       return distance;
     }
@@ -328,5 +216,44 @@ public class Tree {
       }
     }
     return -1;
+  }
+
+  private List<Channel> channelsFrom(int src) {
+    List<Channel> ret = new LinkedList<>();
+    for (Channel c : channels) {
+      if (c.src == src) {
+        ret.add(c);
+      }
+    }
+    return ret;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder b = new StringBuilder();
+    Stack<Channel> work = new Stack<>();
+
+    work.addAll(channelsFrom(root));
+    while (!work.empty()) {
+      Channel c = work.pop();
+      b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
+      work.addAll(channelsFrom(c.dest));
+    }
+    return b.toString();
+  }
+
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof Tree)) {
+      return false;
+    }
+    final Tree that = (Tree) other;
+    return root == that.root && channels.equals(that.channels);
+  }
+
+  public Set<Channel> getChannels() {
+    return channels;
   }
 }
