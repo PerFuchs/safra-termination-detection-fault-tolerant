@@ -29,17 +29,23 @@ public class OurTimer {
   }
 
   public void stopAndCreateSafraTimeSpentEvent() {
-    long duration = pause();
+    pause();
     experimentLogger.info(Event.getSafraTimeSpentEvent(duration));
+    duration = 0;
+    start = 0;
   }
 
   public void stopAndCreateTotalTimeSpentEvent() {
-    long duration = pause();
+    pause();
     experimentLogger.info(Event.getTotalTimeSpentEvent(duration));
+    duration = 0;
+    start = 0;
   }
 
   public void stopAndCreateBasicTimeSpentEvent() {
-    long duration = pause();
+    pause();
     experimentLogger.info(Event.getBasicTimeSpentEvent(duration));
+    duration = 0;
+    start = 0;
   }
 }

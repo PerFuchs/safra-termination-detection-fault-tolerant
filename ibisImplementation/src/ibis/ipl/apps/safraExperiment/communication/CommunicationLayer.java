@@ -294,11 +294,13 @@ public class CommunicationLayer {
     this.crashSimulator = crashSimulator;
   }
 
-  public void sendMessage(Message message) throws IOException {
+  public void sendMessage(Message message, OurTimer basicTimer) throws IOException {
     if (message instanceof BasicMessage) {
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       if (!crashed) {
+        basicTimer.pause();
         safraNode.handleSendingBasicMessage(message.getReceiver());
+        basicTimer.start();
       }
     }
     if (!crashed) {

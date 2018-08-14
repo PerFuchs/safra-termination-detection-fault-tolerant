@@ -5,6 +5,7 @@ import ibis.ipl.apps.safraExperiment.communication.Message;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
+import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public class AlphaSynchronizer implements CrashHandler {
     }
 
     messagesSent++;
-    communicationLayer.sendMessage(m);
+    communicationLayer.sendMessage(m, new OurTimer());
   }
 
   public synchronized void receiveMessage(Message m) throws IOException, TerminationDetectedTooEarly {
@@ -50,7 +51,7 @@ public class AlphaSynchronizer implements CrashHandler {
     } else if (m instanceof SafeMessage) {
       handleSafeMessage((SafeMessage) m);
     } else {
-      communicationLayer.sendMessage(new AckMessage());
+      communicationLayer.sendMessage(new AckMessage(), new OurTimer());
       client.handleMessage(m);
     }
   }

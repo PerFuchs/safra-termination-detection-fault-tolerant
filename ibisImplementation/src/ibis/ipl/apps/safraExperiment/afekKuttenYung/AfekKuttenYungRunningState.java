@@ -4,14 +4,20 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AwebruchClient;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
+import ibis.ipl.apps.safraExperiment.experiment.Event;
+import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
+import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class AfekKuttenYungRunningState extends AfekKuttenYungState implements Runnable, AwebruchClient {
+  private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
+
   private AfekKuttenYungStateMachine afekKuttenYungMachine;
 
   private AfekKuttenYungData ownData;
@@ -44,7 +50,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   public void startAlgorithm() throws IOException {
     safra.setActive(true, "Start AKY");
-    sendStateToAllNeighbours();
+    sendStateToAllNeighbours(new OurTimer());
     try {
       synchronizer.awaitPulse();
     } catch (InterruptedException e) {
@@ -74,11 +80,15 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void stepLoop() throws IOException, InterruptedException {
+    OurTimer timer = new OurTimer();
     while (true) {
       step();
 
+      timer.stopAndCreateBasicTimeSpentEvent();
       setActive(false, "Step done");
       synchronizer.awaitPulse();
+
+      timer.start();
       copyNeighbourStates();
     }
   }
@@ -92,9 +102,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     // Implement algorithm from the book operating on own state and neighbour state
   }
 
-  private void updateOwnState(Message m) {
+  private void updateOwnState(Message m, OurTimer timer) {
     ownData.update(m);
-    sendStateUpdateToAllNeighbours(m);
+    sendStateUpdateToAllNeighbours(m, timer);
   }
 
   private synchronized void copyNeighbourStates() {
@@ -105,21 +115,27 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     }
   }
 
-  private void sendStateToAllNeighbours() {
+  private void sendStateToAllNeighbours(OurTimer timer) {
 
   }
 
-  private void sendStateUpdateToAllNeighbours(Message m) {
+  private void sendStateUpdateToAllNeighbours(Message m, OurTimer timer) {
 
   }
 
   @Override
   public synchronized void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly {
+    OurTimer timer = new OurTimer();
+
     if (!safra.crashDetected(m.getSource())) {
+      timer.pause();
       setActive(true, "Got state update");
+      timer.start();
+
       newNeighbourData.get(m.getSource()).update(m);
       // No call to safra.setActive(false). Message handling is not done before the next call to step.
     }
+    timer.stopAndCreateBasicTimeSpentEvent();
   }
 
   public synchronized void terminate() throws TerminationDetectedTooEarly {
@@ -131,8 +147,18 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   @Override
-  public void handleCrash(int crashedNode) {
-    newNeighbourData.remove(crashedNode);
+  public void handleCrash(int crashedNode) throws IOException {
+    OurTimer timer = new OurTimer();
+
+    if (newNeighbourData.containsKey(crashedNode)) {
+      newNeighbourData.remove(crashedNode);
+
+      timer.pause();
+      setActive(true, "Crash detected");
+
+      experimentLogger.info(Event.getParentCrashEvent());
+    }
+    timer.stopAndCreateBasicTimeSpentEvent();
   }
 
   public AlphaSynchronizer getSynchronizer() {
