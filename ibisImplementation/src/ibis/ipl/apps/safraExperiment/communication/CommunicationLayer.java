@@ -1,6 +1,7 @@
 package ibis.ipl.apps.safraExperiment.communication;
 
 import ibis.ipl.*;
+import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
@@ -298,11 +299,17 @@ public class CommunicationLayer {
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       if (!crashed) {
         safraNode.handleSendingBasicMessage(message.getReceiver());
-
       }
+    }
+    if (!crashed) {
+      WriteMessage m = sendPorts.get(message.getReceiver()).newMessage();
+      m.writeInt(MessageTypes.MESSAGECLASS.ordinal());
+      message.writeToIPLMessage(m);
+      m.send();
+      m.finish();
+    }
+    if (message instanceof BasicMessage) {
       crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
-    } else {
-
     }
   }
 
