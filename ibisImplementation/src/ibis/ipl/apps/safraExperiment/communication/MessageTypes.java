@@ -6,5 +6,6 @@ public enum MessageTypes {
   CRASHED,
   TOKEN,
   BARRIER,
-  ANNOUNCE
+  ANNOUNCE,
+  MESSAGECLASS
 }

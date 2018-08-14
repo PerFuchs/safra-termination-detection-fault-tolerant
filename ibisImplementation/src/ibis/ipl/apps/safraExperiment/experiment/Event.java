@@ -210,6 +210,14 @@ public class Event implements Comparable<Event> {
     return String.format("<<BasicTimeSpent>%d>", duration);
   }
 
+  public static String getTerminationDetectedToEarlyEvent() {
+    return "<<TerminationDetectedTooEarly>>";
+  }
+
+  public static String getCrashAfterTerminationEvent() {
+    return "<<CrashAfterTermination>>";
+  }
+
   public boolean isTokenSend() {
     return isTokenSend;
   }

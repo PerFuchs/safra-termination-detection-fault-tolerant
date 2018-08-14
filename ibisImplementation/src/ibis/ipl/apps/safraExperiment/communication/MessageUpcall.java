@@ -1,11 +1,14 @@
 package ibis.ipl.apps.safraExperiment.communication;
 
 import ibis.ipl.ReadMessage;
+import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import org.apache.log4j.Logger;
@@ -13,7 +16,6 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 
 public class MessageUpcall implements ibis.ipl.MessageUpcall {
-
   private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
   private static Logger logger = Logger.getLogger(MessageUpcall.class);
 
@@ -23,6 +25,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
   private CrashDetector crashDetector;
   private BarrierFactory barrierFactory;
   private boolean crashed = false;
+  private AlphaSynchronizer synchronizer;
 
   public MessageUpcall(CommunicationLayer communicationLayer, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) {
     this.communicationLayer = communicationLayer;
@@ -92,6 +95,26 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         readMessage.finish();
         safraNode.handleAnnounce();
         break;
+      case MESSAGECLASS:
+        Message m = Message.fromIPLMessage(readMessage);
+        readMessage.finish();
+
+        synchronized (MessageUpcall.class) {
+          if (!crashed) {
+            if (m instanceof BasicMessage) {
+              BasicMessage bm = (BasicMessage) m;
+              safraNode.handleReceiveBasicMessage(bm.getSource(), bm.getSequenceNumber());
+            }
+
+            try {
+              synchronizer.receiveMessage(m);
+            } catch (TerminationDetectedTooEarly terminationDetectedTooEarly) {
+              experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
+              terminationDetectedTooEarly.printStackTrace();
+            }
+          }
+        }
+
       default:
         throw new IOException("Got message of unknown type.");
 
