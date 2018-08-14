@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.chandyMisra;
 
+import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
@@ -12,7 +13,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-public class ChandyMisraNode implements CrashHandler {
+public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
   private final static Logger logger = Logger.getLogger(ChandyMisraNode.class);
   private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 

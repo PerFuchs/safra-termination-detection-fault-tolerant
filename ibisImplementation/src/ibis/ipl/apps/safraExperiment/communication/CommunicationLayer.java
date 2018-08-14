@@ -1,6 +1,7 @@
 package ibis.ipl.apps.safraExperiment.communication;
 
 import ibis.ipl.*;
+import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
@@ -42,6 +43,7 @@ public class CommunicationLayer {
 
   private boolean crashed;
   private Network network;
+  private AlphaSynchronizer synchronizer;
   private Safra safraNode;
 
   public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) {
@@ -73,8 +75,9 @@ public class CommunicationLayer {
     return "CrashPort";
   }
 
-  public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory, CrashSimulator crashSimulator) throws IOException {
+  public void connectIbises(Network network, ChandyMisraNode chandyMisraNode, AlphaSynchronizer synchronizer, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory, CrashSimulator crashSimulator) throws IOException {
     this.network = network;
+    this.synchronizer = synchronizer;
     this.safraNode = safraNode;
 
     setupGeneralReceivePort(chandyMisraNode, safraNode, crashDetector, barrierFactory);

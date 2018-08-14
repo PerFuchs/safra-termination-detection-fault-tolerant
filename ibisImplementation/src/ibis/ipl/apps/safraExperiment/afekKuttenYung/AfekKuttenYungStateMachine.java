@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.afekKuttenYung;
 
+import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AwebruchClient;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
@@ -12,7 +13,7 @@ import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 
 import java.io.IOException;
 
-public class AfekKuttenYungStateMachine implements AwebruchClient, CrashHandler {
+public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClient, CrashHandler {
   private AfekKuttenYungState state;
 
   public AfekKuttenYungStateMachine(CommunicationLayer communicationLayer, Safra safra, CrashDetector crashDetector) {
@@ -25,7 +26,7 @@ public class AfekKuttenYungStateMachine implements AwebruchClient, CrashHandler 
     state.handleMessage(m);
   }
 
-  public void startAlgorithm() throws Exception {
+  public void startAlgorithm() throws IOException {
     state.startAlgorithm();
   }
 
@@ -43,4 +44,10 @@ public class AfekKuttenYungStateMachine implements AwebruchClient, CrashHandler 
   }
 
 
+  public AlphaSynchronizer getSynchronizer() {
+    if (!(state instanceof AfekKuttenYungRunningState)) {
+      throw new IllegalStateException("Can only get synchronizer in running state");
+    }
+    return ((AfekKuttenYungRunningState) state).getSynchronizer();
+  }
 }

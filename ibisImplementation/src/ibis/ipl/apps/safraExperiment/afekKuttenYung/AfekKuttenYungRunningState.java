@@ -42,10 +42,14 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   }
 
-  public void startAlgorithm() throws InterruptedException, IOException {
+  public void startAlgorithm() throws IOException {
     safra.setActive(true, "Start AKY");
     sendStateToAllNeighbours();
-    synchronizer.awaitPulse();
+    try {
+      synchronizer.awaitPulse();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     copyNeighbourStates();
 
     loopThread = new Thread(this);
@@ -131,4 +135,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     newNeighbourData.remove(crashedNode);
   }
 
+  public AlphaSynchronizer getSynchronizer() {
+    return synchronizer;
+  }
 }

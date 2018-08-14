@@ -9,7 +9,7 @@ import java.io.IOException;
 public abstract class AfekKuttenYungState {
   public abstract void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly;
 
-  public abstract void startAlgorithm() throws Exception;
+  public abstract void startAlgorithm() throws IOException;
 
   public abstract void terminate() throws TerminationDetectedTooEarly;
 

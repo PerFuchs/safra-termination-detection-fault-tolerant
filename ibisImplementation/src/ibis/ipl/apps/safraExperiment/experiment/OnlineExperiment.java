@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
+import ibis.ipl.apps.safraExperiment.BasicAlgorithms;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
@@ -155,5 +156,9 @@ public class OnlineExperiment extends Experiment {
     for (int level : levels.keySet()) {
       logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
     }
+  }
+
+  public void writeBasicResults(BasicAlgorithms basicAlgorithm) {
+
   }
 }
