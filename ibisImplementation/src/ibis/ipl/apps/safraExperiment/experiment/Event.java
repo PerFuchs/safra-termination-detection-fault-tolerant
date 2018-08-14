@@ -214,8 +214,8 @@ public class Event implements Comparable<Event> {
     return "<<TerminationDetectedTooEarly>>";
   }
 
-  public static String getCrashAfterTerminationEvent() {
-    return "<<CrashAfterTermination>>";
+  public static String getDetectedCrashAfterTerminationEvent() {
+    return "<<CrashDetectedAfterTermination>>";
   }
 
   public boolean isTokenSend() {

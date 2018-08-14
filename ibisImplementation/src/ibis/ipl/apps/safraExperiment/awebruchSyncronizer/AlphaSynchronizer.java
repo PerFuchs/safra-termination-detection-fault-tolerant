@@ -2,16 +2,13 @@ package ibis.ipl.apps.safraExperiment.awebruchSyncronizer;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
-import ibis.ipl.apps.safraExperiment.safra.api.CrashAfterTerminationException;
-import ibis.ipl.apps.safraExperiment.safra.api.Safra;
+import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 public class AlphaSynchronizer implements CrashHandler {
@@ -115,7 +112,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
 
   @Override
-  public void handleCrash(int crashedNode) throws IOException, CrashAfterTerminationException {
+  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException {
     if (safeMessageReceived.containsKey(crashedNode)) {
       safeMessageReceived.remove(crashedNode);
     }

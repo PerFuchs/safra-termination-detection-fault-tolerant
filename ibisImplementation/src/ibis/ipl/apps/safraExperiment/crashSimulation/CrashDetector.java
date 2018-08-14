@@ -1,8 +1,7 @@
 package ibis.ipl.apps.safraExperiment.crashSimulation;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
-import ibis.ipl.apps.safraExperiment.experiment.Experiment;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
-import ibis.ipl.apps.safraExperiment.safra.api.CrashAfterTerminationException;
+import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -30,8 +29,8 @@ public class CrashDetector {
     for (CrashHandler ch : crashHandlers) {
       try {
         ch.handleCrash(crashedNode);
-      } catch (CrashAfterTerminationException e) {
-        experimentLogger.error(Event.getCrashAfterTerminationEvent());
+      } catch (CrashDetectionAfterTerminationException e) {
+        experimentLogger.error(Event.getDetectedCrashAfterTerminationEvent());
       }
     }
   }
