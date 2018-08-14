@@ -20,7 +20,7 @@ import java.util.*;
  * This is the sending part of the IPL wrapper, it exposes an interface where Ibises are referred to as numbers between
  * 0 to <networkSize> - 1 to send messages to them. It hides the complexity of finding all ibises and assigning these
  * numbers, as well as, the complexity of setting up channels between the ibises.
- *
+ * <p>
  * The channels between Ibises are mostly setup statically, each ibis sets up channels as specified by a `Network` instance
  * for the whole run. If an Ibises is expected to simulate a crash it also sets up channels to send crash notification
  * to all neighbours. This is done to avoid transferring these messages in band and FIFO with all other messages.
@@ -186,6 +186,7 @@ public class CommunicationLayer {
 
   /**
    * This is no actual broadcast. It only sends these messages to all neighbours
+   *
    * @throws IOException
    */
   public void broadcastCrashMessage() throws IOException {
@@ -290,12 +291,14 @@ public class CommunicationLayer {
   }
 
   public void sendMessage(Message message) throws IOException {
-    // TODO
-    crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
-    if (!crashed) {
-      if (message instanceof BasicMessage) {
+    if (message instanceof BasicMessage) {
+      crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
+      if (!crashed) {
         safraNode.handleSendingBasicMessage(message.getReceiver());
+
       }
+      crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
+    } else {
 
     }
   }
