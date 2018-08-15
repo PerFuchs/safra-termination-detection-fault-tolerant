@@ -157,7 +157,7 @@ class IbisNode {
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
-    Logger.getLogger(Network.class).setLevel(Level.INFO);
+    Logger.getLogger(Network.class).setLevel(Level.DEBUG);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
     Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
     Logger.getLogger(Tree.class).setLevel(Level.INFO);
@@ -259,7 +259,7 @@ class IbisNode {
   }
 
   private static void writeResults() throws IOException, InterruptedException {
-    experiment.writeBasicResults(basicAlgorithmChoice);
+    experiment.writeBasicResults(basicAlgorithm);
     experiment.finalizeExperimentLogger();
     logger.debug(String.format("%04d Finished writing results", communicationLayer.getID()));
     barrierFactory.getBarrier("ResultsWritten").await();

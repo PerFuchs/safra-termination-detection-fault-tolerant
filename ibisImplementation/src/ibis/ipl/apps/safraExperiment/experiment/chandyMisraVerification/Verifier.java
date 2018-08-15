@@ -17,7 +17,7 @@ public class Verifier {
   }
 
   public static void check(Set<ChandyMisraResult> results, Network usedNetworkTopology, int root) throws IncorrectChannelUsedException, IncorrectTreeException, IncorrectWeightException {
-    Network constructedNetwork = new Network(results, new LinkedList<Channel>(usedNetworkTopology.getChannels()));
+    Network constructedNetwork = new Network(results);
 
     if (!usedNetworkTopology.isSuperNetworkOf(constructedNetwork)) {
       throw new IncorrectChannelUsedException();

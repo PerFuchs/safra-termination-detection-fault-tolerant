@@ -69,7 +69,7 @@ public abstract class Experiment {
       Path path = filePathForChandyMisraResults(i);
 
       String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
-      results.add(new ChandyMisraResult(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2])));
+      results.add(new ChandyMisraResult(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2]), Integer.valueOf(r[3])));
     }
     return results;
   }

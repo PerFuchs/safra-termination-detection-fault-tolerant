@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
+import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.BasicAlgorithms;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
@@ -121,8 +122,16 @@ public class OnlineExperiment extends Experiment {
     }
   }
 
-  public void writeChandyMisraResults(ChandyMisraNode chandyMisraNode) throws IOException {
-    String str = String.format("%d %d %d\n", nodeID, chandyMisraNode.getParent(), chandyMisraNode.getDist());
+  public void writeBasicResults(BasicAlgorithm basicAlgorithm) throws IOException {
+    if (basicAlgorithm instanceof ChandyMisraNode) {
+      writeChandyMisraResults((ChandyMisraNode) basicAlgorithm);
+    } else {
+      // TODO
+    }
+  }
+
+  private void writeChandyMisraResults(ChandyMisraNode chandyMisraNode) throws IOException {
+    String str = String.format("%d %d %d %d\n", nodeID, chandyMisraNode.getParent(), chandyMisraNode.getDist(), chandyMisraNode.getParentEdgeWeight());
 
     Path path = filePathForChandyMisraResults(nodeID);
     byte[] strToBytes = str.getBytes();
@@ -158,7 +167,5 @@ public class OnlineExperiment extends Experiment {
     }
   }
 
-  public void writeBasicResults(BasicAlgorithms basicAlgorithm) {
 
-  }
 }

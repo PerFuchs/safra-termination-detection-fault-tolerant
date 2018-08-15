@@ -27,13 +27,13 @@ public class Network {
    * @param results
    * @param channelWeights Channels to use the weighs from when building the network
    */
-  public Network(Set<ChandyMisraResult> results, List<Channel> channelWeights) {
+  public Network(Set<ChandyMisraResult> results) {
     this.nodeCount = results.size();
     channels = new LinkedList<>();
     for (ChandyMisraResult r : results) {
       if (r.parent != -1) {
-        channels.add(channelWeights.get(channelWeights.indexOf(new Channel(r.parent, r.node, -1))));
-        channels.add(channelWeights.get(channelWeights.indexOf(new Channel(r.node, r.parent, -1))));
+        channels.add(new Channel(r.parent, r.node, r.parentEdgeWeight));
+        channels.add(new Channel(r.node, r.parent, r.parentEdgeWeight));
       }
     }
   }
