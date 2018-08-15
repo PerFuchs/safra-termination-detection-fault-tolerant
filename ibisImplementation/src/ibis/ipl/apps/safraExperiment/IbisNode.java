@@ -22,7 +22,6 @@ import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
-import jdk.nashorn.internal.runtime.regexp.joni.exception.ValueException;
 import org.apache.log4j.*;
 
 import java.io.IOException;
@@ -126,17 +125,21 @@ class IbisNode {
   private static void validateArgs(String[] args) {
     if (args.length < 4) {
       System.err.println("Too less arguments. Use: <outputFolder> <faultPercentage> <fs|ft> <chandyMisra|afekKY");
+      System.exit(1);
     }
     try {
       Double.valueOf(args[1]);
-    } catch (ValueException e) {
+    } catch (NumberFormatException e) {
       System.err.println("The second argument should be a float");
+      System.exit(1);
     }
-    if (!args[2].equals("ft") || args[2].equals("fs")) {
+    if (!(args[2].equals("ft") || args[2].equals("fs"))) {
       System.err.println("Use either 'fs' or 'ft' as third argument");
+      System.exit(1);
     }
-    if (!args[3].equals("cm") || args[3].equals("afekKY")) {
+    if (!(args[3].equals("cm") || args[3].equals("afekKY"))) {
       System.err.println("Use either 'cm' or 'afekKY' as fourth argument");
+      System.exit(1);
     }
   }
 

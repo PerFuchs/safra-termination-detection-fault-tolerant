@@ -42,7 +42,7 @@ waitForAllNodesToFinish () {
 for j in $(seq 1 ${repetitions})
  do
     echo "Starting repetition ${j}"
-    for i in $(seq 1 ${numberOfNodes})
+    for i in $(seq 1 ${instancesPerNode})
     do
        startChandyMisraInstance ${instancesInTotal} "$outputFolder/${j}" ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} &
        pids[${i}]=$!

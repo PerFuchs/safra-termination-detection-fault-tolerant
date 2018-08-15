@@ -16,7 +16,7 @@ echo $0 $@ >> out.log
 
 CLASSPATH=lib/cell1D.jar \
 prun -np ${numberOfNodes} ${prunArguments} \
-/home/pfs250/ibisImplemenation/runForSingleNode.sh \
+./runForSingleNode.sh \
 ${instancesPerNode} ${instancesInTotal} ${repetitions} ${outputFolder} \
 ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} \
 ${numberOfNodes} >> out.log
