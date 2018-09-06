@@ -2,6 +2,7 @@ package ibis.ipl.apps.safraExperiment;
 
 import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungMessageFactory;
+import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungRunningState;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungStateMachine;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.SynchronizerMessageFactory;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
@@ -156,6 +157,7 @@ class IbisNode {
     Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
+    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);

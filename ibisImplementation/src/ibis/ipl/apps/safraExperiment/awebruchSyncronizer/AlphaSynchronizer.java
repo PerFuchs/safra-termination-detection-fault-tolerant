@@ -6,6 +6,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 public class AlphaSynchronizer implements CrashHandler {
+  private final static Logger logger = Logger.getLogger(AlphaSynchronizer.class);
 
   private int ackMessages;
   private int messagesSent;
@@ -41,6 +43,10 @@ public class AlphaSynchronizer implements CrashHandler {
       throw new IllegalStateException("Client tried to send message after declaring pulse finished");
     }
 
+    if (logger.isTraceEnabled()) {
+      logger.trace(String.format("%04d sending message %d", communicationLayer.getID(), messagesSent));
+    }
+
     messagesSent++;
     communicationLayer.sendMessage(destination, m, timer);
   }
@@ -56,7 +62,8 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  private void handleAckMessage(AckMessage m) {
+  private void handleAckMessage(AckMessage m) throws IOException {
+    logger.trace("Received ack message");
     ackMessages++;
     if (pulseFinished && ackMessages == messagesSent) {
       sendSafeMessageToAllNeighbours();
@@ -80,18 +87,20 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  private void sendSafeMessageToAllNeighbours() {
-
+  private void sendSafeMessageToAllNeighbours() throws IOException {
+    for (int i : safeMessageReceived.keySet()) {
+      communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
+    }
   }
 
-  public synchronized void finishPulse() {
+  public synchronized void finishPulse() throws IOException {
     pulseFinished = true;
     if (ackMessages == messagesSent) {
       sendSafeMessageToAllNeighbours();
     }
   }
 
-  public void awaitPulse() throws InterruptedException {
+  public void awaitPulse() throws InterruptedException, IOException {
     if (!pulseFinished) {
       finishPulse();
     }

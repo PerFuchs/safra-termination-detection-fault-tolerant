@@ -9,12 +9,14 @@ import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class AfekKuttenYungRunningState extends AfekKuttenYungState implements Runnable, AwebruchClient {
+  private final static Logger logger = Logger.getLogger(AfekKuttenYungRunningState.class);
+
   private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
   private AfekKuttenYungStateMachine afekKuttenYungMachine;
@@ -30,6 +32,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private boolean terminated;
   private Thread loopThread;
   private int me;
+  private boolean changed; // If the node's data changed during the step
+
 
   AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine) {
     me = communicationLayer.getID();
@@ -50,6 +54,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   public void startAlgorithm() throws IOException {
+    logger.debug(String.format("%04d Starting algorihtm", me));
     safra.setActive(true, "Start AKY");
     sendDataToAllNeighbours(new OurTimer());
     try {
@@ -57,6 +62,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
+    logger.trace(String.format("%04d finished first pulse", me));
     copyNeighbourStates();
 
     loopThread = new Thread(this);
@@ -85,7 +91,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     while (true) {
       step();
 
-      sendDataToAllNeighbours(timer);
+      logger.trace(String.format("%04d Updating neighbours", me));
+      if (changed) {
+        sendDataToAllNeighbours(timer);
+        changed = false;
+      }
       timer.stopAndCreateBasicTimeSpentEvent();
       setActive(false, "Step done");
       synchronizer.awaitPulse();
@@ -101,6 +111,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private synchronized void step() throws IOException {
+    logger.trace("Step");
+
     if (!(notRoot() && maxRoot()) && !iAmRoot()) {
       becomeRoot();
     } else if (!maxRoot()) {
@@ -130,7 +142,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             isRequested |= request(i);
             requestBy = i;
           }
-          if (getParentData().from != me && isRequested) {
+          if ((iAmRoot() || getParentData().from != me) && isRequested) {
             handleFor(requestBy);
           }
         }
@@ -140,16 +152,14 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         grant();
       }
     }
-
-
-    // Implement algorithm from the book operating on own state and neighbour state
   }
 
   private void handleFor(int requestBy) {
+    changed = true;
     AfekKuttenYungData otherData = neighbourData.get(requestBy);
     ownData.req = otherData.req;
     ownData.from = requestBy;
-    ownData.to = ownData.parent;
+    ownData.to = iAmRoot() ? me : ownData.parent;
     ownData.direction = AfekKuttenYungData.ASK;
   }
 
@@ -187,6 +197,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void resetRequest() {
+    changed = true;
     ownData.req = AfekKuttenYungData.EMPTY_NODE;
     ownData.from = AfekKuttenYungData.EMPTY_NODE;
     ownData.to = AfekKuttenYungData.EMPTY_NODE;
@@ -194,6 +205,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void grant() {
+    changed = true;
     ownData.direction = AfekKuttenYungData.GRANT;
   }
 
@@ -213,6 +225,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void join() {
+    changed = true;
     ownData.parent = ownData.to;
     ownData.root = neighbourData.get(ownData.to).root;
     ownData.distance = neighbourData.get(ownData.to).distance + 1;
@@ -220,6 +233,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void ask() {
+    changed = true;
     ownData.req = me;
     ownData.from = me;
     ownData.direction = AfekKuttenYungData.ASK;
@@ -261,6 +275,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void becomeRoot() {
+    changed = true;
     ownData.parent = AfekKuttenYungData.EMPTY_PARENT;
     ownData.root = me;
     ownData.distance = 0;
