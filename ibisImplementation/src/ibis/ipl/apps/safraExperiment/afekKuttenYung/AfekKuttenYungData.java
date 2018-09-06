@@ -2,6 +2,8 @@ package ibis.ipl.apps.safraExperiment.afekKuttenYung;
 
 import ibis.ipl.apps.safraExperiment.communication.Message;
 
+import java.util.Random;
+
 public class AfekKuttenYungData {
   public static final int EMPTY_DIRECTION = -1;
   public static final int ASK = 1;
@@ -20,20 +22,51 @@ public class AfekKuttenYungData {
   public int direction;
 
   public static AfekKuttenYungData getRandomData() {
-    return null;
+    Random r = new Random();
+
+    int parent = r.nextInt();
+    int root = r.nextInt();
+    int distance = r.nextInt();
+
+    int req = r.nextInt();
+    int from = r.nextInt();
+    int to = r.nextInt();
+    int direction = r.nextInt();
+
+    return new AfekKuttenYungData(parent, root, distance, req, from, to, direction);
   }
 
   public static AfekKuttenYungData getEmptyData() {
-    return null;
+    return new AfekKuttenYungData(EMPTY_NODE, EMPTY_NODE, -1, EMPTY_NODE, EMPTY_NODE, EMPTY_NODE, EMPTY_DIRECTION);
   }
+
+  public AfekKuttenYungData(int parent, int root, int distance, int req, int from, int to, int direction) {
+    this.parent = parent;
+    this.root = root;
+    this.distance = distance;
+    this.req = req;
+    this.from = from;
+    this.to = to;
+    this.direction = direction;
+  }
+
 
   AfekKuttenYungData(AfekKuttenYungData afekKuttenYungData) {
+    copyFrom(afekKuttenYungData);
+  }
+  
+  private void copyFrom(AfekKuttenYungData other) {
+    parent = other.parent;
+    root = other.root;
+    distance = other.distance;
 
+    req = other.req;
+    to = other.to;
+    from = other.from;
+    direction = other.direction;
   }
 
-  void update(Message message) {
-
+  public void update(AfekKuttenYungDataMessage m) {
+    copyFrom(m.data);
   }
-
-
 }

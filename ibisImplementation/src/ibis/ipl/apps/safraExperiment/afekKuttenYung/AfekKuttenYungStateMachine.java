@@ -22,8 +22,8 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
   }
 
   @Override
-  public synchronized void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly {
-    state.handleMessage(m);
+  public synchronized void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
+    state.handleMessage(source, m);
   }
 
   public void startAlgorithm() throws IOException {

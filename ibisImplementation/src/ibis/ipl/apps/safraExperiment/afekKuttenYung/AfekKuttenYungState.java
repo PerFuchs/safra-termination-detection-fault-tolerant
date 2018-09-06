@@ -7,7 +7,7 @@ import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import java.io.IOException;
 
 public abstract class AfekKuttenYungState {
-  public abstract void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly;
+  public abstract void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly;
 
   public abstract void startAlgorithm() throws IOException;
 

@@ -96,18 +96,18 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
         safraNode.handleAnnounce();
         break;
       case MESSAGECLASS:
-        Message m = Message.fromIPLMessage(readMessage);
+        Message m = MessageFactory.buildMessage(readMessage);
         readMessage.finish();
 
         synchronized (MessageUpcall.class) {
           if (!crashed) {
             if (m instanceof BasicMessage) {
               BasicMessage bm = (BasicMessage) m;
-              safraNode.handleReceiveBasicMessage(bm.getSource(), bm.getSequenceNumber());
+              safraNode.handleReceiveBasicMessage(origin, bm.getSequenceNumber());
             }
 
             try {
-              synchronizer.receiveMessage(m);
+              synchronizer.receiveMessage(origin, m);
             } catch (TerminationDetectedTooEarly terminationDetectedTooEarly) {
               experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
               terminationDetectedTooEarly.printStackTrace();

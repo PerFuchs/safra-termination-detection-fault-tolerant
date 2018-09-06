@@ -6,5 +6,5 @@ import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import java.io.IOException;
 
 public interface AwebruchClient {
-  public abstract void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly;
+  void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly;
 }

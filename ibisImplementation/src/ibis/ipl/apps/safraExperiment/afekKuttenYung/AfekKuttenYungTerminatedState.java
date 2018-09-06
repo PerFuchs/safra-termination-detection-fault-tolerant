@@ -19,7 +19,7 @@ public class AfekKuttenYungTerminatedState extends AfekKuttenYungState {
   }
 
   @Override
-  public void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly {
+  public void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
     throw new TerminationDetectedTooEarly("Received basic message after termination");
   }
 

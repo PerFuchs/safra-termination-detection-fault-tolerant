@@ -293,17 +293,17 @@ public class CommunicationLayer {
     this.crashSimulator = crashSimulator;
   }
 
-  public void sendMessage(Message message, OurTimer basicTimer) throws IOException {
+  public void sendMessage(int receiver, Message message, OurTimer basicTimer) throws IOException {
     if (message instanceof BasicMessage) {
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       if (!crashed) {
         basicTimer.pause();
-        safraNode.handleSendingBasicMessage(message.getReceiver());
+        safraNode.handleSendingBasicMessage(receiver);
         basicTimer.start();
       }
     }
     if (!crashed) {
-      WriteMessage m = sendPorts.get(message.getReceiver()).newMessage();
+      WriteMessage m = sendPorts.get(receiver).newMessage();
       m.writeInt(MessageTypes.MESSAGECLASS.ordinal());
       message.writeToIPLMessage(m);
       m.send();

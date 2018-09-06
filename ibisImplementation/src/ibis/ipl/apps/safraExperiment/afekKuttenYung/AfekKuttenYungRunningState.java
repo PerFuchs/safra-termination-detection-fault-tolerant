@@ -2,7 +2,6 @@ package ibis.ipl.apps.safraExperiment.afekKuttenYung;
 
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AwebruchClient;
-import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
@@ -301,20 +300,31 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     }
   }
 
-  private void sendDataToAllNeighbours(OurTimer timer) {
-
+  private void sendDataToAllNeighbours(OurTimer timer) throws IOException {
+    for (int n : newNeighbourData.keySet()) {
+      communicationLayer.sendMessage(n, new AfekKuttenYungDataMessage(safra.getSequenceNumber(), ownData), timer);
+    }
   }
 
   @Override
-  public synchronized void handleMessage(Message m) throws IOException, TerminationDetectedTooEarly {
+  public synchronized void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
     OurTimer timer = new OurTimer();
+    if (terminated) {
+      throw new TerminationDetectedTooEarly(String.format("%d received basic message", communicationLayer.getID()));
 
-    if (!safra.crashDetected(m.getSource())) {
+    }
+
+    if (!(m instanceof AfekKuttenYungDataMessage)) {
+      throw new IllegalStateException("Afek Kutten Yung received illegal message type");
+    }
+    AfekKuttenYungDataMessage message = (AfekKuttenYungDataMessage) m;
+
+    if (!safra.crashDetected(source)) {
       timer.pause();
       setActive(true, "Got state update");
       timer.start();
 
-      newNeighbourData.get(m.getSource()).update(m);
+      newNeighbourData.get(source).update(message);
       // No call to safra.setActive(false). Message handling is not done before the next call to step.
     }
     timer.stopAndCreateBasicTimeSpentEvent();
