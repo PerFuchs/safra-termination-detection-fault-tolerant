@@ -2,12 +2,14 @@ package ibis.ipl.apps.safraExperiment.experiment;
 
 import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.BasicAlgorithms;
+import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungStateMachine;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
-import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectChannelUsedException;
-import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectTreeException;
-import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectWeightException;
+import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungResult;
+import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungVerifier;
+import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.IncorrectRootException;
+import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.IncorrectDistanceException;
 import ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification.Verifier;
 import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
 import ibis.ipl.apps.safraExperiment.network.Channel;
@@ -46,16 +48,19 @@ public class OnlineExperiment extends Experiment {
   private final CommunicationLayer communicationLayer;
   private final Network network;
   private CrashSimulator crashSimulator;
+  
+  private final BasicAlgorithms basicAlgorithmChoice;
 
   private int nodeID;
 
-  public OnlineExperiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashSimulator crashSimulator, boolean isFaultTolerant) throws IOException {
+  public OnlineExperiment(Path outputFolder, CommunicationLayer communicationLayer, Network network, CrashSimulator crashSimulator, boolean isFaultTolerant, BasicAlgorithms basicAlgorithmChoice) throws IOException {
     super(outputFolder, outputFolder, communicationLayer.getIbisCount(), isFaultTolerant, TerminationDefinitions.EXTENDED);
     this.outputFolder = outputFolder;
     this.communicationLayer = communicationLayer;
     this.network = network;
     this.nodeID = communicationLayer.getID();
     this.crashSimulator = crashSimulator;
+    this.basicAlgorithmChoice = basicAlgorithmChoice;
     if (!outputFolder.toFile().exists()) {
       Files.createDirectories(outputFolder);
     }
@@ -89,14 +94,52 @@ public class OnlineExperiment extends Experiment {
   public boolean verify() throws IOException {
     boolean ret = super.verify();
     SafraStatistics safraStatistics = getSafraStatistics();
-    List<ChandyMisraResult> results = readChandyMisraResults();
 
-    ret &= verifyChandyMisraResult(results, safraStatistics.getCrashedNodes(), crashSimulator.getCrashingNodes());
+    if (basicAlgorithmChoice == BasicAlgorithms.CHANDY_MISRA) {
+      List<ChandyMisraResult> results = readChandyMisraResults();
+      ret &= verifyChandyMisraResult(results, safraStatistics.getCrashedNodes());
+    } else {
+      List<AfekKuttenYungResult> results = readAfekKuttenYungResults();
+      ret &= verifyAfekKuttenYungResult(results, safraStatistics.getCrashedNodes());
+    }
     return ret;
   }
 
-  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes, Set<Integer> nodesExpectedToCrash) throws IOException {
-    Set<ChandyMisraResult> validResults = new HashSet<>();
+
+
+  private boolean verifyAfekKuttenYungResult(List<AfekKuttenYungResult> results, Set<Integer> crashedNodes) throws IOException {
+    List<AfekKuttenYungResult> validResults = new LinkedList<>();
+    for (AfekKuttenYungResult r : results) {
+      if (!crashedNodes.contains(r.node)) {
+        validResults.add(r);
+      }
+    }
+
+    try {
+      AfekKuttenYungVerifier.check(validResults, network.getAliveNetwork(crashedNodes));
+      logger.info("Afek Kutten Yung result is correct.");
+      return true;
+    } catch (IncorrectChannelUsedException e) {
+      logger.error("Afek Kutten Yung uses non-existent channels");
+      writeToErrorFile("Afek Kutten Yung uses non-existent channels");
+      return false;
+    } catch (IncorrectTreeException e) {
+      logger.error("Afek Kutten Yung calculated an incorrect tree");
+      writeToErrorFile("Afek Kutten Yung calculated an incorrect tree");
+      return false;
+    } catch (IncorrectDistanceException e) {
+      logger.error("Afek Kutten Yung calculated incorrect weights");
+      writeToErrorFile("Afek Kutten Yung calculated incorrect weights");
+      return false;
+    } catch (IncorrectRootException e) {
+      logger.error("Afek Kutten Yung calculated incorrect root");
+      writeToErrorFile("Afek Kutten Yung calculated incorrect root");
+      return false;
+    }
+  }
+
+  private boolean verifyChandyMisraResult(List<ChandyMisraResult> results, Set<Integer> crashedNodes) throws IOException {
+    List<ChandyMisraResult> validResults = new LinkedList<>();
     for (ChandyMisraResult r : results) {
       if (!crashedNodes.contains(r.node)) {
         validResults.add(r);
@@ -115,7 +158,7 @@ public class OnlineExperiment extends Experiment {
       logger.error("Chandy Misra calculated an incorrect tree");
       writeToErrorFile("Chandy Misra calculated an incorrect tree");
       return false;
-    } catch (IncorrectWeightException e) {
+    } catch (IncorrectDistanceException e) {
       logger.error("Chandy Misra calculated incorrect weights");
       writeToErrorFile("Chandy Misra calculated incorrect weights");
       return false;
@@ -126,20 +169,33 @@ public class OnlineExperiment extends Experiment {
     if (basicAlgorithm instanceof ChandyMisraNode) {
       writeChandyMisraResults((ChandyMisraNode) basicAlgorithm);
     } else {
-      // TODO
+      writeAfekKuttenYungResult((AfekKuttenYungStateMachine) basicAlgorithm);
     }
   }
 
   private void writeChandyMisraResults(ChandyMisraNode chandyMisraNode) throws IOException {
     String str = String.format("%d %d %d %d\n", nodeID, chandyMisraNode.getParent(), chandyMisraNode.getDist(), chandyMisraNode.getParentEdgeWeight());
 
-    Path path = filePathForChandyMisraResults(nodeID);
+    Path path = filePathForChandyMisraResult(nodeID);
     byte[] strToBytes = str.getBytes();
 
     Files.write(path, strToBytes);
 
     logger.trace(String.format("%04d output written", nodeID));
   }
+
+
+  private void writeAfekKuttenYungResult(AfekKuttenYungStateMachine afekKuttenYungStateMachine) throws IOException {
+    String str = String.format("%d %d %d %d\n", nodeID, afekKuttenYungStateMachine.getParent(), afekKuttenYungStateMachine.getDistance(), afekKuttenYungStateMachine.getRoot());
+
+    Path path = filePathForAfekKuttenYungResult(nodeID);
+    byte[] strToBytes = str.getBytes();
+
+    Files.write(path, strToBytes);
+
+    logger.trace(String.format("%04d output written", nodeID));
+  }
+
 
   /**
    * Needs to be called before readEvents because otherwise file writes from other DAS4 nodes won't be readable - the

@@ -74,7 +74,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       }
     } finally {
       if (terminated) {
-        afekKuttenYungMachine.setState(new AfekKuttenYungTerminatedState());
+        afekKuttenYungMachine.setState(new AfekKuttenYungTerminatedState(ownData.parent, ownData.distance, ownData.root));
       }
     }
   }
@@ -159,6 +159,21 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       experimentLogger.info(Event.getParentCrashEvent());
     }
     timer.stopAndCreateBasicTimeSpentEvent();
+  }
+
+  @Override
+  public int getParent() {
+    return ownData.parent;
+  }
+
+  @Override
+  public int getRoot() {
+    return ownData.root;
+  }
+
+  @Override
+  public int getDistance() {
+    return ownData.distance;
   }
 
   public AlphaSynchronizer getSynchronizer() {

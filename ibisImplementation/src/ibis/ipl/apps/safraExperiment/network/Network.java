@@ -1,6 +1,7 @@
 package ibis.ipl.apps.safraExperiment.network;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungResult;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import org.apache.log4j.Logger;
 
@@ -16,26 +17,31 @@ public class Network {
   private final int nodeCount;
   private List<Channel> channels;
 
-  private Network(List<Channel> channels, int nodeCount) {
-    this.nodeCount = nodeCount;
-    this.channels = channels;
-  }
-
-  /**
-   * Builds a network from Chandy Misra results.
-   *
-   * @param results
-   * @param channelWeights Channels to use the weighs from when building the network
-   */
-  public Network(Set<ChandyMisraResult> results) {
-    this.nodeCount = results.size();
-    channels = new LinkedList<>();
+  public static Network fromChandyMisraResults(List<ChandyMisraResult> results) {
+    List<Channel> channels = new LinkedList<>();
     for (ChandyMisraResult r : results) {
       if (r.parent != -1) {
         channels.add(new Channel(r.parent, r.node, r.parentEdgeWeight));
         channels.add(new Channel(r.node, r.parent, r.parentEdgeWeight));
       }
     }
+    return new Network(channels, results.size());
+  }
+
+  public static Network fromAfekKuttenYungResults(List<AfekKuttenYungResult> results) {
+    List<Channel> channels = new LinkedList<>();
+    for (AfekKuttenYungResult r : results) {
+      if (r.parent != -1) {
+        channels.add(new Channel(r.parent, r.node, 1));
+        channels.add(new Channel(r.node, r.parent, 1));
+      }
+    }
+    return new Network(channels, results.size());
+  }
+
+  private Network(List<Channel> channels, int nodeCount) {
+    this.nodeCount = nodeCount;
+    this.channels = channels;
   }
 
   private static Set<Integer> getAliveNodes(int nodeCount, Set<Integer> crashedNodes) {
@@ -55,13 +61,6 @@ public class Network {
       }
     }
     return aliveChannels;
-  }
-
-  public Tree getMinimumSpanningTree(Set<Integer> crashedNodes) {
-    Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
-    Set<Integer> aliveNodes = getAliveNodes(nodeCount, crashedNodeNumbers);
-    List<Channel> aliveChannels = getAliveChannels(channels, crashedNodeNumbers);
-    return Tree.getMinimumSpanningTree(aliveChannels, 0, aliveNodes);
   }
 
   public Tree getSinkTree(Set<Integer> crashedNodes) {
@@ -235,7 +234,7 @@ public class Network {
     return this.channels.containsAll(other.channels);
   }
 
-  private Set<Integer> getVertices() {
+  public Set<Integer> getVertices() {
     Set<Integer> ret = new HashSet<>();
     for (Channel c : channels) {
       ret.add(c.src);
@@ -248,6 +247,10 @@ public class Network {
 
   public Network getAliveNetwork(Set<Integer> crashedNodes) {
     return new Network(getAliveChannels(this.channels, crashedNodes), nodeCount - crashedNodes.size());
+  }
+
+  public Tree getBFSTree(int root) {
+    return Tree.getBFSTree(this, root);
   }
 }
 

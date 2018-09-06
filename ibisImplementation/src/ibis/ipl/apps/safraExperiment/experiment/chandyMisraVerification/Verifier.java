@@ -1,13 +1,13 @@
 package ibis.ipl.apps.safraExperiment.experiment.chandyMisraVerification;
 
+import ibis.ipl.apps.safraExperiment.experiment.IncorrectChannelUsedException;
+import ibis.ipl.apps.safraExperiment.experiment.IncorrectTreeException;
 import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
-import ibis.ipl.apps.safraExperiment.network.Channel;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.network.Tree;
 import org.apache.log4j.Logger;
 
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.List;
 
 public class Verifier {
   private static final Logger logger = Logger.getLogger(Verifier.class);
@@ -16,15 +16,15 @@ public class Verifier {
 
   }
 
-  public static void check(Set<ChandyMisraResult> results, Network usedNetworkTopology, int root) throws IncorrectChannelUsedException, IncorrectTreeException, IncorrectWeightException {
-    Network constructedNetwork = new Network(results);
+  public static void check(List<ChandyMisraResult> results, Network usedNetworkTopology, int root) throws IncorrectChannelUsedException, IncorrectTreeException, IncorrectDistanceException {
+    Network constructedNetwork = Network.fromChandyMisraResults(results);
 
     if (!usedNetworkTopology.isSuperNetworkOf(constructedNetwork)) {
       throw new IncorrectChannelUsedException();
     }
 
     checkTree(constructedNetwork, usedNetworkTopology, root);
-    checkWeightCalculation(results, usedNetworkTopology, root);
+    checkDistanceCalculation(results, usedNetworkTopology, root);
   }
 
   private static void checkTree(Network constructedNetwork, Network expectedNetwork, int root) throws IncorrectTreeException {
@@ -39,11 +39,11 @@ public class Verifier {
     }
   }
 
-  private static void checkWeightCalculation(Set<ChandyMisraResult> results, Network expectedNetwork, int root) throws IncorrectWeightException {
+  private static void checkDistanceCalculation(List<ChandyMisraResult> results, Network expectedNetwork, int root) throws IncorrectDistanceException {
     Tree expectedSinkTree = expectedNetwork.getSinkTree(root);
     for (ChandyMisraResult r : results) {
       if (r.dist != expectedSinkTree.getDistance(r.node)) {
-        throw new IncorrectWeightException();
+        throw new IncorrectDistanceException();
       }
     }
   }

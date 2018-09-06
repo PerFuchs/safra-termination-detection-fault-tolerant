@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.experiment;
 
+import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungResult;
 import ibis.ipl.apps.safraExperiment.network.ChandyMisraResult;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -56,8 +57,12 @@ public abstract class Experiment {
     return ret;
   }
 
-  Path filePathForChandyMisraResults(int node) {
+  Path filePathForChandyMisraResult(int node) {
     return Paths.get(analysisFolder.toString(), String.format("%04d.chandyMisra", node));
+  }
+
+  Path filePathForAfekKuttenYungResult(int node) {
+    return analysisFolder.resolve(String.format("%04d.afekKuttenYung", node));
   }
 
   List<ChandyMisraResult> readChandyMisraResults() throws IOException {
@@ -66,10 +71,24 @@ public abstract class Experiment {
     for (int i = 0; i < nodeCount; i++) {
       logger.trace(String.format("Reading result %04d", i));
 
-      Path path = filePathForChandyMisraResults(i);
+      Path path = filePathForChandyMisraResult(i);
 
       String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
       results.add(new ChandyMisraResult(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2]), Integer.valueOf(r[3])));
+    }
+    return results;
+  }
+
+  List<AfekKuttenYungResult> readAfekKuttenYungResults() throws IOException {
+    List<AfekKuttenYungResult> results = new LinkedList<>();
+
+    for (int i = 0; i < nodeCount; i++) {
+      logger.trace(String.format("Reading result %04d", i));
+
+      Path path = filePathForAfekKuttenYungResult(i);
+
+      String[] r = Files.readAllLines(path, StandardCharsets.UTF_8).get(0).split(" ");
+      results.add(new AfekKuttenYungResult(Integer.valueOf(r[0]), Integer.valueOf(r[1]), Integer.valueOf(r[2]), Integer.valueOf(r[3])));
     }
     return results;
   }

@@ -14,4 +14,8 @@ public abstract class AfekKuttenYungState {
   public abstract void terminate() throws TerminationDetectedTooEarly;
 
   public abstract void handleCrash(int crashedNode) throws CrashDetectionAfterTerminationException, IOException;
+
+  public abstract int getParent();
+  public abstract int getRoot();
+  public abstract int getDistance();
 }

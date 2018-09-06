@@ -74,7 +74,7 @@ class IbisNode {
 
       setupNetwork();
 
-      experiment = new OnlineExperiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant);
+      experiment = new OnlineExperiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant, basicAlgorithmChoice);
 
       setupSafra();
 

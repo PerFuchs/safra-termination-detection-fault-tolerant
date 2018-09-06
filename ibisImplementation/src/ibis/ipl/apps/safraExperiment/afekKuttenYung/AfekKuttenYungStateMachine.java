@@ -50,4 +50,16 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
     }
     return ((AfekKuttenYungRunningState) state).getSynchronizer();
   }
+
+  public int getParent() {
+    return state.getParent();
+  }
+
+  public int getDistance() {
+    return state.getDistance();
+  }
+
+  public int getRoot() {
+    return state.getRoot();
+  }
 }

@@ -9,43 +9,42 @@ public class Tree {
   private final static Logger logger = Logger.getLogger(Tree.class);
 
   private int root;
-  private Set<Channel> channels;
-  private final Set<Integer> vertices;
-  private final Map<Integer, Integer> distances = new HashMap<>();
+  private Map<Integer, Integer> nodesToParent;
+  private Map<Integer, Integer> distancesToParent;
 
+  public static Tree getBFSTree(Network network, int root) {
+    LinkedList<Channel> work = new LinkedList<>();
 
-  /**
-   * Prims algorithm is used to build the expected spanning tree from given channels and vertices.
-   * <p>
-   * Channels that have a src or dest outside of vertices are ignored. That is useful to simulated crashed channels.
-   *
-   * @param channels The channels/edges defining the graph to construct the spanning tree for. Can include "illegal"
-   *                 channels which have src or dest set to a value not contained in vertices. These are ignored.
-   * @param root     The root of the spanning tree to build.
-   * @param vertices The vertices of the graph; includes root
-   */
-  public static Tree getMinimumSpanningTree(List<Channel> channels, int root, Set<Integer> vertices) {
-    Set<Channel> treeChannels = new TreeSet<>();
-    Set<Integer> visited = new HashSet<>();
-    visited.add(root);
-
-    List<Channel> sortedChannels = new ArrayList<>(channels);
-    Collections.sort(sortedChannels);
-
-    while (!vertices.equals(visited)) {
-      Channel lowestOutgoing = null;
-
-      for (int i = 0; i < sortedChannels.size(); i++) {
-        lowestOutgoing = sortedChannels.get(i);
-        if (visited.contains(lowestOutgoing.src) && !visited.contains(lowestOutgoing.dest)) {
-          break;
-        }
-      }
-
-      treeChannels.add(lowestOutgoing);
-      visited.add(lowestOutgoing.dest);
+    Set<Channel> allChannels = new HashSet<>(network.getChannels());
+    for (Channel c : channelsFrom(allChannels, root)) {
+      work.offerFirst(c);
     }
-    return new Tree(root, treeChannels, vertices);
+    allChannels.removeAll(work);
+
+    Map<Integer, Integer> parents = new HashMap<>();
+    Map<Integer, Integer> distancesToParent = new HashMap<>();
+    while (!work.isEmpty()) {
+      Channel current = work.pollLast();
+      parents.put(current.dest, current.src);
+      distancesToParent.put(current.dest, current.getWeight());
+
+      for (Channel c : channelsFrom(allChannels, current.dest)) {
+        work.offerFirst(c);
+      }
+      allChannels.removeAll(work);
+    }
+
+    return new Tree(root, parents, distancesToParent);
+  }
+
+  private static Set<Channel> channelsFrom(Set<Channel> channels, int node) {
+    Set<Channel> ret = new HashSet<>();
+    for (Channel c : channels) {
+      if (c.src == node) {
+        ret.add(c);
+      }
+    }
+    return ret;
   }
 
   /**
@@ -120,6 +119,7 @@ public class Tree {
       distances.put(v, distance);
     }
     Map<Integer, Integer> parents = new HashMap<>();
+    Map<Integer, Integer> distancesToParent = new HashMap<>();
 
     while (!unvisitedVertices.isEmpty()) {
       NodeDistancePair v = unvisitedVertices.poll();
@@ -131,6 +131,7 @@ public class Tree {
           unvisitedVertices.remove(new NodeDistancePair(-1, c.dest));  // Equality of PriorityQueue entries is defined by the node only.
           unvisitedVertices.offer(new NodeDistancePair(alternativeDistance, c.dest));  // Reenter the node with its new distance
           parents.put(c.dest, v.node);
+          distancesToParent.put(c.dest, c.getWeight());
         }
       }
     }
@@ -144,32 +145,26 @@ public class Tree {
       logger.debug("Some vertices cannot be reached via this sink tree");
     }
 
-    Set<Channel> treeChannels = new TreeSet<>();
-
-    // Select the channels based on parent relationship calculated by Dijkstra.
-    for (int v : vertices) {
-      if (v == root) {
-        continue;
-      }
-      if (parents.containsKey(v)) {
-        int parent = parents.get(v);
-        treeChannels.add(channels.get(channels.indexOf(new Channel(parent, v, -1))));
-      }
-    }
-
-    return new Tree(root, treeChannels, vertices);
+    return new Tree(root, parents, distancesToParent);
   }
 
-  private Tree(int root, Set<Channel> channels, Set<Integer> vertices) {
+  private Tree(int root, Map<Integer, Integer> parents, Map<Integer, Integer> distancesToParent) {
     this.root = root;
-    this.channels = channels;
-    this.vertices = vertices;
+    this.nodesToParent = parents;
+    this.distancesToParent = distancesToParent;
+  }
+
+  public boolean hasEqualVerticesWith(Tree other) {
+    return nodesToParent.keySet().equals(other.nodesToParent.keySet()) && root == other.root;
   }
 
   public Map<Integer, Set<Integer>> getLevels() {
     Map<Integer, Set<Integer>> levels = new HashMap<>();
-    for (int v : vertices) {
-      int level = getLevel(root, v, 0);
+    levels.put(0, new HashSet<Integer>());
+    levels.get(0).add(root);
+
+    for (int v : nodesToParent.keySet()) {
+      int level = getLevel(v);
       if (!levels.containsKey(level)) {
         levels.put(level, new HashSet<Integer>());
       }
@@ -178,66 +173,47 @@ public class Tree {
     return levels;
   }
 
-  private int getLevel(int currentNode, int node, int level) {
-    if (currentNode == node) {
-      return level;
+  private int getLevel(int node) {
+    if (node == root) {
+      return 0;
     }
+    int distance = 1;
+    int parent = nodesToParent.get(node);
+    while (parent != root) {
+      distance += 1;
+      parent = nodesToParent.get(parent);
+    }
+    return distance;
+  }
 
-    List<Channel> outChannels = channelsFrom(currentNode);
-    for (Channel c : outChannels) {
-      int l = getLevel(c.dest, node, level + 1);
-      if (l != -1) {
-        return l;
-      }
-    }
-    return -1;
+  public boolean hasEqualLevels(Tree other) {
+    return getLevels().equals(other.getLevels());
   }
 
   public int getDistance(int node) {
-    return getDistance(root, node, 0);
-  }
-
-  private int getDistance(int currentNode, int node, int distance) {
-    if (distances.containsKey(node)) {
-      return distances.get(node);
-    } else {
-      distances.put(currentNode, distance);
+    if (node == root) {
+      return 0;
     }
-
-    if (currentNode == node) {
-      return distance;
+    int distance = distancesToParent.get(node);
+    int parent = nodesToParent.get(node);
+    while (parent != root) {
+      distance += distancesToParent.get(parent);
+      parent = nodesToParent.get(parent);
     }
-
-    List<Channel> outChannels = channelsFrom(currentNode);
-    for (Channel c : outChannels) {
-      int d = getDistance(c.dest, node, distance + c.getWeight());
-      if (d != -1) {
-        return d;
-      }
-    }
-    return -1;
-  }
-
-  private List<Channel> channelsFrom(int src) {
-    List<Channel> ret = new LinkedList<>();
-    for (Channel c : channels) {
-      if (c.src == src) {
-        ret.add(c);
-      }
-    }
-    return ret;
+    return distance;
   }
 
   @Override
   public String toString() {
     StringBuilder b = new StringBuilder();
-    Stack<Channel> work = new Stack<>();
+    Stack<Integer> work = new Stack<>();
 
-    work.addAll(channelsFrom(root));
+    work.addAll(getChildren(root));
     while (!work.empty()) {
-      Channel c = work.pop();
-      b.append(String.format("Node: %d Parent: %d\n", c.dest, c.src));
-      work.addAll(channelsFrom(c.dest));
+      Integer node = work.pop();
+
+      b.append(String.format("Node: %d Parent: %d\n", node, nodesToParent.get(node)));
+      work.addAll(getChildren(node));
     }
     return b.toString();
   }
@@ -250,10 +226,18 @@ public class Tree {
       return false;
     }
     final Tree that = (Tree) other;
-    return root == that.root && channels.equals(that.channels);
+    return root == that.root && nodesToParent.equals(that.nodesToParent) && distancesToParent.equals(that.distancesToParent);
   }
 
-  public Set<Channel> getChannels() {
-    return channels;
+  private Set<Integer> getChildren(int node) {
+    Set<Integer> children = new HashSet<>();
+
+    for (int potentialChild : nodesToParent.keySet()) {
+      if (nodesToParent.get(potentialChild) == node) {
+        children.add(potentialChild);
+      }
+    }
+    return children;
   }
+
 }
