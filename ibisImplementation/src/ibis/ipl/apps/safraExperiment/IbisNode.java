@@ -124,7 +124,7 @@ class IbisNode {
 
   private static void validateArgs(String[] args) {
     if (args.length < 4) {
-      System.err.println("Too less arguments. Use: <outputFolder> <faultPercentage> <fs|ft> <chandyMisra|afekKY");
+      System.err.println("Too less arguments. Use: <outputFolder> <faultPercentage> <fs|ft> <cm|aky");
       System.exit(1);
     }
     try {
@@ -137,8 +137,8 @@ class IbisNode {
       System.err.println("Use either 'fs' or 'ft' as third argument");
       System.exit(1);
     }
-    if (!(args[3].equals("cm") || args[3].equals("afekKY"))) {
-      System.err.println("Use either 'cm' or 'afekKY' as fourth argument");
+    if (!(args[3].equals("cm") || args[3].equals("aky"))) {
+      System.err.println("Use either 'cm' or 'aky' as fourth argument");
       System.exit(1);
     }
   }

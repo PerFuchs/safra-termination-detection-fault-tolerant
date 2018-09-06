@@ -36,13 +36,13 @@ public class AlphaSynchronizer implements CrashHandler {
     prepareNextPulse();
   }
 
-  public void sendMessage(Message m) throws IOException {
+  public void sendMessage(int destination, Message m, OurTimer timer) throws IOException {
     if (pulseFinished) {
       throw new IllegalStateException("Client tried to send message after declaring pulse finished");
     }
 
     messagesSent++;
-    communicationLayer.sendMessage(m, new OurTimer());
+    communicationLayer.sendMessage(destination, m, timer);
   }
 
   public synchronized void receiveMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
@@ -51,7 +51,7 @@ public class AlphaSynchronizer implements CrashHandler {
     } else if (m instanceof SafeMessage) {
       handleSafeMessage(source, (SafeMessage) m);
     } else {
-      communicationLayer.sendMessage(new AckMessage(), new OurTimer());
+      communicationLayer.sendMessage(source, new AckMessage(), new OurTimer());
       client.handleMessage(source, m);
     }
   }

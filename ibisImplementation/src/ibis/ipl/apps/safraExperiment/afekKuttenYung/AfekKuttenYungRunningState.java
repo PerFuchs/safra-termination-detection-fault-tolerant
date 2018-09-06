@@ -302,7 +302,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private void sendDataToAllNeighbours(OurTimer timer) throws IOException {
     for (int n : newNeighbourData.keySet()) {
-      communicationLayer.sendMessage(n, new AfekKuttenYungDataMessage(safra.getSequenceNumber(), ownData), timer);
+      synchronizer.sendMessage(n, new AfekKuttenYungDataMessage(safra.getSequenceNumber(), ownData), timer);
     }
   }
 
