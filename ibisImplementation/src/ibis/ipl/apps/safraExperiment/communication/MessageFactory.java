@@ -22,7 +22,7 @@ public abstract class MessageFactory {
     throw new IllegalStateException(String.format("Could not construct message for type %d. Did you forget to register a factory?", messageType));
   }
 
-  static void registerFactory(MessageFactory factory) {
+  public static void registerFactory(MessageFactory factory) {
     factoryImplementations.add(factory);
   }
 

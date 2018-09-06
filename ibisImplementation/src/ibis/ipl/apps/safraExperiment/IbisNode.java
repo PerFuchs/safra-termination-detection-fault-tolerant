@@ -1,9 +1,12 @@
 package ibis.ipl.apps.safraExperiment;
 
 import ibis.ipl.*;
+import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungMessageFactory;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungStateMachine;
+import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.SynchronizerMessageFactory;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.communication.MessageFactory;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
@@ -64,7 +67,7 @@ class IbisNode {
       synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
       logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
 
-      communicationLayer = new CommunicationLayer(ibis, registry, porttype);
+      setupCommunicationLayer(porttype);
 
       barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
@@ -151,7 +154,7 @@ class IbisNode {
 
 //      Logger.getLogger("ibis").setLevel(Level.INFO);
     Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
-    Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
+    Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
@@ -178,6 +181,15 @@ class IbisNode {
     logger.trace(String.format("%s Pool closed", ibis.identifier().toString()));
   }
 
+  private static void setupCommunicationLayer(PortType porttype) {
+    communicationLayer = new CommunicationLayer(ibis, registry, porttype);
+
+    if (basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG) {
+      MessageFactory.registerFactory(new AfekKuttenYungMessageFactory());
+      MessageFactory.registerFactory(new SynchronizerMessageFactory());
+    }
+  }
+
   private static void setupCrashSimulator() {
     Set<CrashPoint> enabledCrashPoints = new HashSet<>();
     enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_TOKEN);
@@ -196,8 +208,12 @@ class IbisNode {
   }
 
   private static void setupNetwork() {
-    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
+    network = Network.getLineNetwork(communicationLayer);
+//    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
+
+    communicationLayer.setNetwork(network);
+
     logger.trace("Constructed network");
   }
 

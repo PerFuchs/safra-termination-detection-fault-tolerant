@@ -87,7 +87,7 @@ public class CommunicationLayer {
     for (int i : neighbours) {
       String name = getReceivePortName(i);
 
-      MessageUpcall mu = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+      MessageUpcall mu = new MessageUpcall(this, chandyMisraNode, synchronizer, safraNode, crashDetector, barrierFactory);
       messageUpcalls.put(i, mu);
 
       ReceivePort p = setupReceivePort(name, mu);
@@ -119,7 +119,7 @@ public class CommunicationLayer {
   }
 
   private void setupCrashReceivePort(ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) throws IOException {
-    MessageUpcall upcall = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+    MessageUpcall upcall = new MessageUpcall(this, chandyMisraNode, synchronizer, safraNode, crashDetector, barrierFactory);
     messageUpcalls.put(-2, upcall);
 
     ReceivePort crashReceivePort = setupReceivePort(getCrashPortName(), upcall);
@@ -127,7 +127,7 @@ public class CommunicationLayer {
   }
 
   private void setupGeneralReceivePort(ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) throws IOException {
-    MessageUpcall generalUpcall = new MessageUpcall(this, chandyMisraNode, safraNode, crashDetector, barrierFactory);
+    MessageUpcall generalUpcall = new MessageUpcall(this, chandyMisraNode, synchronizer, safraNode, crashDetector, barrierFactory);
     messageUpcalls.put(-1, generalUpcall);
 
     ReceivePort generalReceivePort = setupReceivePort(getGeneralReceivePortName(), generalUpcall);
@@ -316,5 +316,9 @@ public class CommunicationLayer {
 
   public List<Integer> getNeighbours() {
     return network.getNeighbours(this.getID());
+  }
+
+  public void setNetwork(Network network) {
+    this.network = network;
   }
 }

@@ -3,6 +3,8 @@ package ibis.ipl.apps.safraExperiment.afekKuttenYung;
 import ibis.ipl.ReadMessage;
 import ibis.ipl.WriteMessage;
 import ibis.ipl.apps.safraExperiment.communication.BasicMessage;
+import ibis.ipl.apps.safraExperiment.communication.MessageClassTypes;
+import ibis.ipl.apps.safraExperiment.communication.MessageTypes;
 
 import java.io.IOException;
 
@@ -22,7 +24,7 @@ public class AfekKuttenYungDataMessage extends BasicMessage {
 
   @Override
   public void writeToIPLMessage(WriteMessage writeMessage) throws IOException {
-    writeMessage.writeInt(AfekKuttenYungMessageFactory.DATA_MESSAGE_TYPE);
+    writeMessage.writeInt(MessageClassTypes.AKY_MESSAGE.ordinal());
 
     writeMessage.writeLong(sequenceNumber);
 

@@ -27,9 +27,10 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
   private boolean crashed = false;
   private AlphaSynchronizer synchronizer;
 
-  public MessageUpcall(CommunicationLayer communicationLayer, ChandyMisraNode chandyMisraNode, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) {
+  public MessageUpcall(CommunicationLayer communicationLayer, ChandyMisraNode chandyMisraNode, AlphaSynchronizer synchronizer, Safra safraNode, CrashDetector crashDetector, BarrierFactory barrierFactory) {
     this.communicationLayer = communicationLayer;
     this.chandyMisraNode = chandyMisraNode;
+    this.synchronizer = synchronizer;
     this.safraNode = safraNode;
     this.crashDetector = crashDetector;
     this.barrierFactory = barrierFactory;
@@ -114,9 +115,9 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
             }
           }
         }
-
+        break;
       default:
-        throw new IOException("Got message of unknown type.");
+        throw new IOException(String.format("Got message of unknown type: %d", messageType.ordinal()));
 
     }
   }
