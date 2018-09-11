@@ -120,8 +120,6 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private synchronized void step() throws IOException {
-    logger.trace("Step");
-
     if (!(notRoot() && maxRoot()) && !iAmRoot()) {
       becomeRoot();
     } else if (!maxRoot()) {
@@ -148,8 +146,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
           boolean isRequested = false;
           int requestBy = AfekKuttenYungData.EMPTY_NODE;
           for (int i : neighbourData.keySet()) {
-            isRequested |= request(i);
-            requestBy = i;
+            if (request(i)) {
+              isRequested = true;
+              requestBy = i;
+              break;
+            }
           }
           if ((iAmRoot() || getParentData().from != me) && isRequested) {
             handleFor(requestBy);
@@ -187,7 +188,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private boolean request(int i) {
     AfekKuttenYungData data = neighbourData.get(i);
-    return (isRoot(i) && data.req == data.from && data.from == i) || (data.parent == me && data.req != i && data.req != AfekKuttenYungData.EMPTY_NODE);
+    return ((isRoot(i) && data.req == data.from && data.from == i) || (data.parent == me && data.req != i && data.req != AfekKuttenYungData.EMPTY_NODE)) && data.to == me;
   }
 
   private boolean isRoot(int i) {
