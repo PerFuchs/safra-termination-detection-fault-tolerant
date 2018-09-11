@@ -14,6 +14,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
+import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungVerifier;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.network.Tree;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -158,6 +159,7 @@ class IbisNode {
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.TRACE);
+    Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFS.class).setLevel(Level.TRACE);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
@@ -166,7 +168,7 @@ class IbisNode {
     Logger.getLogger(Network.class).setLevel(Level.DEBUG);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
     Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
-    Logger.getLogger(Tree.class).setLevel(Level.INFO);
+    Logger.getLogger(Tree.class).setLevel(Level.TRACE);
   }
 
   private static void setupIBISAndWaitForPoolClosed(PortType porttype) throws IbisCreationFailedException {
@@ -291,9 +293,9 @@ class IbisNode {
       logger.debug("Starting verfication and output processing.");
       experiment.writeNetwork();
       // Takes a long time for big networks skip it for them
-      if (communicationLayer.getIbisCount() <= 500) {
-        experiment.printNetworkStatistics(network);
-      }
+//      if (communicationLayer.getIbisCount() <= 500) {
+//        experiment.printNetworkStatistics(network);
+//      }
       experiment.verify();
 
       experiment.writeSafraStatitistics();

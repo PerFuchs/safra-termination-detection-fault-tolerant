@@ -14,24 +14,38 @@ public class Tree {
 
   public static Tree getBFSTree(Network network, int root) {
     LinkedList<Channel> work = new LinkedList<>();
+    Set<Integer> visited = new HashSet<>();
 
     Set<Channel> allChannels = new HashSet<>(network.getChannels());
     for (Channel c : channelsFrom(allChannels, root)) {
       work.offerFirst(c);
     }
     allChannels.removeAll(work);
+    visited.add(root);
 
     Map<Integer, Integer> parents = new HashMap<>();
     Map<Integer, Integer> distancesToParent = new HashMap<>();
     while (!work.isEmpty()) {
       Channel current = work.pollLast();
-      parents.put(current.dest, current.src);
-      distancesToParent.put(current.dest, current.getWeight());
+      if (!visited.contains(current.dest)) {
+        logger.debug(String.format("Current: %04d", current.dest));
 
-      for (Channel c : channelsFrom(allChannels, current.dest)) {
-        work.offerFirst(c);
+        parents.put(current.dest, current.src);
+        distancesToParent.put(current.dest, current.getWeight());
+
+        for (Channel c : channelsFrom(allChannels, current.dest)) {
+          if (!visited.contains(c.dest)) {
+            work.offerFirst(c);
+          }
+        }
+        allChannels.removeAll(work);
+        visited.add(current.dest);
       }
-      allChannels.removeAll(work);
+  }
+
+    logger.debug(String.format("Root %04d", root));
+    for (int n : parents.keySet()) {
+      logger.debug(String.format("%04d --> %04d", n, parents.get(n)));
     }
 
     return new Tree(root, parents, distancesToParent);
@@ -173,7 +187,7 @@ public class Tree {
     return levels;
   }
 
-  private int getLevel(int node) {
+  public int getLevel(int node) {
     if (node == root) {
       return 0;
     }

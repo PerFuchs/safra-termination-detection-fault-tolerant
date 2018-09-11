@@ -18,11 +18,13 @@ public class AfekKuttenYungVerifier {
   }
 
   public static void check(List<AfekKuttenYungResult> results, Network usedNetworkTopology) throws IncorrectChannelUsedException, IncorrectTreeException, IncorrectRootException, IncorrectDistanceException {
+    logger.trace("Starting verification");
     Network constructedNetwork = Network.fromAfekKuttenYungResults(results);
 
     if (!usedNetworkTopology.isSuperNetworkOf(constructedNetwork)) {
       throw new IncorrectChannelUsedException();
     }
+    logger.trace("Correct channels used");
 
     int expectedRoot = getExpectedRoot(usedNetworkTopology);
     for (AfekKuttenYungResult r : results) {
@@ -30,10 +32,13 @@ public class AfekKuttenYungVerifier {
         throw new IncorrectRootException();
       }
     }
+    logger.trace("Correct root computed");
 
     checkTree(constructedNetwork, usedNetworkTopology, expectedRoot);
+    logger.trace("Correct tree computed");
 
     checkDistanceCalculation(results, usedNetworkTopology, expectedRoot);
+    logger.trace("Correct distance calculated");
   }
 
   private static int getExpectedRoot(Network expectedNetwork) {
@@ -42,21 +47,25 @@ public class AfekKuttenYungVerifier {
 
   private static void checkTree(Network constructedNetwork, Network expectedNetwork, int root) throws IncorrectTreeException {
    Tree expectedBFSTree = expectedNetwork.getBFSTree(root);
+   logger.trace("Expected tree constructed");
    Tree actualBFSTree = constructedNetwork.getBFSTree(root);
+   logger.trace("Actual tree constructed");
 
    if (!expectedBFSTree.hasEqualVerticesWith(actualBFSTree)) {
      throw new IncorrectTreeException();
    }
+   logger.trace("Vertices are equal");
 
    if (!expectedBFSTree.hasEqualLevels(actualBFSTree)) {
      throw new IncorrectTreeException();
    }
+   logger.trace("Levels are equal");
   }
 
   private static void checkDistanceCalculation(List<AfekKuttenYungResult> results, Network expectedNetwork, int root) throws IncorrectDistanceException {
     Tree expectedSinkTree = expectedNetwork.getBFSTree(root);
     for (AfekKuttenYungResult r : results) {
-      if (r.distance != expectedSinkTree.getDistance(r.node)) {
+      if (r.distance != expectedSinkTree.getLevel(r.node)) {
         throw new IncorrectDistanceException();
       }
     }
