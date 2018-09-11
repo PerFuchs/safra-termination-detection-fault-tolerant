@@ -34,6 +34,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private int me;
   private boolean changed; // If the node's data changed during the step
 
+  private boolean waitingForPulse = false;
+  private boolean gotUpdatesBeforeStep = false;
+
 
   AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine) {
     me = communicationLayer.getID();
@@ -63,7 +66,6 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       e.printStackTrace();
     }
     logger.trace(String.format("%04d finished first pulse", me));
-    copyNeighbourStates();
 
     loopThread = new Thread(this);
     loopThread.start();
@@ -89,19 +91,26 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private void stepLoop() throws IOException, InterruptedException {
     OurTimer timer = new OurTimer();
     while (true) {
-      step();
+      synchronized (this) {
+        timer.start();
+        copyNeighbourStates();
 
-      if (changed) {
-        logger.trace(String.format("%04d Updating neighbours", me));
-        sendDataToAllNeighbours(timer);
-        changed = false;
+        step();
+
+        if (changed) {
+          logger.trace(String.format("%04d Updating neighbours", me));
+          sendDataToAllNeighbours(timer);
+          changed = false;
+        }
+        timer.stopAndCreateBasicTimeSpentEvent();
+        if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
+          setActive(false, "Step done");
+        }
+        gotUpdatesBeforeStep = false;
+        waitingForPulse = true;
       }
-      timer.stopAndCreateBasicTimeSpentEvent();
-      setActive(false, "Step done");
       synchronizer.awaitPulse();
-
-      timer.start();
-      copyNeighbourStates();
+      waitingForPulse = false;
     }
   }
 
@@ -315,6 +324,10 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       timer.pause();
       setActive(true, "Got state update");
       timer.start();
+
+      if (!waitingForPulse) {
+        gotUpdatesBeforeStep = true;
+      }
 
       newNeighbourData.get(source).update(message);
       // No call to safra.setActive(false). Message handling is not done before the next call to step.
