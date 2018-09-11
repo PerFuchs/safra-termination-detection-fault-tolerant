@@ -256,6 +256,7 @@ public class SafraFT implements Safra, CrashHandler {
 
         if (sum == 0) {
           announce();
+          this.token = null;
           return;
         }
       }

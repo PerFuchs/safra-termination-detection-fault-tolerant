@@ -152,6 +152,7 @@ public class SafraFS implements Safra {
 
       if (token.messageCounter == 0 && isBlackUntil == me) {
         announce();
+        token = null;
       } else {
         forwardToken(new TokenFS(token.messageCounter, furthest(isBlackUntil, (me + 1) % communicationLayer.getIbisCount())), timer);
         isBlackUntil = me;
