@@ -158,7 +158,8 @@ class IbisNode {
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
+    Logger.getLogger(SafraFS.class).setLevel(Level.TRACE);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
@@ -262,6 +263,7 @@ class IbisNode {
 
       safraNode.await();
       timeout.clear();
+      logger.debug(String.format("%04d Safra barrier broke", communicationLayer.getID()));
 
       totalTime.stopAndCreateTotalTimeSpentEvent();
     } catch (InterruptedException e){
@@ -271,6 +273,7 @@ class IbisNode {
     try {
       basicAlgorithm.terminate();
     } catch (TerminationDetectedTooEarly e) {
+      logger.error("Termination was detected to early");
       experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
     }
     Thread.sleep(5000);  // Give events after termination a chance to be logged

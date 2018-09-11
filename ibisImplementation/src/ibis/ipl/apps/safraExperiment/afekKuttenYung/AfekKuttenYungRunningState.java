@@ -66,7 +66,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     copyNeighbourStates();
 
     loopThread = new Thread(this);
-    loopThread.run();
+    loopThread.start();
   }
 
   @Override
@@ -91,8 +91,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     while (true) {
       step();
 
-      logger.trace(String.format("%04d Updating neighbours", me));
       if (changed) {
+        logger.trace(String.format("%04d Updating neighbours", me));
         sendDataToAllNeighbours(timer);
         changed = false;
       }
@@ -152,6 +152,10 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         grant();
       }
     }
+
+    if (logger.isDebugEnabled()) {
+      logger.debug(String.format("%04d: %s", me, ownData.toString()));
+    }
   }
 
   private void handleFor(int requestBy) {
@@ -159,41 +163,27 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     AfekKuttenYungData otherData = neighbourData.get(requestBy);
     ownData.req = otherData.req;
     ownData.from = requestBy;
-    ownData.to = iAmRoot() ? me : ownData.parent;
+    ownData.to = ownData.parent;
     ownData.direction = AfekKuttenYungData.ASK;
   }
 
   private boolean notHandling() {
-    return ownData.req == AfekKuttenYungData.EMPTY_NODE
-        && ownData.from == AfekKuttenYungData.EMPTY_NODE
-        && ownData.to == AfekKuttenYungData.EMPTY_NODE
-        && ownData.direction == AfekKuttenYungData.EMPTY_DIRECTION;
+    return ownData.req == AfekKuttenYungData.EMPTY_NODE && ownData.from == AfekKuttenYungData.EMPTY_NODE && ownData.to == AfekKuttenYungData.EMPTY_NODE && ownData.direction == AfekKuttenYungData.EMPTY_DIRECTION;
   }
 
   private boolean handling(int i) {
     AfekKuttenYungData data = neighbourData.get(i);
-    return data.req == ownData.req
-        && ownData.from == i
-        && data.to == me
-        && ownData.to == ownData.parent
-        && data.direction == AfekKuttenYungData.ASK;
+    return data.req == ownData.req && ownData.from == i && data.to == me && ownData.to == ownData.parent && data.direction == AfekKuttenYungData.ASK;
   }
 
   private boolean request(int i) {
     AfekKuttenYungData data = neighbourData.get(i);
-    return (isRoot(i)
-          && data.req == data.from
-          && data.from == i)
-        || (data.parent == me
-          && data.req != i
-          && data.req != AfekKuttenYungData.EMPTY_NODE);
+    return (isRoot(i) && data.req == data.from && data.from == i) || (data.parent == me && data.req != i && data.req != AfekKuttenYungData.EMPTY_NODE);
   }
 
   private boolean isRoot(int i) {
     AfekKuttenYungData data = i == me ? ownData : neighbourData.get(i);
-    return data.parent == AfekKuttenYungData.EMPTY_PARENT
-        && data.root == i
-        && data.distance == 0;
+    return data.parent == AfekKuttenYungData.EMPTY_PARENT && data.root == i && data.distance == 0;
   }
 
   private void resetRequest() {
@@ -211,17 +201,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private boolean granted(int grantingNeighbour) {
     AfekKuttenYungData data = neighbourData.get(grantingNeighbour);
-    return ownData.req == data.req
-        && ownData.from == data.from
-        && data.direction == AfekKuttenYungData.GRANT
-        && ownData.direction == AfekKuttenYungData.ASK;
+    return ownData.req == data.req && ownData.from == data.from && data.direction == AfekKuttenYungData.GRANT && ownData.direction == AfekKuttenYungData.ASK;
   }
 
   private boolean requesting() {
-    return neighbourData.keySet().contains(ownData.to)
-        && neighbourData.get(ownData.to).root > me
-        && ownData.req == me
-        && ownData.from == me;
+    return neighbourData.keySet().contains(ownData.to) && neighbourData.get(ownData.to).root > me && ownData.req == me && ownData.from == me;
   }
 
   private void join() {
@@ -258,11 +242,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private boolean asking(int i) {
-    return isMaxRoot(neighbourData.get(i).root)
-        && ownData.req == me
-        && ownData.from == me
-        && ownData.to == i
-        && ownData.direction == AfekKuttenYungData.ASK;
+    return isMaxRoot(neighbourData.get(i).root) && ownData.req == me && ownData.from == me && ownData.to == i && ownData.direction == AfekKuttenYungData.ASK;
   }
 
   private boolean isMaxRoot(int root) {
@@ -286,10 +266,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private boolean notRoot() {
-    return neighbourData.containsKey(ownData.parent)
-        && ownData.root > me
-        && ownData.root == getParentData().root
-        && ownData.distance == getParentData().distance + 1;
+    return neighbourData.containsKey(ownData.parent) && ownData.root > me && ownData.root == getParentData().root && ownData.distance == getParentData().distance + 1;
   }
 
   private boolean maxRoot() {
@@ -349,6 +326,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     if (active) {
       throw new TerminationDetectedTooEarly(String.format("%d was still active", communicationLayer.getID()));
     }
+    logger.trace(String.format("AKY %04d terminating", me));
     terminated = true;
     loopThread.interrupt();
   }

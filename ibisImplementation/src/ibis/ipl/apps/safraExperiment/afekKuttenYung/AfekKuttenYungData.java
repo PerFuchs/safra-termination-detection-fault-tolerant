@@ -69,4 +69,22 @@ public class AfekKuttenYungData {
   public void update(AfekKuttenYungDataMessage m) {
     copyFrom(m.data);
   }
+
+  public String treeVariablesAsString() {
+    return String.format("Parent: %04d, Root: %04d, Distance: %04d", parent, root, distance);
+  }
+
+  public String requestVariablesAsString() {
+    String directionString = "N";
+    if (direction == ASK) {
+      directionString = "A";
+    } else if (direction == GRANT) {
+      directionString = "G";
+    }
+    return String.format("Direction: %s, Req: %04d, From: %04d, To: %04d", directionString, req, from, to);
+  }
+
+  public String toString(){
+    return treeVariablesAsString() + requestVariablesAsString();
+  }
 }
