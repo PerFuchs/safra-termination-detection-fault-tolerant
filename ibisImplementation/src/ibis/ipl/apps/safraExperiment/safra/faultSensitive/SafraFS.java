@@ -64,11 +64,11 @@ public class SafraFS implements Safra {
 
   public synchronized void setActive(boolean status, String reason) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
-    }
     timer.pause();
     if (status != basicAlgorithmIsActive) {
+      if (terminationDetected) {
+        experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
+      }
       experimentLogger.info(Event.getActiveStatusChangedEvent(status, reason));
     }
     timer.start();

@@ -98,11 +98,12 @@ public class SafraFT implements Safra, CrashHandler {
 
   public synchronized void setActive(boolean status, String reason) throws IOException {
     OurTimer timer = new OurTimer();
-    if (terminationDetected) {
-      experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
-    }
+
     if (status != basicAlgorithmIsActive) {
       timer.pause();
+      if (terminationDetected) {
+        experimentLogger.error(String.format("%d active status changed after termination.", communicationLayer.getID()));
+      }
       experimentLogger.info(Event.getActiveStatusChangedEvent(status, reason));
       timer.start();
     }
