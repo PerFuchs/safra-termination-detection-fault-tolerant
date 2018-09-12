@@ -63,15 +63,17 @@ public class AlphaSynchronizer implements CrashHandler {
   }
 
   private void handleAckMessage(AckMessage m) throws IOException {
-    logger.trace("Received ack message");
     ackMessages++;
+    logger.trace(String.format("%04d received ack message. Messages left %d, pulse finished %b", communicationLayer.getID(), messagesSent - ackMessages, pulseFinished));
     if (pulseFinished && ackMessages == messagesSent) {
+      logger.trace(String.format("%04d pulse safe by ack message", communicationLayer.getID()));
       sendSafeMessageToAllNeighbours();
     }
   }
 
   private void handleSafeMessage(int source, SafeMessage m) {
     if (safeMessageReceived.containsKey(source)) {
+      logger.trace(String.format("%04d got safe message from %04d", communicationLayer.getID(), source));
       safeMessageReceived.put(source, true);
       checkPulseComplete();
     }
@@ -96,6 +98,7 @@ public class AlphaSynchronizer implements CrashHandler {
   public synchronized void finishPulse() throws IOException {
     pulseFinished = true;
     if (ackMessages == messagesSent) {
+      logger.trace(String.format("%04d pulse safe by await pulse", communicationLayer.getID()));
       sendSafeMessageToAllNeighbours();
     }
   }

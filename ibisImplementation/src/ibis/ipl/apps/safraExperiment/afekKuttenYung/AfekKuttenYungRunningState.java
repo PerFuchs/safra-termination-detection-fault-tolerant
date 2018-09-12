@@ -98,7 +98,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         step();
 
         if (changed) {
-          logger.trace(String.format("%04d Updating neighbours", me));
+//          logger.trace(String.format("%04d Updating neighbours", me));
           sendDataToAllNeighbours(timer);
           changed = false;
         }
@@ -110,6 +110,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         waitingForPulse = true;
       }
       synchronizer.awaitPulse();
+      if (me==0) {
+        logger.debug("Pulse");
+      }
       waitingForPulse = false;
     }
   }
@@ -119,20 +122,29 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     safra.setActive(status, reason);
   }
 
+  // TODO remove logging statements or put them in ifs
   private synchronized void step() throws IOException {
+    if (neighbourData.keySet().contains(ownData.parent) && granted(ownData.parent)) {
+      logger.trace(String.format("%04d parents grants.", me));
+    }
     if (!(notRoot() && maxRoot()) && !iAmRoot()) {
+      logger.trace(String.format("%04d becomes root", me));
       becomeRoot();
     } else if (!maxRoot()) {
-
       boolean isAsking = false;
       for (int i : neighbourData.keySet()) {
         isAsking |= asking(i);
       }
 
       if (!isAsking) {
+        logger.trace(String.format("%04d asks", me));
+
         ask();
       } else if (requesting() && granted(ownData.to)) {
+        logger.trace(String.format("%04d joins", me));
         join();
+      } else {
+        logger.trace(String.format("%04d not max root, waiting for grant?", me));
       }
     } else {
       boolean isHandling = false;
@@ -141,6 +153,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       }
       if (!isHandling) {
         if (!notHandling()) {
+          logger.trace(String.format("%04d resets", me));
           resetRequest();
         } else {
           boolean isRequested = false;
@@ -153,13 +166,20 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             }
           }
           if ((iAmRoot() || getParentData().from != me) && isRequested) {
+            logger.trace(String.format("%04d handles for %04d with state %s", me, requestBy, neighbourData.get(requestBy).toString()));
             handleFor(requestBy);
+          } else {
+            logger.trace(String.format("%04d empty handle", me));
           }
         }
       } else if (iAmRoot() && ownData.direction == AfekKuttenYungData.ASK) {
+        logger.trace(String.format("%04d grants", me));
         grant();
-      } else if (granted(ownData.parent)) {
+      } else if (ownData.parent != -1 && granted(ownData.parent)) {
+        logger.trace(String.format("%04d grants", me));
         grant();
+      } else {
+        logger.trace(String.format("%04d Parent state: %s", me, neighbourData.keySet().contains(ownData.parent) ? neighbourData.get(ownData.parent).toString() : ""));
       }
     }
 
@@ -211,7 +231,10 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private boolean granted(int grantingNeighbour) {
     AfekKuttenYungData data = neighbourData.get(grantingNeighbour);
-    return ownData.req == data.req && ownData.from == data.from && data.direction == AfekKuttenYungData.GRANT && ownData.direction == AfekKuttenYungData.ASK;
+    if (data == null) {
+      throw new IllegalStateException(String.format("No data for %04d on %04d", grantingNeighbour, me));
+    }
+    return ownData.req == data.req && me == data.from && data.direction == AfekKuttenYungData.GRANT && ownData.direction == AfekKuttenYungData.ASK;
   }
 
   private boolean requesting() {

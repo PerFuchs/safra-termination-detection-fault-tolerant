@@ -4,6 +4,7 @@ import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungMessageFactory;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungRunningState;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungStateMachine;
+import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.SynchronizerMessageFactory;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
@@ -159,6 +160,7 @@ class IbisNode {
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.TRACE);
+    Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.TRACE);
     Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFS.class).setLevel(Level.TRACE);
