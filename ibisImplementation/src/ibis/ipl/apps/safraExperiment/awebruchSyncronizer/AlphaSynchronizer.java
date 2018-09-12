@@ -13,6 +13,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
+/**
+ * An Awebruch's Alpha Synchronizer as described in "Distributed Algorithms an intuitive approach" by Wan Fokkink.
+ *
+ * Slightly changed to only release a process into the next pulse when its received safe messages from all neighbours
+ * AND received all ACK messages for this pulse.
+ */
 public class AlphaSynchronizer implements CrashHandler {
   private final static Logger logger = Logger.getLogger(AlphaSynchronizer.class);
 
@@ -23,7 +29,13 @@ public class AlphaSynchronizer implements CrashHandler {
   private AwebruchClient client;
 
   private boolean pulseFinished;
-  private Map<Integer, Boolean> safeMessageReceived;
+  private Map<Integer, Integer> safeMessageReceived;
+
+  /**
+   * Used to block the process until the next pulse starts. Needs to be released twice before it can be acquired and the pulse finished.
+   * The releases happen when safe messages from all neighbours are received and when all ACK messages for this pulse have
+   * been received.
+   */
   private Semaphore semaphore;
 
   public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client) {
@@ -32,7 +44,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
     safeMessageReceived = new HashMap<>();
     for (int neighbour : communicationLayer.getNeighbours()) {
-      safeMessageReceived.put(neighbour, false);
+      safeMessageReceived.put(neighbour, 0);
     }
 
     prepareNextPulse();
@@ -74,17 +86,22 @@ public class AlphaSynchronizer implements CrashHandler {
   private void handleSafeMessage(int source, SafeMessage m) {
     if (safeMessageReceived.containsKey(source)) {
       logger.trace(String.format("%04d got safe message from %04d", communicationLayer.getID(), source));
-      safeMessageReceived.put(source, true);
-      checkPulseComplete();
+      int safeMessages = safeMessageReceived.get(source);
+      safeMessageReceived.put(source, safeMessages + 1);
+      tryEndPulse();
     }
   }
 
-  private void checkPulseComplete() {
+  private void tryEndPulse() {
     boolean allSafe = true;
-    for (boolean safe : safeMessageReceived.values()) {
-      allSafe &= safe;
+    for (int safe : safeMessageReceived.values()) {
+      allSafe &= safe > 0;
     }
     if (allSafe) {
+      for (int n : safeMessageReceived.keySet()) {
+        int messages = safeMessageReceived.get(n);
+        safeMessageReceived.put(n, messages - 1);
+      }
       semaphore.release();
     }
   }
@@ -93,6 +110,7 @@ public class AlphaSynchronizer implements CrashHandler {
     for (int i : safeMessageReceived.keySet()) {
       communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
     }
+    semaphore.release();
   }
 
   public synchronized void finishPulse() throws IOException {
@@ -114,13 +132,9 @@ public class AlphaSynchronizer implements CrashHandler {
 
   private synchronized void prepareNextPulse() {
     pulseFinished = false;
-    semaphore = new Semaphore(0);
+    semaphore = new Semaphore(-1);
     ackMessages = 0;
     messagesSent = 0;
-
-    for (int neighbour : safeMessageReceived.keySet()) {
-      safeMessageReceived.put(neighbour, false);
-    }
   }
 
 
@@ -130,6 +144,6 @@ public class AlphaSynchronizer implements CrashHandler {
       safeMessageReceived.remove(crashedNode);
     }
 
-    checkPulseComplete();
+    tryEndPulse();
   }
 }
