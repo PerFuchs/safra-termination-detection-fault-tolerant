@@ -167,7 +167,7 @@ class IbisNode {
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
-    Logger.getLogger(Network.class).setLevel(Level.DEBUG);
+    Logger.getLogger(Network.class).setLevel(Level.TRACE);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
     Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
     Logger.getLogger(Tree.class).setLevel(Level.TRACE);
@@ -215,8 +215,8 @@ class IbisNode {
   }
 
   private static void setupNetwork() {
-    network = Network.getLineNetwork(communicationLayer);
-//    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
+//    network = Network.getLineNetwork(communicationLayer);
+    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
     communicationLayer.setNetwork(network);

@@ -34,7 +34,7 @@ public class AfekKuttenYungVerifier {
     }
     logger.trace("Correct root computed");
 
-    checkTree(constructedNetwork, usedNetworkTopology, expectedRoot);
+    checkIsTree(constructedNetwork, usedNetworkTopology, expectedRoot);
     logger.trace("Correct tree computed");
 
     checkDistanceCalculation(results, usedNetworkTopology, expectedRoot);
@@ -45,27 +45,26 @@ public class AfekKuttenYungVerifier {
     return Collections.max(expectedNetwork.getVertices());
   }
 
-  private static void checkTree(Network constructedNetwork, Network expectedNetwork, int root) throws IncorrectTreeException {
-   Tree expectedBFSTree = expectedNetwork.getBFSTree(root);
-   logger.trace("Expected tree constructed");
-   Tree actualBFSTree = constructedNetwork.getBFSTree(root);
-   logger.trace("Actual tree constructed");
+  private static void checkIsTree(Network constructedNetwork, Network expectedNetwork, int root) throws IncorrectTreeException {
+    // Check connectedness. All nodes reachable from root in the expected network have to be connected to root in the constructed network.
+    Network constructedConnectedNetwork = constructedNetwork.filterUnconnectedNodes(root);
+    Network expectedConnectedNetwork = expectedNetwork.filterUnconnectedNodes(root);
 
-   if (!expectedBFSTree.hasEqualVerticesWith(actualBFSTree)) {
-     throw new IncorrectTreeException();
-   }
-   logger.trace("Vertices are equal");
+    if (!constructedConnectedNetwork.hasEqualNodes(expectedConnectedNetwork)) {
+      throw new IncorrectTreeException();
+    }
+    logger.trace("Vertices are equal");
 
-   if (!expectedBFSTree.hasEqualLevels(actualBFSTree)) {
-     throw new IncorrectTreeException();
-   }
-   logger.trace("Levels are equal");
+    if (constructedConnectedNetwork.hasCycle(root)) {
+      throw new IncorrectTreeException();
+    }
+    logger.trace("Tree has not cycle");
   }
 
-  private static void checkDistanceCalculation(List<AfekKuttenYungResult> results, Network expectedNetwork, int root) throws IncorrectDistanceException {
-    Tree expectedSinkTree = expectedNetwork.getBFSTree(root);
+  private static void checkDistanceCalculation(List<AfekKuttenYungResult> results, Network constructedNetwork, int root) throws IncorrectDistanceException {
+    Tree tree = constructedNetwork.getBFSTree(root);  // I already checked if it is a tree. Therefore, any tree building algorithm builds the same tree.
     for (AfekKuttenYungResult r : results) {
-      if (r.distance != expectedSinkTree.getLevel(r.node)) {
+      if (r.distance != tree.getLevel(r.node)) {
         throw new IncorrectDistanceException();
       }
     }

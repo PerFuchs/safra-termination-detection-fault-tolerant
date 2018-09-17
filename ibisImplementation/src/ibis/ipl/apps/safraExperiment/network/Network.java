@@ -122,10 +122,10 @@ public class Network {
 
     // Add heavyweight edges from the root to all nodes to simulate an fully connected network - because the root cannot
     // fail this guarantees the network stays connected with arbitrary failing nodes.
-    for (int i = 2; i < communicationLayer.getIbisCount(); i++) {
-      channels.add(new Channel(0, i, 1000*i));  // Carefull MAX_VALUE obviously leads to overflows later on
-      channels.add(new Channel(i, 0, 1000*i));
-    }
+//    for (int i = 2; i < communicationLayer.getIbisCount(); i++) {
+//      channels.add(new Channel(0, i, 1000*i));  // Carefull MAX_VALUE obviously leads to overflows later on
+//      channels.add(new Channel(i, 0, 1000*i));
+//    }
 
     return new Network(channels, communicationLayer.getIbisCount());
   }
@@ -187,6 +187,7 @@ public class Network {
           unreachableVertices.remove(new Integer(node));
           channels.add(new Channel(root, node, 400000));
           channels.add(new Channel(node, root, 400000));
+          logger.trace(String.format("Connected %04d to 0", node));
       }
 
       unreachableVertices = new LinkedList<>();
@@ -251,6 +252,73 @@ public class Network {
 
   public Tree getBFSTree(int root) {
     return Tree.getBFSTree(this, root);
+  }
+
+
+  private static Set<Channel> channelsFrom(List<Channel> channels, int node) {
+    Set<Channel> ret = new HashSet<>();
+    for (Channel c : channels) {
+      if (c.src == node) {
+        ret.add(c);
+      }
+    }
+    return ret;
+  }
+
+  public boolean hasCycle(int root) {
+      return depthFirstSearch(root, new HashSet<Integer>(), new HashSet<Integer>(), -1);
+  }
+
+  /**
+   *
+   * @param currentNode node to start search from
+   * @param visited output parameter, will contain all nodes visited
+   * @param marked for internal use, initialize with an empty set
+   * @ret true if a cycle was detected, false otherwise
+   */
+  private boolean depthFirstSearch(int currentNode, Set<Integer> visited, Set<Integer> marked, int parent) {
+    boolean ret = false;
+    if (visited.contains(currentNode)) {
+      return false;
+    }
+    if (marked.contains(currentNode)) {
+      return true;
+    }
+    marked.add(currentNode);
+    for (Channel c : channelsFrom(channels, currentNode)) {
+      if (c.dest != parent) {
+        ret |= depthFirstSearch(c.dest, visited, marked, currentNode);
+      }
+      }
+    visited.add(currentNode);
+    return ret;
+  }
+
+  public Network filterUnconnectedNodes(int root) {
+    Set<Integer> reachableNodes = new HashSet<>();
+    depthFirstSearch(root, reachableNodes, new HashSet<Integer>(), -1);
+
+    List<Channel> newChannels = new LinkedList<>();
+    for (Channel c : channels) {
+      if (reachableNodes.contains(c.src) && reachableNodes.contains(c.dest)) {
+        newChannels.add(new Channel(c.src, c.dest, c.getWeight()));
+      }
+    }
+
+    return new Network(newChannels, reachableNodes.size());
+  }
+
+  private Set<Integer> getNodes() {
+    Set<Integer> nodes = new HashSet<>();
+    for (Channel c : channels) {
+      nodes.add(c.src);
+      nodes.add(c.dest);
+    }
+    return nodes;
+  }
+
+  public boolean hasEqualNodes(Network otherNetwork) {
+    return this.getNodes().equals(otherNetwork.getNodes());
   }
 }
 
