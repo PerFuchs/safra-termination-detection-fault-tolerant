@@ -37,7 +37,7 @@ public class AfekKuttenYungVerifier {
     checkIsTree(constructedNetwork, usedNetworkTopology, expectedRoot);
     logger.trace("Correct tree computed");
 
-    checkDistanceCalculation(results, usedNetworkTopology, expectedRoot);
+    checkDistanceCalculation(results, constructedNetwork, expectedRoot);
     logger.trace("Correct distance calculated");
   }
 
@@ -65,6 +65,8 @@ public class AfekKuttenYungVerifier {
     Tree tree = constructedNetwork.getBFSTree(root);  // I already checked if it is a tree. Therefore, any tree building algorithm builds the same tree.
     for (AfekKuttenYungResult r : results) {
       if (r.distance != tree.getLevel(r.node)) {
+        logger.debug(String.format("%04d has invalid weight %d but should be %d", r.node, r.distance, tree.getLevel(r.node)));
+        logger.debug(tree.toString());
         throw new IncorrectDistanceException();
       }
     }
