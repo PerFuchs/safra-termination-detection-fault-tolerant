@@ -23,11 +23,12 @@ import java.util.concurrent.Semaphore;
 public class AlphaSynchronizer implements CrashHandler {
   private final static Logger logger = Logger.getLogger(AlphaSynchronizer.class);
 
-  private int ackMessages;
-  private int messagesSent;
+  private Map<Integer, Integer> ackMessages;
+  private Map<Integer, Integer> messagesSent;
 
   private CommunicationLayer communicationLayer;
   private AwebruchClient client;
+  private final CrashDetector crashDetector;
 
   private boolean pulseFinished;
   private Map<Integer, Integer> safeMessageReceived;
@@ -43,12 +44,15 @@ public class AlphaSynchronizer implements CrashHandler {
     this.communicationLayer = communicationLayer;
     this.client = client;
 
+    this.crashDetector = crashDetector;
     crashDetector.addHandler(this);
 
     safeMessageReceived = new HashMap<>();
     for (int neighbour : communicationLayer.getNeighbours()) {
       safeMessageReceived.put(neighbour, 0);
     }
+    ackMessages = new HashMap<>();
+    messagesSent = new HashMap<>();
 
     prepareNextPulse();
   }
@@ -58,17 +62,14 @@ public class AlphaSynchronizer implements CrashHandler {
       throw new IllegalStateException("Client tried to send message after declaring pulse finished");
     }
 
-    if (logger.isTraceEnabled()) {
-      logger.trace(String.format("%04d sending message %d", communicationLayer.getID(), messagesSent));
-    }
+    increaseMessageCounter(destination);
 
-    messagesSent++;
     communicationLayer.sendMessage(destination, m, timer);
   }
 
   public synchronized void receiveMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
     if (m instanceof AckMessage) {
-      handleAckMessage((AckMessage) m);
+      handleAckMessage(source, (AckMessage) m);
     } else if (m instanceof SafeMessage) {
       handleSafeMessage(source, (SafeMessage) m);
     } else {
@@ -77,13 +78,44 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  private void handleAckMessage(AckMessage m) throws IOException {
-    ackMessages++;
-    logger.trace(String.format("%04d received ack message. Messages left %d, pulse finished %b", communicationLayer.getID(), messagesSent - ackMessages, pulseFinished));
-    if (pulseFinished && ackMessages == messagesSent) {
+  private void handleAckMessage(int source, AckMessage m) throws IOException {
+    logger.trace(String.format("%04d received ack message. pulse finished %b", communicationLayer.getID(), pulseFinished));
+
+    increaseAckCounter(source);
+
+    if (pulseFinished && allMessagesAcked()) {
       logger.trace(String.format("%04d pulse safe by ack message", communicationLayer.getID()));
       sendSafeMessageToAllNeighbours();
     }
+  }
+
+  // TODO crash detector or safra node. Should be safra node correct?
+  private void increaseAckCounter(int index) {
+    if (!crashDetector.hasCrashed(index)) {
+      increaseMapCounter(ackMessages, index);
+    }
+  }
+
+  private void increaseMessageCounter(int index) {
+    if (!crashDetector.hasCrashed(index)) {
+      increaseMapCounter(messagesSent, index);
+    }
+  }
+
+  private void increaseMapCounter(Map<Integer, Integer> map, int index) {
+    int counter = map.get(index);
+    counter++;
+    map.put(index, counter);
+  }
+
+  private boolean allMessagesAcked() {
+    int messagesSentSum = 0;
+    int messagesAckedSum = 0;
+    for (int neighbour : messagesSent.keySet()) {
+      messagesSentSum += messagesSent.get(neighbour);
+      messagesAckedSum += ackMessages.get(neighbour);
+    }
+    return messagesSentSum == messagesAckedSum;
   }
 
   private void handleSafeMessage(int source, SafeMessage m) {
@@ -124,7 +156,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
   public synchronized void finishPulse() throws IOException {
     pulseFinished = true;
-    if (ackMessages == messagesSent) {
+    if (allMessagesAcked()) {
       logger.trace(String.format("%04d pulse safe by await pulse", communicationLayer.getID()));
       sendSafeMessageToAllNeighbours();
     }
@@ -142,8 +174,11 @@ public class AlphaSynchronizer implements CrashHandler {
   private synchronized void prepareNextPulse() {
     pulseFinished = false;
     semaphore = new Semaphore(-1);
-    ackMessages = 0;
-    messagesSent = 0;
+
+    for (int neighbour : safeMessageReceived.keySet()) {
+      ackMessages.put(neighbour, 0);
+      messagesSent.put(neighbour, 0);
+    }
   }
 
 
@@ -152,8 +187,14 @@ public class AlphaSynchronizer implements CrashHandler {
     if (safeMessageReceived.containsKey(crashedNode)) {
       logger.debug(String.format("%04d Detected crash of neighbour %04d", communicationLayer.getID(), crashedNode));
       safeMessageReceived.remove(crashedNode);
+
+      ackMessages.remove(crashedNode);
+      messagesSent.remove(crashedNode);
     }
 
+    if (pulseFinished && allMessagesAcked()) {
+      sendSafeMessageToAllNeighbours();
+    }
     tryEndPulse();
   }
 }
