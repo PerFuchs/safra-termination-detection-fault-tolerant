@@ -1,15 +1,9 @@
 package ibis.ipl.apps.safraExperiment.safra.faultTolerant;
 
-import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
+import ibis.ipl.apps.safraExperiment.crashSimulation.*;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
-import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
-import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.Token;
 import ibis.ipl.apps.safraExperiment.safra.api.TokenFactory;
@@ -17,7 +11,10 @@ import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 
@@ -74,7 +71,11 @@ public class SafraFT implements Safra, CrashHandler {
     }
 
     if (isBasicInitiator) {
-      setActive(true, "Initiator");
+      try {
+        setActive(true, "Initiator");
+      } catch (CrashException e) {
+        // Pass, is never actually thrown.
+      }
     }
 
     crashDetector.addHandler(this);
@@ -96,7 +97,7 @@ public class SafraFT implements Safra, CrashHandler {
     return j;
   }
 
-  public synchronized void setActive(boolean status, String reason) throws IOException {
+  public synchronized void setActive(boolean status, String reason) throws IOException, CrashException {
     OurTimer timer = new OurTimer();
 
     if (status != basicAlgorithmIsActive) {
@@ -115,7 +116,7 @@ public class SafraFT implements Safra, CrashHandler {
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
-  public synchronized void startAlgorithm() throws InterruptedException, IOException {
+  public synchronized void startAlgorithm() throws InterruptedException, IOException, CrashException {
     OurTimer timer = new OurTimer();
     semaphore.acquire();
     started = true;
@@ -141,7 +142,7 @@ public class SafraFT implements Safra, CrashHandler {
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
-  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) throws IOException {
+  public synchronized void handleReceiveBasicMessage(int sender, long sequenceNumber) throws IOException, CrashException {
     OurTimer timer = new OurTimer();
     if (terminationDetected) {
       experimentLogger.error(String.format("%d received basic message after termination.", communicationLayer.getID()));
@@ -168,7 +169,7 @@ public class SafraFT implements Safra, CrashHandler {
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
-  public synchronized void handleCrash(int crashedNode) throws IOException {
+  public synchronized void handleCrash(int crashedNode) throws IOException, CrashException {
     OurTimer timer = new OurTimer();
     if (!crashed.contains(crashedNode) && !report.contains(crashedNode) && !terminationDetected) {
       report.add(crashedNode);
@@ -210,7 +211,7 @@ public class SafraFT implements Safra, CrashHandler {
     }
   }
 
-  public synchronized void receiveToken(Token token) throws IOException {
+  public synchronized void receiveToken(Token token) throws IOException, CrashException {
     OurTimer timer = new OurTimer();
     if (!(token instanceof TokenFT)) {
       throw new IllegalStateException("None TokenFT used with SafraFT");
@@ -230,7 +231,7 @@ public class SafraFT implements Safra, CrashHandler {
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
-  private synchronized void handleToken(OurTimer timer) throws IOException {
+  private synchronized void handleToken(OurTimer timer) throws IOException, CrashException {
     if (!basicAlgorithmIsActive && this.token != null) {
       int me = communicationLayer.getID();
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);

@@ -3,6 +3,7 @@ package ibis.ipl.apps.safraExperiment.chandyMisra;
 import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
@@ -35,7 +36,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     crashDetector.addHandler(this);
   }
 
-  public synchronized void startAlgorithm() throws IOException {
+  public synchronized void startAlgorithm() throws IOException, CrashException {
     if (communicationLayer.isRoot()) {
       safraNode.setActive(true, "Start basic");
       OurTimer timer = new OurTimer();
@@ -48,7 +49,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     }
   }
 
-  public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException {
+  public synchronized void handleReceiveDistanceMessage(DistanceMessage dm, int origin) throws IOException, CrashException {
     if (terminated) {
       logger.error(String.format("%d received distance message after termination.", communicationLayer.getID()));
     }
@@ -68,7 +69,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     }
   }
 
-  private void sendDistanceMessagesToAllNeighbours(int distance, OurTimer timer) throws IOException {
+  private void sendDistanceMessagesToAllNeighbours(int distance, OurTimer timer) throws IOException, CrashException {
     for (int neighbour : network.getNeighbours(me)) {
       if (neighbour != parent) {
         sendDistanceMessage(distance, neighbour, timer);
@@ -76,7 +77,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     }
   }
 
-  private void sendDistanceMessage(int distance, int receiver, OurTimer timer) throws IOException {
+  private void sendDistanceMessage(int distance, int receiver, OurTimer timer) throws IOException, CrashException {
     communicationLayer.sendDistanceMessage(new DistanceMessage(distance), receiver, timer);
   }
 
@@ -84,7 +85,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     return parent;
   }
 
-  public synchronized void handleCrash(int crashedNode) throws IOException {
+  public synchronized void handleCrash(int crashedNode) throws IOException, CrashException {
     if (crashedNode == parent) {
       if (terminated) {
         experimentLogger.warn(String.format("%d notfified crash after termination.", communicationLayer.getID()));
@@ -108,7 +109,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     }
   }
 
-  public synchronized void receiveRequestMessage(int origin) throws IOException {
+  public synchronized void receiveRequestMessage(int origin) throws IOException, CrashException {
     safraNode.setActive(true, "Processing Request Message");
     OurTimer timer = new OurTimer();
     if (terminated) {
@@ -121,7 +122,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     safraNode.setActive(false, "End processing Request Message");
   }
 
-  private void handleRequestMessage(int origin, OurTimer timer) throws IOException {
+  private void handleRequestMessage(int origin, OurTimer timer) throws IOException, CrashException {
     if (origin == parent) {
       logger.trace(String.format("%d got request message from parent %d", communicationLayer.getID(), origin));
       parent = -1;
@@ -136,7 +137,7 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     }
   }
 
-  private void sendRequestMessage(int receiver) throws IOException {
+  private void sendRequestMessage(int receiver) throws IOException, CrashException {
     communicationLayer.sendRequestMessage(receiver);
   }
 

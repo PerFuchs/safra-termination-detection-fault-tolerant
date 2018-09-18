@@ -3,6 +3,7 @@ package ibis.ipl.apps.safraExperiment.awebruchSyncronizer;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
@@ -33,6 +34,8 @@ public class AlphaSynchronizer implements CrashHandler {
   private boolean pulseFinished;
   private Map<Integer, Integer> safeMessageReceived;
 
+  private int pulses = 0;
+
   /**
    * Used to block the process until the next pulse starts. Needs to be released twice before it can be acquired and the pulse finished.
    * The releases happen when safe messages from all neighbours are received and when all ACK messages for this pulse have
@@ -57,7 +60,7 @@ public class AlphaSynchronizer implements CrashHandler {
     prepareNextPulse();
   }
 
-  public void sendMessage(int destination, Message m, OurTimer timer) throws IOException {
+  public void sendMessage(int destination, Message m, OurTimer timer) throws IOException, CrashException {
     if (pulseFinished) {
       throw new IllegalStateException("Client tried to send message after declaring pulse finished");
     }
@@ -67,7 +70,7 @@ public class AlphaSynchronizer implements CrashHandler {
     communicationLayer.sendMessage(destination, m, timer);
   }
 
-  public synchronized void receiveMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
+  public synchronized void receiveMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly, CrashException {
     if (m instanceof AckMessage) {
       handleAckMessage(source, (AckMessage) m);
     } else if (m instanceof SafeMessage) {
@@ -78,7 +81,7 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  private void handleAckMessage(int source, AckMessage m) throws IOException {
+  private void handleAckMessage(int source, AckMessage m) throws IOException, CrashException {
     logger.trace(String.format("%04d received ack message. pulse finished %b", communicationLayer.getID(), pulseFinished));
 
     increaseAckCounter(source);
@@ -147,14 +150,14 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  private void sendSafeMessageToAllNeighbours() throws IOException {
+  private void sendSafeMessageToAllNeighbours() throws IOException, CrashException {
     for (int i : safeMessageReceived.keySet()) {
       communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
     }
     semaphore.release();
   }
 
-  public synchronized void finishPulse() throws IOException {
+  public synchronized void finishPulse() throws IOException, CrashException {
     pulseFinished = true;
     if (allMessagesAcked()) {
       logger.trace(String.format("%04d pulse safe by await pulse", communicationLayer.getID()));
@@ -162,12 +165,14 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  public void awaitPulse() throws InterruptedException, IOException {
+  public void awaitPulse() throws InterruptedException, IOException, CrashException {
     if (!pulseFinished) {
       finishPulse();
     }
 
     semaphore.acquire();
+    pulses++;
+    logger.debug(String.format("%04d finished pulse %d", communicationLayer.getID(), pulses));
     prepareNextPulse();
   }
 
@@ -183,7 +188,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
 
   @Override
-  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException {
+  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException, CrashException {
     if (safeMessageReceived.containsKey(crashedNode)) {
       logger.debug(String.format("%04d Detected crash of neighbour %04d", communicationLayer.getID(), crashedNode));
       safeMessageReceived.remove(crashedNode);

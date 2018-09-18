@@ -26,13 +26,15 @@ public class CrashSimulator {
   private CommunicationLayer communicationLayer;
   private boolean simulateCrashes;
   private final Set<CrashPoint> enabledCrashPoints;
+  private final boolean throwCrashException;
   private Set<Integer> crashingNodes = new HashSet<>();
 
   public CrashSimulator(CommunicationLayer communicationLayer, SynchronizedRandom synchronizedRandom, double crashPercentage, boolean simulateCrashes,
-                        Set<CrashPoint> enabledCrashPoints) {
+                        Set<CrashPoint> enabledCrashPoints, boolean throwCrashException) {
     this.communicationLayer = communicationLayer;
     this.simulateCrashes = simulateCrashes;
     this.enabledCrashPoints = enabledCrashPoints;
+    this.throwCrashException = throwCrashException;
 
     int me = communicationLayer.getID();
     int numberOfNodes = communicationLayer.getIbisCount();
@@ -85,7 +87,7 @@ public class CrashSimulator {
     }
   }
 
-  public void reachedCrashPoint(CrashPoint crashPoint) throws IOException {
+  public void reachedCrashPoint(CrashPoint crashPoint) throws IOException, CrashException {
     if (crashPoints.keySet().contains(crashPoint) && simulateCrashes && enabledCrashPoints.contains(crashPoint)) {
       logger.debug(String.format("%d Reached crash point its crash point %s", communicationLayer.getID(), crashPoint.toString()));
       int counter = crashPointCounters.get(crashPoint);
@@ -98,10 +100,14 @@ public class CrashSimulator {
     }
   }
 
-  private void crash() throws IOException {
+  private void crash() throws IOException, CrashException {
     experimentLogger.info(String.format("%s %d", Event.getNodeCrashedEvent(), communicationLayer.getID()));
     communicationLayer.broadcastCrashMessage();
     communicationLayer.crash();
+
+    if (throwCrashException) {
+      throw new CrashException();
+    }
   }
 
   public boolean couldCrash() {

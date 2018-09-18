@@ -10,6 +10,7 @@ import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.MessageFactory;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
@@ -210,7 +211,10 @@ class IbisNode {
     enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
 
-    crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, faultPercentage, faultTolerant, enabledCrashPoints);
+    // TODO test and use for CM as well
+    boolean enableCrashException = basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG;
+
+    crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, faultPercentage, faultTolerant, enabledCrashPoints, enableCrashException);
     communicationLayer.setCrashSimulator(crashSimulator);
   }
 
@@ -262,8 +266,12 @@ class IbisNode {
     try {
       OurTimer totalTime = new OurTimer();
 
-      safraNode.startAlgorithm();
-      basicAlgorithm.startAlgorithm();
+      try {
+        safraNode.startAlgorithm();
+        basicAlgorithm.startAlgorithm();
+      } catch (CrashException e) {
+        // Pass
+      }
 
       safraNode.await();
       timeout.clear();

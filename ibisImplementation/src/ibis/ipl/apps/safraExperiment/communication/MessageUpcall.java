@@ -5,6 +5,7 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -41,84 +42,87 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
     int origin = communicationLayer.getIbises().indexOf(readMessage.origin().ibisIdentifier());
     MessageTypes messageType = MessageTypes.values()[readMessage.readInt()];
 
-    switch (messageType) {
-      case DISTANCE:
-        long sequenceNumber = readMessage.readLong();
-        int distance = readMessage.readInt();
-        readMessage.finish();
-        synchronized (MessageUpcall.class) {
-          if (!crashed) {
-            DistanceMessage dm = new DistanceMessage(distance);
-            safraNode.handleReceiveBasicMessage(origin, sequenceNumber);
-            chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
-          }
-        }
-        break;
-      case CRASHED:
-        readMessage.finish();
-        synchronized (MessageUpcall.class) {
-          if (!crashed) {
-            crashDetector.handleCrash(origin);
-          }
-        }
-        break;
-      case REQUEST:
-        long sn = readMessage.readLong();
-        readMessage.finish();
-        synchronized (MessageUpcall.class) {
-          if (!crashed) {
-            safraNode.handleReceiveBasicMessage(origin, sn);
-            chandyMisraNode.receiveRequestMessage(origin);
-          }
-        }
-        break;
-      case TOKEN:
-        Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
-        readMessage.finish();
-        synchronized (MessageUpcall.class) {
-          if (!crashed) {
-            safraNode.receiveToken(token);
-          } else {
-            // This is to inform the predecessor in the ring that its successor crashed as it is obviously not aware.
-            // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
-            // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
-            // crash happens but only will become so on receive of the token.
-            communicationLayer.sendCrashMessage(origin);
-          }
-        }
-        break;
-      case BARRIER:
-        String name = readMessage.readString();
-        readMessage.finish();
-        barrierFactory.handleBarrierMessage(name);
-        break;
-      case ANNOUNCE:
-        readMessage.finish();
-        safraNode.handleAnnounce();
-        break;
-      case MESSAGECLASS:
-        Message m = MessageFactory.buildMessage(readMessage);
-        readMessage.finish();
-
-        synchronized (MessageUpcall.class) {
-          if (!crashed) {
-            if (m instanceof BasicMessage) {
-              BasicMessage bm = (BasicMessage) m;
-              safraNode.handleReceiveBasicMessage(origin, bm.getSequenceNumber());
-            }
-
-            try {
-              synchronizer.receiveMessage(origin, m);
-            } catch (TerminationDetectedTooEarly terminationDetectedTooEarly) {
-              experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
-              terminationDetectedTooEarly.printStackTrace();
+    try {
+      switch (messageType) {
+        case DISTANCE:
+          long sequenceNumber = readMessage.readLong();
+          int distance = readMessage.readInt();
+          readMessage.finish();
+          synchronized (MessageUpcall.class) {
+            if (!crashed) {
+              DistanceMessage dm = new DistanceMessage(distance);
+              safraNode.handleReceiveBasicMessage(origin, sequenceNumber);
+              chandyMisraNode.handleReceiveDistanceMessage(dm, origin);
             }
           }
-        }
-        break;
-      default:
-        throw new IOException(String.format("Got message of unknown type: %d", messageType.ordinal()));
+          break;
+        case CRASHED:
+          readMessage.finish();
+          synchronized (MessageUpcall.class) {
+            if (!crashed) {
+              crashDetector.handleCrash(origin);
+            }
+          }
+          break;
+        case REQUEST:
+          long sn = readMessage.readLong();
+          readMessage.finish();
+          synchronized (MessageUpcall.class) {
+            if (!crashed) {
+              safraNode.handleReceiveBasicMessage(origin, sn);
+              chandyMisraNode.receiveRequestMessage(origin);
+            }
+          }
+          break;
+        case TOKEN:
+          Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
+          readMessage.finish();
+          synchronized (MessageUpcall.class) {
+            if (!crashed) {
+              safraNode.receiveToken(token);
+            } else {
+              // This is to inform the predecessor in the ring that its successor crashed as it is obviously not aware.
+              // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
+              // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
+              // crash happens but only will become so on receive of the token.
+              communicationLayer.sendCrashMessage(origin);
+            }
+          }
+          break;
+        case BARRIER:
+          String name = readMessage.readString();
+          readMessage.finish();
+          barrierFactory.handleBarrierMessage(name);
+          break;
+        case ANNOUNCE:
+          readMessage.finish();
+          safraNode.handleAnnounce();
+          break;
+        case MESSAGECLASS:
+          Message m = MessageFactory.buildMessage(readMessage);
+          readMessage.finish();
 
+          synchronized (MessageUpcall.class) {
+            if (!crashed) {
+              if (m instanceof BasicMessage) {
+                BasicMessage bm = (BasicMessage) m;
+                safraNode.handleReceiveBasicMessage(origin, bm.getSequenceNumber());
+              }
+
+              try {
+                synchronizer.receiveMessage(origin, m);
+              } catch (TerminationDetectedTooEarly terminationDetectedTooEarly) {
+                experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
+                terminationDetectedTooEarly.printStackTrace();
+              }
+            }
+          }
+          break;
+        default:
+          throw new IOException(String.format("Got message of unknown type: %d", messageType.ordinal()));
+      }
+    } catch (CrashException e) {
+      // Pass
     }
   }
 

@@ -6,6 +6,7 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AwebruchClient;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -22,11 +23,11 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
   }
 
   @Override
-  public synchronized void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
+  public synchronized void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly, CrashException {
     state.handleMessage(source, m);
   }
 
-  public void startAlgorithm() throws IOException {
+  public void startAlgorithm() throws IOException, CrashException {
     state.startAlgorithm();
   }
 
@@ -35,7 +36,7 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
   }
 
   @Override
-  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException {
+  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException, CrashException {
     state.handleCrash(crashedNode);
   }
 

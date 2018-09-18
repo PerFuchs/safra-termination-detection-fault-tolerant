@@ -4,6 +4,7 @@ import ibis.ipl.*;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.chandyMisra.DistanceMessage;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashPoint;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -157,7 +158,7 @@ public class CommunicationLayer {
    * @param basicTimer used to time the basic algorithm. Is stopped while Safra processes the send event.
    *                   * @throws IOException
    */
-  public void sendDistanceMessage(DistanceMessage dm, int receiver, OurTimer basicTimer) throws IOException {
+  public void sendDistanceMessage(DistanceMessage dm, int receiver, OurTimer basicTimer) throws IOException, CrashException {
     crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     if (!crashed) {
       logger.trace(String.format("%d sending distance message to %d", getID(), receiver));
@@ -215,7 +216,7 @@ public class CommunicationLayer {
     m.finish();
   }
 
-  public void sendRequestMessage(int receiver) throws IOException {
+  public void sendRequestMessage(int receiver) throws IOException, CrashException {
     crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     if (!crashed) {
       logger.trace(String.format("%d sending request message to %d", getID(), receiver));
@@ -293,7 +294,7 @@ public class CommunicationLayer {
     this.crashSimulator = crashSimulator;
   }
 
-  public void sendMessage(int receiver, Message message, OurTimer basicTimer) throws IOException {
+  public void sendMessage(int receiver, Message message, OurTimer basicTimer) throws IOException, CrashException {
     if (message instanceof BasicMessage) {
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
       if (!crashed) {

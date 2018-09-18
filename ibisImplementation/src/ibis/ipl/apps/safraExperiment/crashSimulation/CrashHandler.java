@@ -5,5 +5,5 @@ import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationExc
 import java.io.IOException;
 
 public interface CrashHandler {
-  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException;
+  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException, CrashException;
 }

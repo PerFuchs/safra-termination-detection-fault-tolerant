@@ -5,6 +5,7 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AwebruchClient;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -57,7 +58,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   }
 
-  public void startAlgorithm() throws IOException {
+  public void startAlgorithm() throws IOException, CrashException {
     logger.debug(String.format("%04d Starting algorihtm", me));
     safra.setActive(true, "Start AKY");
     sendDataToAllNeighbours(new OurTimer());
@@ -76,6 +77,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   public void run() {
     try {
       stepLoop();
+    } catch (CrashException e) {
+      // Pass
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -89,7 +92,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     }
   }
 
-  private void stepLoop() throws IOException, InterruptedException {
+  private void stepLoop() throws IOException, InterruptedException, CrashException {
     OurTimer timer = new OurTimer();
     while (true) {
       synchronized (this) {
@@ -111,14 +114,14 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         waitingForPulse = true;
       }
       synchronizer.awaitPulse();
-      if (me==0) {
+      if (me == 0) {
         logger.debug("Pulse");
       }
       waitingForPulse = false;
     }
   }
 
-  private void setActive(boolean status, String reason) throws IOException {
+  private void setActive(boolean status, String reason) throws IOException, CrashException {
     active = status;
     safra.setActive(status, reason);
   }
@@ -326,14 +329,14 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     }
   }
 
-  private void sendDataToAllNeighbours(OurTimer timer) throws IOException {
+  private void sendDataToAllNeighbours(OurTimer timer) throws IOException, CrashException {
     for (int n : newNeighbourData.keySet()) {
       synchronizer.sendMessage(n, new AfekKuttenYungDataMessage(safra.getSequenceNumber(), ownData), timer);
     }
   }
 
   @Override
-  public synchronized void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly {
+  public synchronized void handleMessage(int source, Message m) throws IOException, TerminationDetectedTooEarly, CrashException {
     OurTimer timer = new OurTimer();
     if (terminated) {
       throw new TerminationDetectedTooEarly(String.format("%d received basic message", communicationLayer.getID()));
@@ -370,7 +373,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   @Override
-  public void handleCrash(int crashedNode) throws IOException {
+  public void handleCrash(int crashedNode) throws IOException, CrashException {
     OurTimer timer = new OurTimer();
 
     if (newNeighbourData.containsKey(crashedNode)) {

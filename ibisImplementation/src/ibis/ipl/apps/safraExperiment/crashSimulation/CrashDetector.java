@@ -18,14 +18,14 @@ public class CrashDetector {
     crashHandlers.add(ch);
   }
 
-  public synchronized void handleCrash(int crashedNode) throws IOException {
+  public synchronized void handleCrash(int crashedNode) throws IOException, CrashException {
     if (!crashedNodes.contains(crashedNode)) {
       crashedNodes.add(crashedNode);
       notifyCrashHandlers(crashedNode);
     }
   }
 
-  private void notifyCrashHandlers(int crashedNode) throws IOException {
+  private void notifyCrashHandlers(int crashedNode) throws IOException, CrashException {
     for (CrashHandler ch : crashHandlers) {
       try {
         ch.handleCrash(crashedNode);
