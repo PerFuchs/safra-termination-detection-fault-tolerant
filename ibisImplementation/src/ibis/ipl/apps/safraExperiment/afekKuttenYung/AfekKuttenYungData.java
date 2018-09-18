@@ -71,7 +71,7 @@ public class AfekKuttenYungData {
   }
 
   public String treeVariablesAsString() {
-    return String.format("Parent: %04d, Root: %04d, Distance: %04d", parent, root, distance);
+    return String.format("Parent: %04d, Root: %04d, Distance: %d", parent, root, distance);
   }
 
   public String requestVariablesAsString() {

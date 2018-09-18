@@ -17,7 +17,7 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
   private AfekKuttenYungState state;
 
   public AfekKuttenYungStateMachine(CommunicationLayer communicationLayer, Safra safra, CrashDetector crashDetector) {
-    state = new AfekKuttenYungRunningState(communicationLayer, safra, this);
+    state = new AfekKuttenYungRunningState(communicationLayer, safra, this, crashDetector);
     crashDetector.addHandler(this);
   }
 

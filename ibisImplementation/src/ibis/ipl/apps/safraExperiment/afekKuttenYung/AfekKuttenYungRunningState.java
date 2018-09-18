@@ -4,6 +4,7 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AwebruchClient;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
@@ -38,9 +39,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private boolean gotUpdatesBeforeStep = false;
 
 
-  AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine) {
+  AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine, CrashDetector crashDetector) {
     me = communicationLayer.getID();
-    synchronizer = new AlphaSynchronizer(communicationLayer, this);
+    synchronizer = new AlphaSynchronizer(communicationLayer, this, crashDetector);
 
     this.communicationLayer = communicationLayer;
     this.safra = safra;

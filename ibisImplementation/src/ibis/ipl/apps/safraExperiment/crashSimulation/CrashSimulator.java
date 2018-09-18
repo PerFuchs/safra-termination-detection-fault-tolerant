@@ -92,7 +92,7 @@ public class CrashSimulator {
       counter++;
       crashPointCounters.put(crashPoint, counter);
       if (counter == crashPoints.get(crashPoint)) {
-        logger.info(String.format("Node %d crashed on %s with %d repititions", communicationLayer.getID(), crashPoint.toString(), counter));
+        logger.info(String.format("Node %04d crashed on %s with %d repetitions", communicationLayer.getID(), crashPoint.toString(), counter));
         crash();
       }
     }

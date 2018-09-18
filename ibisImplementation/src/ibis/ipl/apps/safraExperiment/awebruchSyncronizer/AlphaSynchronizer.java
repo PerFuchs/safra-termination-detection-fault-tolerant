@@ -2,6 +2,7 @@ package ibis.ipl.apps.safraExperiment.awebruchSyncronizer;
 
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.Message;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
@@ -38,9 +39,11 @@ public class AlphaSynchronizer implements CrashHandler {
    */
   private Semaphore semaphore;
 
-  public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client) {
+  public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client, CrashDetector crashDetector) {
     this.communicationLayer = communicationLayer;
     this.client = client;
+
+    crashDetector.addHandler(this);
 
     safeMessageReceived = new HashMap<>();
     for (int neighbour : communicationLayer.getNeighbours()) {
@@ -85,7 +88,13 @@ public class AlphaSynchronizer implements CrashHandler {
 
   private void handleSafeMessage(int source, SafeMessage m) {
     if (safeMessageReceived.containsKey(source)) {
-      logger.trace(String.format("%04d got safe message from %04d", communicationLayer.getID(), source));
+      if (logger.isTraceEnabled()) {
+        StringBuilder b = new StringBuilder();
+        for (int n : safeMessageReceived.keySet()) {
+          b.append(String.format("%04d: %s, ", n, safeMessageReceived.get(n) == 0 ? "no" : "yes"));
+        }
+        logger.trace(String.format("%04d safe messages: %s", communicationLayer.getID(), b.toString()));
+      }
       int safeMessages = safeMessageReceived.get(source);
       safeMessageReceived.put(source, safeMessages + 1);
       tryEndPulse();
@@ -141,6 +150,7 @@ public class AlphaSynchronizer implements CrashHandler {
   @Override
   public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException {
     if (safeMessageReceived.containsKey(crashedNode)) {
+      logger.debug(String.format("%04d Detected crash of neighbour %04d", communicationLayer.getID(), crashedNode));
       safeMessageReceived.remove(crashedNode);
     }
 
