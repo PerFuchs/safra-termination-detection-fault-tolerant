@@ -63,4 +63,8 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
   public int getRoot() {
     return state.getRoot();
   }
+
+  public AfekKuttenYungState getState() {
+    return state;
+  }
 }

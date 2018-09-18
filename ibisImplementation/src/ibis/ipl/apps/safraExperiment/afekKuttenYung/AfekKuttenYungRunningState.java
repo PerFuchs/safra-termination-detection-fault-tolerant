@@ -55,13 +55,19 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       neighbourData.put(n, AfekKuttenYungData.getEmptyData());
       newNeighbourData.put(n, AfekKuttenYungData.getEmptyData());
     }
-
   }
 
   public void startAlgorithm() throws IOException, CrashException {
     logger.debug(String.format("%04d Starting algorihtm", me));
-    safra.setActive(true, "Start AKY");
-    sendDataToAllNeighbours(new OurTimer());
+    synchronized (this) {
+      try {
+        safra.setActive(true, "Start AKY");
+        sendDataToAllNeighbours(new OurTimer());
+      } catch (CrashException e) {
+        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
+        throw e;
+      }
+    }
     try {
       synchronizer.awaitPulse();
     } catch (InterruptedException e) {
@@ -78,11 +84,14 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     try {
       stepLoop();
     } catch (CrashException e) {
-      // Pass
+      if (!terminated) {
+        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
+      }
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
-      if (!terminated) {
+      // This thread should be interupted when AKY terminates or crashes if so don't print the stack trace.
+      if (!terminated && afekKuttenYungMachine.getState() == this) {
         e.printStackTrace();
       }
     } finally {
@@ -127,7 +136,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   // TODO remove logging statements or put them in ifs
-  private synchronized void step() throws IOException {
+  private synchronized void step() {
     if (neighbourData.keySet().contains(ownData.parent) && granted(ownData.parent)) {
       logger.trace(String.format("%04d parents grants.", me));
     }
@@ -350,7 +359,13 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
     if (!safra.crashDetected(source)) {
       timer.pause();
-      setActive(true, "Got state update");
+      try {
+        setActive(true, "Got state update");
+      } catch (CrashException e) {
+        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
+        loopThread.interrupt();
+        throw e;
+      }
       timer.start();
 
       if (!waitingForPulse) {
@@ -380,7 +395,13 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       newNeighbourData.remove(crashedNode);
 
       timer.pause();
-      setActive(true, "Crash detected");
+      try {
+        setActive(true, "Crash detected");
+      } catch (CrashException e) {
+        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
+        loopThread.interrupt();
+        throw e;
+      }
 
       experimentLogger.info(Event.getParentCrashEvent());
     }
