@@ -320,6 +320,10 @@ public class Network {
   public boolean hasEqualNodes(Network otherNetwork) {
     return this.getNodes().equals(otherNetwork.getNodes());
   }
+
+  public boolean hasNode(int node) {
+    return getNodes().contains(node);
+  }
 }
 
 

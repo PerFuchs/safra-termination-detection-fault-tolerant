@@ -7,8 +7,7 @@ import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.network.Tree;
 import org.apache.log4j.Logger;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class AfekKuttenYungVerifier {
   private static final Logger logger = Logger.getLogger(AfekKuttenYungVerifier.class);
@@ -27,17 +26,24 @@ public class AfekKuttenYungVerifier {
     logger.trace("Correct channels used");
 
     int expectedRoot = getExpectedRoot(usedNetworkTopology);
-    for (AfekKuttenYungResult r : results) {
-      if (r.root != expectedRoot) {
-        throw new IncorrectRootException();
-      }
+
+    // Check connectedness. All nodes reachable from root in the expected network have to be connected to root in the constructed network.
+    Network constructedConnectedNetwork = constructedNetwork.filterUnconnectedNodes(expectedRoot);
+    Network usedConnectedNetwork = usedNetworkTopology.filterUnconnectedNodes(expectedRoot);
+
+    if (!constructedConnectedNetwork.hasEqualNodes(usedConnectedNetwork)) {
+      throw new IncorrectTreeException();
     }
-    logger.trace("Correct root computed");
+    logger.trace("Network contains expected connected nodes");
 
-    checkIsTree(constructedNetwork, usedNetworkTopology, expectedRoot);
-    logger.trace("Correct tree computed");
+    List<AfekKuttenYungResult> connectedResults = filterUnconnectedResults(constructedConnectedNetwork, results);
 
-    checkDistanceCalculation(results, constructedNetwork, expectedRoot);
+    checkRootComputations(connectedResults, expectedRoot);
+
+    checkCycleFree(constructedConnectedNetwork, expectedRoot);
+    logger.trace("Network is tree");
+
+    checkDistanceCalculation(connectedResults, constructedNetwork, expectedRoot);
     logger.trace("Correct distance calculated");
   }
 
@@ -45,20 +51,30 @@ public class AfekKuttenYungVerifier {
     return Collections.max(expectedNetwork.getVertices());
   }
 
-  private static void checkIsTree(Network constructedNetwork, Network expectedNetwork, int root) throws IncorrectTreeException {
-    // Check connectedness. All nodes reachable from root in the expected network have to be connected to root in the constructed network.
-    Network constructedConnectedNetwork = constructedNetwork.filterUnconnectedNodes(root);
-    Network expectedConnectedNetwork = expectedNetwork.filterUnconnectedNodes(root);
-
-    if (!constructedConnectedNetwork.hasEqualNodes(expectedConnectedNetwork)) {
-      throw new IncorrectTreeException();
+  private static List<AfekKuttenYungResult> filterUnconnectedResults(Network constructedConnectedNetwork, List<AfekKuttenYungResult> results) {
+    List<AfekKuttenYungResult> connectedResults = new LinkedList<>();
+    for (AfekKuttenYungResult r : results) {
+      if (constructedConnectedNetwork.hasNode(r.node)) {
+        connectedResults.add(r);
+      }
     }
-    logger.trace("Vertices are equal");
+    return connectedResults;
+  }
 
+  private static void checkRootComputations(List<AfekKuttenYungResult> results, int expectedRoot) throws IncorrectRootException {
+    for (AfekKuttenYungResult r : results) {
+      if (r.root != expectedRoot) {
+        throw new IncorrectRootException();
+      }
+    }
+    logger.trace("Correct root computed");
+  }
+
+  private static void checkCycleFree(Network constructedConnectedNetwork, int root) throws IncorrectTreeException {
     if (constructedConnectedNetwork.hasCycle(root)) {
       throw new IncorrectTreeException();
     }
-    logger.trace("Tree has not cycle");
+    logger.trace("Tree has no cycle");
   }
 
   private static void checkDistanceCalculation(List<AfekKuttenYungResult> results, Network constructedNetwork, int root) throws IncorrectDistanceException {
