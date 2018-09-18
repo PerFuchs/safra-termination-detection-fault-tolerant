@@ -388,7 +388,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   @Override
-  public void handleCrash(int crashedNode) throws IOException, CrashException {
+  public synchronized void handleCrash(int crashedNode) throws IOException, CrashException {
     OurTimer timer = new OurTimer();
 
     if (newNeighbourData.containsKey(crashedNode)) {
