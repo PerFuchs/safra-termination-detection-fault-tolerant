@@ -224,8 +224,8 @@ class IbisNode {
   }
 
   private static void setupNetwork() {
-//    network = Network.getLineNetwork(communicationLayer);
-    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
+    network = Network.getLineNetwork(communicationLayer);
+//    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
     communicationLayer.setNetwork(network);
@@ -234,10 +234,15 @@ class IbisNode {
   }
 
   private static void setupSafra() throws IOException {
+    boolean isBasicInitiator = communicationLayer.isRoot();
+    if (basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG) {
+      isBasicInitiator = true;
+    }
+
     if (faultTolerant) {
-      safraNode = new SafraFT(communicationLayer, crashSimulator, crashDetector, communicationLayer.isRoot());
+      safraNode = new SafraFT(communicationLayer, crashSimulator, crashDetector, isBasicInitiator);
     } else {
-      safraNode = new SafraFS(communicationLayer, communicationLayer.isRoot());
+      safraNode = new SafraFS(communicationLayer, isBasicInitiator);
     }
   }
 
