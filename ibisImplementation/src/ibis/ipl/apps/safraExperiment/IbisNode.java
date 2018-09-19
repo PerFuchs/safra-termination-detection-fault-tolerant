@@ -24,6 +24,7 @@ import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
+import ibis.ipl.apps.safraExperiment.utils.DeadlockDetector;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 
 class IbisNode {
@@ -88,6 +90,9 @@ class IbisNode {
       setupBasicAlgorithm();
 
       connectIbises();
+
+      DeadlockDetector dd = new DeadlockDetector(1, TimeUnit.SECONDS);
+      dd.start();
 
       runToTermination();
 
