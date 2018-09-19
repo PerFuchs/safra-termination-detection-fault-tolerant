@@ -28,7 +28,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private Map<Integer, AfekKuttenYungData> newNeighbourData;
 
   private CommunicationLayer communicationLayer;
-  private AlphaSynchronizer synchronizer;
+  private final AlphaSynchronizer synchronizer;
   private Safra safra;
   private boolean active;
   private boolean terminated;
@@ -59,13 +59,15 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   public void startAlgorithm() throws IOException, CrashException {
     logger.debug(String.format("%04d Starting algorihtm", me));
-    synchronized (this) {
-      try {
-        safra.setActive(true, "Start AKY");
-        sendDataToAllNeighbours(new OurTimer());
-      } catch (CrashException e) {
-        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
-        throw e;
+    synchronized (synchronizer) {
+      synchronized (this) {
+        try {
+          safra.setActive(true, "Start AKY");
+          sendDataToAllNeighbours(new OurTimer());
+        } catch (CrashException e) {
+          afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
+          throw e;
+        }
       }
     }
     try {
@@ -104,23 +106,25 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private void stepLoop() throws IOException, InterruptedException, CrashException {
     OurTimer timer = new OurTimer();
     while (true) {
-      synchronized (this) {
-        timer.start();
-        copyNeighbourStates();
+      synchronized (synchronizer) {
+        synchronized (this) {
+          timer.start();
+          copyNeighbourStates();
 
-        step();
+          step();
 
-        if (changed) {
+          if (changed) {
 //          logger.trace(String.format("%04d Updating neighbours", me));
-          sendDataToAllNeighbours(timer);
-          changed = false;
+            sendDataToAllNeighbours(timer);
+            changed = false;
+          }
+          timer.stopAndCreateBasicTimeSpentEvent();
+          if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
+            setActive(false, "Step done");
+          }
+          gotUpdatesBeforeStep = false;
+          waitingForPulse = true;
         }
-        timer.stopAndCreateBasicTimeSpentEvent();
-        if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
-          setActive(false, "Step done");
-        }
-        gotUpdatesBeforeStep = false;
-        waitingForPulse = true;
       }
       logger.trace(String.format("%04d waiting", me));
       synchronizer.awaitPulse();
