@@ -112,9 +112,8 @@ public class Network {
    * Based on baseNetwork returns a network with edges so that all nodes not expected to crash stay connected with
    * expectedRoot.
    */
-  public static Network getFailSafeNetwork(Network baseNetwork, Set<Integer> nodesExpectedToCrash, int expectedRoot, int ibisCount, SynchronizedRandom synchronizedRandom) {
+  public static Network getFailSafeNetwork(Network baseNetwork, Set<Integer> nodesExpectedToCrash, int expectedRoot, SynchronizedRandom synchronizedRandom) {
     Set<Channel> failSafeChannels = new HashSet<>();
-
     Network aliveNetwork = baseNetwork.getAliveNetwork(nodesExpectedToCrash);
 
     List<Integer> unreachableVertices = aliveNetwork.getUnconnectedNodes(expectedRoot);
@@ -185,9 +184,7 @@ public class Network {
       }
       for (Channel c : network.adjancencyMap.get(node)) {
         Channel weightedChannel = new Channel(c.src, c.dest, c.getWeight() * weightMultiplier);
-        if (!adjancencyMap.get(c.src).contains(c)) {
-          adjancencyMap.get(c.src).add(weightedChannel);
-        }
+        adjancencyMap.get(c.src).add(weightedChannel);
       }
     }
     return this;
@@ -233,8 +230,20 @@ public class Network {
   }
 
   public Network getAliveNetwork(Set<Integer> crashedNodes) {
-    Map<Integer, Set<Channel>> aliveNetwork = new HashMap<>(adjancencyMap);
+    Map<Integer, Set<Channel>> aliveNetwork = new HashMap<>();
+    for (int node : adjancencyMap.keySet()) {
+      aliveNetwork.put(node, new HashSet<Channel>());
+      for (Channel c : adjancencyMap.get(node)) {
+        aliveNetwork.get(node).add(new Channel(c.src, c.dest, c.getWeight()));
+      }
+    }
+
     for (int node : crashedNodes) {
+      if (aliveNetwork.containsKey(node)) {
+        for (Channel c : aliveNetwork.get(node)) {
+          aliveNetwork.get(c.dest).remove(new Channel(c.dest, c.src, 1));
+        }
+      }
       aliveNetwork.remove(node);
     }
     return new Network(aliveNetwork);
@@ -296,6 +305,20 @@ public class Network {
 
   public boolean hasNode(int node) {
     return adjancencyMap.keySet().contains(node);
+  }
+
+  public String toString() {
+    StringBuilder b = new StringBuilder();
+    for (int node : adjancencyMap.keySet()) {
+      b.append(node);
+      b.append(": ");
+      for (Channel c : adjancencyMap.get(node)) {
+        b.append(c.dest);
+        b.append(", ");
+      }
+      b.append("\n");
+    }
+    return b.toString();
   }
 }
 

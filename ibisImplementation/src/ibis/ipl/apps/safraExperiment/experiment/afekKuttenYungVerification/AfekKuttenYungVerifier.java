@@ -80,7 +80,7 @@ public class AfekKuttenYungVerifier {
   private static void checkDistanceCalculation(List<AfekKuttenYungResult> results, Network constructedNetwork, int root) throws IncorrectDistanceException {
     Tree tree = constructedNetwork.getSinkTree(root);  // I know the network is a tree. Hence, every tree building algorithm builds the same tree
     for (AfekKuttenYungResult r : results) {
-      if (r.distance != tree.getLevel(r.node)) {
+      if (tree.hasNode(r.node) && r.distance != tree.getLevel(r.node)) {
         logger.debug(String.format("%04d has invalid weight %d but should be %d", r.node, r.distance, tree.getLevel(r.node)));
         logger.debug(tree.toString());
         throw new IncorrectDistanceException();

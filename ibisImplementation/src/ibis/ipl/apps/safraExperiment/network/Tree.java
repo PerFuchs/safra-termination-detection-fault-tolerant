@@ -171,4 +171,8 @@ public class Tree {
     return children;
   }
 
+  public boolean hasNode(int node) {
+    return nodesToParent.containsKey(node);
+  }
+
 }

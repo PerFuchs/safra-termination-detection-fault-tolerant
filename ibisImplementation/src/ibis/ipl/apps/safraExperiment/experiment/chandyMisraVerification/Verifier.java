@@ -55,7 +55,7 @@ public class Verifier {
   private static void checkDistanceCalculation(List<ChandyMisraResult> results, Network expectedNetwork, int root) throws IncorrectDistanceException {
     Tree expectedSinkTree = expectedNetwork.getSinkTree(root);
     for (ChandyMisraResult r : results) {
-      if (r.dist != expectedSinkTree.getDistance(r.node)) {
+      if (expectedSinkTree.hasNode(r.node) && r.dist != expectedSinkTree.getDistance(r.node)) {
         throw new IncorrectDistanceException();
       }
     }

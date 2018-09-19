@@ -228,8 +228,7 @@ class IbisNode {
     network = Network.getLineNetwork(communicationLayer);
 //    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
-    network = network.combineWith(Network.getFailSafeNetwork(network, crashSimulator.getCrashingNodes(), getExpectedRoot(), communicationLayer.getIbisCount(), synchronizedRandom), 40000);
-    
+    network = network.combineWith(Network.getFailSafeNetwork(network, crashSimulator.getCrashingNodes(), getExpectedRoot(), synchronizedRandom), 40000);
 
     communicationLayer.setNetwork(network);
 
@@ -241,7 +240,7 @@ class IbisNode {
       return communicationLayer.getRoot();
     } else if (basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG) {
       Set<Integer> survivingNodes = new HashSet<>();
-      for (int i=0; i < communicationLayer.getIbisCount(); i++) {
+      for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
         if (!crashSimulator.getCrashingNodes().contains(i)) {
           survivingNodes.add(i);
         }
@@ -307,7 +306,7 @@ class IbisNode {
       logger.debug(String.format("%04d Safra barrier broke", communicationLayer.getID()));
 
       totalTime.stopAndCreateTotalTimeSpentEvent();
-    } catch (InterruptedException e){
+    } catch (InterruptedException e) {
       logger.error("Termination wasn't detected in 1:30 minutes.");
       experiment.writeToErrorFile("Termination wasn't detected in 1:30 minutes.");
     }
@@ -352,4 +351,4 @@ class IbisNode {
     signalHandler.stop();
     ibis.end();
   }
- }
+}

@@ -48,7 +48,7 @@ public class OnlineExperiment extends Experiment {
   private final CommunicationLayer communicationLayer;
   private final Network network;
   private CrashSimulator crashSimulator;
-  
+
   private final BasicAlgorithms basicAlgorithmChoice;
 
   private int nodeID;
@@ -104,7 +104,6 @@ public class OnlineExperiment extends Experiment {
     }
     return ret;
   }
-
 
 
   private boolean verifyAfekKuttenYungResult(List<AfekKuttenYungResult> results, Set<Integer> crashedNodes) throws IOException {
