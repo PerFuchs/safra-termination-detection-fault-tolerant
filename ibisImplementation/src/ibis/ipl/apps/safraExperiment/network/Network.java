@@ -268,6 +268,10 @@ public class Network {
       return true;
     }
     marked.add(currentNode);
+
+    if (!adjancencyMap.containsKey(currentNode)) {
+      logger.error(String.format("%04d not in network"));
+    }
     for (Channel c : adjancencyMap.get(currentNode)) {
       if (c.dest != parent) {
         ret |= depthFirstSearch(c.dest, visited, marked, currentNode);

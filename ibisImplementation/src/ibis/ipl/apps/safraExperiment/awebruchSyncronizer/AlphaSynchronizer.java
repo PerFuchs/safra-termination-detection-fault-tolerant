@@ -126,7 +126,6 @@ public class AlphaSynchronizer implements CrashHandler {
     if (safeMessageReceived.containsKey(source)) {
       int safeMessages = safeMessageReceived.get(source);
       safeMessageReceived.put(source, safeMessages + 1);
-      tryEndPulse();
       if (logger.isTraceEnabled()) {
         StringBuilder b = new StringBuilder();
         for (int n : safeMessageReceived.keySet()) {
@@ -134,6 +133,7 @@ public class AlphaSynchronizer implements CrashHandler {
         }
         logger.trace(String.format("%04d safe messages: %s", communicationLayer.getID(), b.toString()));
       }
+      tryEndPulse();
     }
   }
 
@@ -183,7 +183,6 @@ public class AlphaSynchronizer implements CrashHandler {
     if (safeMessageReceived.isEmpty()) {
       semaphore.release();
     }
-
 
     semaphore.acquire();
     pulses++;

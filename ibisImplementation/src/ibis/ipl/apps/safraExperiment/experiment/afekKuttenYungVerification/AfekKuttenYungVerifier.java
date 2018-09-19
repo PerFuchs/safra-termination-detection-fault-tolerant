@@ -26,6 +26,7 @@ public class AfekKuttenYungVerifier {
     logger.trace("Correct channels used");
 
     int expectedRoot = getExpectedRoot(usedNetworkTopology);
+    logger.trace(String.format("expected root is %04d", expectedRoot));
 
     // Check connectedness. All nodes reachable from root in the expected network have to be connected to root in the constructed network.
     Network constructedConnectedNetwork = constructedNetwork.getConnectedSubnetwork(expectedRoot);
