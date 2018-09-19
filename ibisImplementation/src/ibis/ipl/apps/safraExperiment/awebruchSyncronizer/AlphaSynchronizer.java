@@ -137,6 +137,8 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
+
+  // TODO rename to convey this function is not idempotent at all
   private void tryEndPulse() {
     boolean allSafe = true;
     for (int safe : safeMessageReceived.values()) {
@@ -176,6 +178,12 @@ public class AlphaSynchronizer implements CrashHandler {
     if (!pulseFinished) {
       finishPulse();
     }
+
+    // No neighbours. Hence all safe messages have been received.
+    if (safeMessageReceived.isEmpty()) {
+      semaphore.release();
+    }
+
 
     semaphore.acquire();
     pulses++;
