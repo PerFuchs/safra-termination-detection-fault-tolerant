@@ -14,266 +14,240 @@ import java.util.*;
 public class Network {
   private final static Logger logger = Logger.getLogger(Network.class);
 
-  private final int nodeCount;
-  private List<Channel> channels;
+  // Adjacency map for an undirected graph. Keys: all vertices of the graph. Values: list of edges from each node.
+  private final Map<Integer, Set<Channel>> adjancencyMap;
 
   public static Network fromChandyMisraResults(List<ChandyMisraResult> results) {
-    List<Channel> channels = new LinkedList<>();
+    Set<Channel> channels = new HashSet<>();
     for (ChandyMisraResult r : results) {
       if (r.parent != -1) {
         channels.add(new Channel(r.parent, r.node, r.parentEdgeWeight));
         channels.add(new Channel(r.node, r.parent, r.parentEdgeWeight));
       }
     }
-    return new Network(channels, results.size());
+    return new Network(channels);
   }
 
   public static Network fromAfekKuttenYungResults(List<AfekKuttenYungResult> results) {
-    List<Channel> channels = new LinkedList<>();
+    Set<Channel> channels = new HashSet<>();
     for (AfekKuttenYungResult r : results) {
       if (r.parent != -1) {
         channels.add(new Channel(r.parent, r.node, 1));
         channels.add(new Channel(r.node, r.parent, 1));
       }
     }
-    return new Network(channels, results.size());
-  }
-
-  private Network(List<Channel> channels, int nodeCount) {
-    this.nodeCount = nodeCount;
-    this.channels = channels;
-  }
-
-  private static Set<Integer> getAliveNodes(int nodeCount, Set<Integer> crashedNodes) {
-    Set<Integer> aliveNodes = new HashSet<>();
-    for (int i = 0; i < nodeCount; i++) {
-      aliveNodes.add(i);
-    }
-    aliveNodes.removeAll(crashedNodes);
-    return aliveNodes;
-  }
-
-  private static List<Channel> getAliveChannels(List<Channel> channels, Set<Integer> crashedNodes) {
-    List<Channel> aliveChannels = new LinkedList<>(channels);
-    for (Channel c : channels) {
-      if (crashedNodes.contains(c.src) || crashedNodes.contains(c.dest)) {
-        aliveChannels.remove(c);
-      }
-    }
-    return aliveChannels;
-  }
-
-  public Tree getSinkTree(Set<Integer> crashedNodes) {
-    Set<Integer> crashedNodeNumbers = new HashSet<>(crashedNodes);
-    Set<Integer> aliveNodes = getAliveNodes(nodeCount, crashedNodeNumbers);
-    List<Channel> aliveChannels = getAliveChannels(channels, crashedNodeNumbers);
-    return Tree.getSinkTree(aliveChannels, 0, aliveNodes, new LinkedList<Integer>());
-  }
-
-  public Tree getSinkTree(int root) {
-    return Tree.getSinkTree(channels, root, getVertices(), new LinkedList<Integer>());
-  }
-
-  public Network combineWith(Network network, int weightMultiplier) {
-    for (Channel c : network.channels) {
-      if (!channels.contains(c)) {
-        channels.add(new Channel(c.src, c.dest, c.getWeight() * weightMultiplier));
-      }
-    }
-    return this;
-  }
-
-  public List<Integer> getNeighbours(int id) {
-    List<Integer> neighbours = new LinkedList<>();
-
-    for (Channel c : channels) {
-      if (c.src == id) {
-        neighbours.add(c.dest);
-      }
-    }
-    return neighbours;
-  }
-
-  public int getWeight(int source, int destination) {
-    return channels.get(
-        channels.indexOf(new Channel(source, destination, 0)
-        )).getWeight();
-  }
-
-  public static Network getUndirectedRing(CommunicationLayer communicationLayer) {
-    List<Channel> channels = new LinkedList<>();
-
-    for (int i = 1; i < communicationLayer.getIbisCount(); i++) {
-      channels.add(new Channel(i-1, i, 1));
-      channels.add(new Channel(i, i-1, 1));
-    }
-    channels.add(new Channel(0, communicationLayer.getIbisCount() - 1, 1));
-    channels.add(new Channel(communicationLayer.getIbisCount() - 1, 0, 1));
-    return new Network(channels, communicationLayer.getIbisCount());
-  }
-
-  public static Network getLineNetwork(CommunicationLayer communicationLayer) {
-    List<Channel> channels = new LinkedList<>();
-
-    for (int i = 0; i < communicationLayer.getIbisCount() - 1; i++) {
-      channels.add(new Channel(i+1, i, 1));
-      channels.add(new Channel(i, i+1, 1));
-    }
-
-    // Add heavyweight edges from the root to all nodes to simulate an fully connected network - because the root cannot
-    // fail this guarantees the network stays connected with arbitrary failing nodes.
-//    for (int i = 2; i < communicationLayer.getIbisCount(); i++) {
-//      channels.add(new Channel(0, i, 1000*i));  // Carefull MAX_VALUE obviously leads to overflows later on
-//      channels.add(new Channel(i, 0, 1000*i));
-//    }
-
-    return new Network(channels, communicationLayer.getIbisCount());
-  }
-
-  private static Set<Integer> connectedWith(List<Channel> channels, int node) {
-    Set<Integer> neighbour = new HashSet<>();
-    for (Channel c : channels) {
-      if (c.src == node) {
-        neighbour.add(c.dest);
-      }
-    }
-    return neighbour;
-  }
-
-  public static Network getRandomOutdegreeNetwork(CommunicationLayer communicationLayer, SynchronizedRandom synchronizedRandom, Set<Integer> nodesExpectedToCrash) {
-    List<Channel> channels = new LinkedList<>();
-
-    for (int i = 0; i < communicationLayer.getIbisCount(); i++) {
-      int outdeegree = synchronizedRandom.getInt(6);
-      if (outdeegree == 0) {
-        outdeegree = 1;
-      }
-
-      Set<Integer> connectedTo = connectedWith(channels, i);
-
-      while (connectedTo.size() <= outdeegree) {
-        int to = synchronizedRandom.getInt(communicationLayer.getIbisCount());
-        while (connectedTo.contains(to) || to == i) {
-          to = synchronizedRandom.getInt(communicationLayer.getIbisCount());
-        }
-        int weight = synchronizedRandom.getInt(50000);
-        channels.add(new Channel(i, to, weight));
-        channels.add(new Channel(to, i, weight));
-        connectedTo.add(to);
-      }
-    }
-
-    int root = communicationLayer.getRoot();
-    // Add heavyweight edges from the root to nodes that are unreachable when other nodes crash - because the root cannot
-    // fail this guarantees the network stays connected with arbitrary failing nodes.
-    List<Integer> unreachableVertices = new LinkedList<>();  // Output parameter from getSinkTree
-    Tree.getSinkTree(getAliveChannels(channels, nodesExpectedToCrash),
-        root,
-        getAliveNodes(communicationLayer.getIbisCount(), nodesExpectedToCrash),
-        unreachableVertices);
-
-    // All nodes should have the same list to pick a random element from.
-    Collections.sort(unreachableVertices);
-
-    while (!unreachableVertices.isEmpty()) {
-      unreachableVertices.removeAll(nodesExpectedToCrash);
-
-      int nodesToConnect = unreachableVertices.size() / 2;
-      if (nodesToConnect == 0) {
-        nodesToConnect = 1;
-      }
-      for (int i = 0; i < nodesToConnect; i++) {
-          int node = unreachableVertices.get(synchronizedRandom.getInt(unreachableVertices.size()));
-          unreachableVertices.remove(new Integer(node));
-          channels.add(new Channel(root, node, 400000));
-          channels.add(new Channel(node, root, 400000));
-          logger.trace(String.format("Connected %04d to 0", node));
-      }
-
-      unreachableVertices = new LinkedList<>();
-      Tree.getSinkTree(getAliveChannels(channels, nodesExpectedToCrash),
-          communicationLayer.getRoot(),
-          getAliveNodes(communicationLayer.getIbisCount(), nodesExpectedToCrash),
-          unreachableVertices);
-      Collections.sort(unreachableVertices);
-    }
-
-    return new Network(channels, communicationLayer.getIbisCount());
+    return new Network(channels);
   }
 
   public static Network fromFile(Path filePath) throws IOException {
-    List<Channel> channels = new LinkedList<>();
+    Set<Channel> channels = new HashSet<>();
 
-    boolean networkSizeLine = true;
-    int networkSize = -1;
     for (String line : Files.readAllLines(filePath, StandardCharsets.UTF_8)) {
-      if (networkSizeLine) {
-        networkSize = Integer.valueOf(line);
-        networkSizeLine = false;
-      } else {
-        channels.add(Channel.fromString(line));
-      }
+      channels.add(Channel.fromString(line));
     }
-    return new Network(channels, networkSize);
-  }
-
-  public Set<Channel> getChannels() {
-    return new HashSet<>(channels);
+    return new Network(channels);
   }
 
   public void writeToFile(Path filePath) throws IOException {
     StringBuilder network = new StringBuilder();
-    network.append(nodeCount).append('\n');
-    for (Channel c : channels) {
-      network.append(c.toString()).append('\n');
+    for (int node : adjancencyMap.keySet()) {
+      for (Channel c : adjancencyMap.get(node)) {
+        network.append(c.toString()).append('\n');
+      }
     }
 
     Files.write(filePath, network.toString().getBytes());
   }
 
-  public boolean isSuperNetworkOf(Network other) {
-    return this.channels.containsAll(other.channels);
+  public static Network getUndirectedRing(CommunicationLayer communicationLayer) {
+    Set<Channel> channels = new HashSet<>();
+
+    for (int i = 1; i < communicationLayer.getIbisCount(); i++) {
+      channels.add(new Channel(i - 1, i, 1));
+      channels.add(new Channel(i, i - 1, 1));
+    }
+    channels.add(new Channel(0, communicationLayer.getIbisCount() - 1, 1));
+    channels.add(new Channel(communicationLayer.getIbisCount() - 1, 0, 1));
+    return new Network(channels);
   }
 
-  public Set<Integer> getVertices() {
-    Set<Integer> ret = new HashSet<>();
-    for (Channel c : channels) {
-      ret.add(c.src);
-      ret.add(c.dest);
+  public static Network getLineNetwork(CommunicationLayer communicationLayer) {
+    Set<Channel> channels = new HashSet<>();
+
+    for (int i = 0; i < communicationLayer.getIbisCount() - 1; i++) {
+      channels.add(new Channel(i + 1, i, 1));
+      channels.add(new Channel(i, i + 1, 1));
     }
 
-    return ret;
+    return new Network(channels);
   }
 
+  public static Network getRandomOutdegreeNetwork(int ibisCount, SynchronizedRandom synchronizedRandom) {
+    Map<Integer, Set<Channel>> adjacenyMap = new HashMap<>();
 
-  public Network getAliveNetwork(Set<Integer> crashedNodes) {
-    return new Network(getAliveChannels(this.channels, crashedNodes), nodeCount - crashedNodes.size());
-  }
+    for (int i = 0; i < ibisCount; i++) {
+      int outdeegree = synchronizedRandom.getInt(6);
+      if (outdeegree == 0) {
+        outdeegree = 1;
+      }
 
-  public Tree getBFSTree(int root) {
-    return Tree.getBFSTree(this, root);
-  }
+      Set<Integer> connectedTo = getNeighbours(adjacenyMap, i);
 
-
-  private static Set<Channel> channelsFrom(List<Channel> channels, int node) {
-    Set<Channel> ret = new HashSet<>();
-    for (Channel c : channels) {
-      if (c.src == node) {
-        ret.add(c);
+      while (connectedTo.size() <= outdeegree) {
+        int to = synchronizedRandom.getInt(ibisCount);
+        while (connectedTo.contains(to) || to == i) {
+          to = synchronizedRandom.getInt(ibisCount);
+        }
+        int weight = synchronizedRandom.getInt(50000);
+        adjacenyMap.get(i).add(new Channel(i, to, weight));
+        adjacenyMap.get(to).add(new Channel(to, i, weight));
+        connectedTo.add(to);
       }
     }
-    return ret;
-  }
 
-  public boolean hasCycle(int root) {
-      return depthFirstSearch(root, new HashSet<Integer>(), new HashSet<Integer>(), -1);
+    return new Network(adjacenyMap);
   }
 
   /**
-   *
+   * Based on baseNetwork returns a network with edges so that all nodes not expected to crash stay connected with
+   * expectedRoot.
+   */
+  public static Network getFailSafeNetwork(Network baseNetwork, Set<Integer> nodesExpectedToCrash, int expectedRoot, int ibisCount, SynchronizedRandom synchronizedRandom) {
+    Set<Channel> failSafeChannels = new HashSet<>();
+
+    Network aliveNetwork = baseNetwork.getAliveNetwork(nodesExpectedToCrash);
+
+    List<Integer> unreachableVertices = aliveNetwork.getUnconnectedNodes(expectedRoot);
+
+    // All nodes should have the same list to pick a random element from.
+    Collections.sort(unreachableVertices);
+
+    while (!unreachableVertices.isEmpty()) {
+      int nodesToConnect = unreachableVertices.size() / 2;
+      if (nodesToConnect == 0) {
+        nodesToConnect = 1;
+      }
+
+      for (int i = 0; i < nodesToConnect; i++) {
+        int node = unreachableVertices.get(synchronizedRandom.getInt(unreachableVertices.size()));
+        unreachableVertices.remove(new Integer(node));
+
+        Channel c = new Channel(expectedRoot, node, 1);
+        aliveNetwork.adjancencyMap.get(expectedRoot).add(c);
+        failSafeChannels.add(c);
+
+        c = new Channel(node, expectedRoot, 1);
+        aliveNetwork.adjancencyMap.get(node).add(c);
+        failSafeChannels.add(c);
+        logger.trace(String.format("Connected %04d to 0", node));
+      }
+
+      unreachableVertices = aliveNetwork.getUnconnectedNodes(expectedRoot);
+      Collections.sort(unreachableVertices);
+    }
+
+    logger.trace(String.format("Fail safe channels: %d", failSafeChannels.size()));
+
+    return new Network(failSafeChannels);
+  }
+
+
+  private static Set<Integer> getNeighbours(Map<Integer, Set<Channel>> adjancencyMap, int node) {
+    Set<Integer> neighbours = new HashSet<>();
+    for (Channel c : adjancencyMap.get(node)) {
+      neighbours.add(c.dest);
+    }
+    return neighbours;
+  }
+
+  private Network(Map<Integer, Set<Channel>> network) {
+    adjancencyMap = network;
+  }
+
+  private Network(Set<Channel> channels) {
+    adjancencyMap = new HashMap<>();
+    for (Channel c : channels) {
+      if (!adjancencyMap.containsKey(c.src)) {
+        adjancencyMap.put(c.src, new HashSet<Channel>());
+      }
+      adjancencyMap.get(c.src).add(c);
+    }
+  }
+
+  public Tree getSinkTree(int root) {
+    return Tree.getSinkTree(this.adjancencyMap, root);
+  }
+
+  public Network combineWith(Network network, int weightMultiplier) {
+    for (int node : network.adjancencyMap.keySet()) {
+      if (!adjancencyMap.containsKey(node)) {
+        adjancencyMap.put(node, new HashSet<Channel>());
+      }
+      for (Channel c : network.adjancencyMap.get(node)) {
+        Channel weightedChannel = new Channel(c.src, c.dest, c.getWeight() * weightMultiplier);
+        if (!adjancencyMap.get(c.src).contains(c)) {
+          adjancencyMap.get(c.src).add(weightedChannel);
+        }
+      }
+    }
+    return this;
+  }
+
+  public Set<Integer> getNeighbours(int id) {
+    Set<Integer> neighbours = new HashSet<>();
+
+    for (Channel c : adjancencyMap.get(id)) {
+      neighbours.add(c.dest);
+    }
+    return neighbours;
+  }
+
+  public Channel getChannel(int source, int destination) {
+    for (Channel c : adjancencyMap.get(source)) {
+      if (c.dest == destination) {
+        return c;
+      }
+    }
+    throw new IllegalArgumentException("Requested noneexistent channel");
+  }
+
+  public int getWeight(int source, int destination) {
+    return getChannel(source, destination).getWeight();
+  }
+
+  public boolean isSuperNetworkOf(Network other) {
+    if (!this.adjancencyMap.keySet().containsAll(other.adjancencyMap.keySet())) {
+      return false;
+    }
+
+    for (int node : other.adjancencyMap.keySet()) {
+      if (!this.adjancencyMap.get(node).containsAll(other.adjancencyMap.get(node))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public Set<Integer> getVertices() {
+    return adjancencyMap.keySet();
+  }
+
+  public Network getAliveNetwork(Set<Integer> crashedNodes) {
+    Map<Integer, Set<Channel>> aliveNetwork = new HashMap<>(adjancencyMap);
+    for (int node : crashedNodes) {
+      aliveNetwork.remove(node);
+    }
+    return new Network(aliveNetwork);
+  }
+
+  public boolean hasCycle(int root) {
+    return depthFirstSearch(root, new HashSet<Integer>(), new HashSet<Integer>(), -1);
+  }
+
+  /**
    * @param currentNode node to start search from
-   * @param visited output parameter, will contain all nodes visited
-   * @param marked for internal use, initialize with an empty set
+   * @param visited     output parameter, will contain all nodes visited
+   * @param marked      for internal use, initialize with an empty set
    * @ret true if a cycle was detected, false otherwise
    */
   private boolean depthFirstSearch(int currentNode, Set<Integer> visited, Set<Integer> marked, int parent) {
@@ -285,44 +259,43 @@ public class Network {
       return true;
     }
     marked.add(currentNode);
-    for (Channel c : channelsFrom(channels, currentNode)) {
+    for (Channel c : adjancencyMap.get(currentNode)) {
       if (c.dest != parent) {
         ret |= depthFirstSearch(c.dest, visited, marked, currentNode);
       }
-      }
+    }
     visited.add(currentNode);
     return ret;
   }
 
-  public Network filterUnconnectedNodes(int root) {
+  public List<Integer> getUnconnectedNodes(int root) {
+    Set<Integer> connectedNodes = new HashSet<>();
+    depthFirstSearch(root, connectedNodes, new HashSet<Integer>(), -1);
+    List<Integer> unconnectedNodes = new LinkedList<>(adjancencyMap.keySet());
+    unconnectedNodes.removeAll(connectedNodes);
+    return unconnectedNodes;
+  }
+
+  public Network getConnectedSubnetwork(int root) {
     Set<Integer> reachableNodes = new HashSet<>();
     depthFirstSearch(root, reachableNodes, new HashSet<Integer>(), -1);
 
-    List<Channel> newChannels = new LinkedList<>();
-    for (Channel c : channels) {
-      if (reachableNodes.contains(c.src) && reachableNodes.contains(c.dest)) {
-        newChannels.add(new Channel(c.src, c.dest, c.getWeight()));
+    Map<Integer, Set<Channel>> reachableNetwork = new HashMap<>();
+    for (int node : adjancencyMap.keySet()) {
+      if (reachableNodes.contains(node)) {
+        reachableNetwork.put(node, new HashSet<Channel>(adjancencyMap.get(node)));
       }
     }
 
-    return new Network(newChannels, reachableNodes.size());
-  }
-
-  private Set<Integer> getNodes() {
-    Set<Integer> nodes = new HashSet<>();
-    for (Channel c : channels) {
-      nodes.add(c.src);
-      nodes.add(c.dest);
-    }
-    return nodes;
+    return new Network(reachableNetwork);
   }
 
   public boolean hasEqualNodes(Network otherNetwork) {
-    return this.getNodes().equals(otherNetwork.getNodes());
+    return adjancencyMap.keySet().equals(otherNetwork.adjancencyMap.keySet());
   }
 
   public boolean hasNode(int node) {
-    return getNodes().contains(node);
+    return adjancencyMap.keySet().contains(node);
   }
 }
 

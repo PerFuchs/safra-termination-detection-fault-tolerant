@@ -34,6 +34,7 @@ import org.apache.log4j.*;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -227,10 +228,28 @@ class IbisNode {
     network = Network.getLineNetwork(communicationLayer);
 //    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
+    network = network.combineWith(Network.getFailSafeNetwork(network, crashSimulator.getCrashingNodes(), getExpectedRoot(), communicationLayer.getIbisCount(), synchronizedRandom), 40000);
+    
 
     communicationLayer.setNetwork(network);
 
     logger.trace("Constructed network");
+  }
+
+  private static int getExpectedRoot() {
+    if (basicAlgorithmChoice == BasicAlgorithms.CHANDY_MISRA) {
+      return communicationLayer.getRoot();
+    } else if (basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG) {
+      Set<Integer> survivingNodes = new HashSet<>();
+      for (int i=0; i < communicationLayer.getIbisCount(); i++) {
+        if (!crashSimulator.getCrashingNodes().contains(i)) {
+          survivingNodes.add(i);
+        }
+      }
+      return Collections.max(survivingNodes);
+    } else {
+      throw new IllegalStateException("Unknown basic algorithm");
+    }
   }
 
   private static void setupSafra() throws IOException {

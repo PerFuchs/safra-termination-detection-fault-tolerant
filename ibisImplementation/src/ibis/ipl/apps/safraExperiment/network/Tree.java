@@ -12,55 +12,6 @@ public class Tree {
   private Map<Integer, Integer> nodesToParent;
   private Map<Integer, Integer> distancesToParent;
 
-  public static Tree getBFSTree(Network network, int root) {
-    LinkedList<Channel> work = new LinkedList<>();
-    Set<Integer> visited = new HashSet<>();
-
-    Set<Channel> allChannels = new HashSet<>(network.getChannels());
-    for (Channel c : channelsFrom(allChannels, root)) {
-      work.offerFirst(c);
-    }
-    allChannels.removeAll(work);
-    visited.add(root);
-
-    Map<Integer, Integer> parents = new HashMap<>();
-    Map<Integer, Integer> distancesToParent = new HashMap<>();
-    while (!work.isEmpty()) {
-      Channel current = work.pollLast();
-      if (!visited.contains(current.dest)) {
-        logger.debug(String.format("Current: %04d", current.dest));
-
-        parents.put(current.dest, current.src);
-        distancesToParent.put(current.dest, current.getWeight());
-
-        for (Channel c : channelsFrom(allChannels, current.dest)) {
-          if (!visited.contains(c.dest)) {
-            work.offerFirst(c);
-          }
-        }
-        allChannels.removeAll(work);
-        visited.add(current.dest);
-      }
-  }
-
-    logger.debug(String.format("Root %04d", root));
-    for (int n : parents.keySet()) {
-      logger.debug(String.format("%04d --> %04d", n, parents.get(n)));
-    }
-
-    return new Tree(root, parents, distancesToParent);
-  }
-
-  private static Set<Channel> channelsFrom(Set<Channel> channels, int node) {
-    Set<Channel> ret = new HashSet<>();
-    for (Channel c : channels) {
-      if (c.src == node) {
-        ret.add(c);
-      }
-    }
-    return ret;
-  }
-
   /**
    * Used as items for the PriorityQueue of a Dijkstra shortest path implementation.
    */
@@ -103,28 +54,10 @@ public class Tree {
     }
   }
 
-  /**
-   * Uses Dijkstra shortest path algorithm to compute a sink tree.
-   *
-   * @param channels            All available channels
-   * @param root                Root node of the sink tree
-   * @param vertices            The node ID's. These do not have to be consecutive
-   * @param unreachableVertices Output parameter if this methods returns null unreachableVertices will contain
-   *                            all vertices that aren't reachable from root.
-   * @return A shortest path sink tree to root or NULL if the graph is not connected.
-   */
-  public static Tree getSinkTree(List<Channel> channels, int root, Set<Integer> vertices, List<Integer> unreachableVertices) {
-    Map<Integer, List<Channel>> adjacencyGraph = new HashMap<>();
-    for (int v : vertices) {
-      adjacencyGraph.put(v, new LinkedList<Channel>());
-    }
-    for (Channel c : channels) {
-      adjacencyGraph.get(c.src).add(c);
-    }
-
+  public static Tree getSinkTree( Map<Integer, Set<Channel>> adjacencyGraph, int root) {
     PriorityQueue<NodeDistancePair> unvisitedVertices = new PriorityQueue<>();  // Used to find the node with lowest distance to root.
     Map<Integer, Integer> distances = new HashMap<>();  // Used to find distance of a node
-    for (int v : vertices) {
+    for (int v : adjacencyGraph.keySet()) {
       int distance = Integer.MAX_VALUE;
       if (root == v) {
         distance = 0;
@@ -132,6 +65,7 @@ public class Tree {
       unvisitedVertices.offer(new NodeDistancePair(distance, v));
       distances.put(v, distance);
     }
+
     Map<Integer, Integer> parents = new HashMap<>();
     Map<Integer, Integer> distancesToParent = new HashMap<>();
 
@@ -150,15 +84,6 @@ public class Tree {
       }
     }
 
-    if (distances.values().contains(Integer.MAX_VALUE)) {
-      for (int node : distances.keySet()) {
-        if (distances.get(node) == Integer.MAX_VALUE) {
-          unreachableVertices.add(node);
-        }
-      }
-      logger.debug("Some vertices cannot be reached via this sink tree");
-    }
-
     return new Tree(root, parents, distancesToParent);
   }
 
@@ -166,10 +91,6 @@ public class Tree {
     this.root = root;
     this.nodesToParent = parents;
     this.distancesToParent = distancesToParent;
-  }
-
-  public boolean hasEqualVerticesWith(Tree other) {
-    return nodesToParent.keySet().equals(other.nodesToParent.keySet()) && root == other.root;
   }
 
   public Map<Integer, Set<Integer>> getLevels() {
@@ -198,10 +119,6 @@ public class Tree {
       parent = nodesToParent.get(parent);
     }
     return distance;
-  }
-
-  public boolean hasEqualLevels(Tree other) {
-    return getLevels().equals(other.getLevels());
   }
 
   public int getDistance(int node) {

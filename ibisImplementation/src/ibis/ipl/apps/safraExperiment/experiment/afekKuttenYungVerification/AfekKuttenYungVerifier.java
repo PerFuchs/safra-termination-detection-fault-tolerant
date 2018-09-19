@@ -28,8 +28,8 @@ public class AfekKuttenYungVerifier {
     int expectedRoot = getExpectedRoot(usedNetworkTopology);
 
     // Check connectedness. All nodes reachable from root in the expected network have to be connected to root in the constructed network.
-    Network constructedConnectedNetwork = constructedNetwork.filterUnconnectedNodes(expectedRoot);
-    Network usedConnectedNetwork = usedNetworkTopology.filterUnconnectedNodes(expectedRoot);
+    Network constructedConnectedNetwork = constructedNetwork.getConnectedSubnetwork(expectedRoot);
+    Network usedConnectedNetwork = usedNetworkTopology.getConnectedSubnetwork(expectedRoot);
 
     if (!constructedConnectedNetwork.hasEqualNodes(usedConnectedNetwork)) {
       throw new IncorrectTreeException();
@@ -78,7 +78,7 @@ public class AfekKuttenYungVerifier {
   }
 
   private static void checkDistanceCalculation(List<AfekKuttenYungResult> results, Network constructedNetwork, int root) throws IncorrectDistanceException {
-    Tree tree = constructedNetwork.getBFSTree(root);  // I already checked if it is a tree. Therefore, any tree building algorithm builds the same tree.
+    Tree tree = constructedNetwork.getSinkTree(root);  // I know the network is a tree. Hence, every tree building algorithm builds the same tree
     for (AfekKuttenYungResult r : results) {
       if (r.distance != tree.getLevel(r.node)) {
         logger.debug(String.format("%04d has invalid weight %d but should be %d", r.node, r.distance, tree.getLevel(r.node)));
