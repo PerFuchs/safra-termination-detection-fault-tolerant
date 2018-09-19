@@ -209,24 +209,4 @@ public class OnlineExperiment extends Experiment {
     experimentLogger.removeAppender(experimentAppenderName);
     logger.trace(String.format("%04d finalized experiment logger.", communicationLayer.getID()));
   }
-
-  public void printNetworkStatistics(Network network) throws IOException {
-    Tree constructedTree = null;
-    if (basicAlgorithmChoice == BasicAlgorithms.CHANDY_MISRA) {
-      constructedTree = network.getSinkTree(getSafraStatistics().getCrashedNodes());
-    } else {
-//      constructedTree = network.getBFSTree()
-    }
-    Set<Channel> networkChannels = network.getChannels();
-
-    logger.info(String.format("Network Statistics: Number of channels %d", networkChannels.size()));
-
-    Map<Integer, Set<Integer>> levels = constructedTree.getLevels();
-    logger.info(String.format("Tree Statistics: Has %d levels", levels.size()));
-    for (int level : levels.keySet()) {
-      logger.info(String.format("Level %d has %d nodes", level, levels.get(level).size()));
-    }
-  }
-
-
 }

@@ -84,7 +84,7 @@ public class CommunicationLayer {
     setupGeneralReceivePort(chandyMisraNode, safraNode, crashDetector, barrierFactory);
     setupCrashReceivePort(chandyMisraNode, safraNode, crashDetector, barrierFactory);
 
-    List<Integer> neighbours = network.getNeighbours(getID());
+    Set<Integer> neighbours = network.getNeighbours(getID());
     for (int i : neighbours) {
       String name = getReceivePortName(i);
 
@@ -315,7 +315,7 @@ public class CommunicationLayer {
     }
   }
 
-  public List<Integer> getNeighbours() {
+  public Set<Integer> getNeighbours() {
     return network.getNeighbours(this.getID());
   }
 

@@ -28,6 +28,19 @@ public class Verifier {
   }
 
   private static void checkTree(Network constructedNetwork, Network expectedNetwork, int root) throws IncorrectTreeException {
+    Network connectedConstructedNetwork = constructedNetwork.getConnectedSubnetwork(root);
+    Network connectedExpectedNetwork = expectedNetwork.getConnectedSubnetwork(root);
+
+    if (!connectedConstructedNetwork.hasEqualNodes(connectedExpectedNetwork)) {
+      logger.error("Constructed tree does not contain all nodes");
+      throw new IncorrectTreeException();
+    }
+
+    if (connectedConstructedNetwork.hasCycle(root)) {
+      logger.error("Constructed tree has cycle");
+      throw new IncorrectTreeException();
+    }
+
     Tree expectedSinkTree = expectedNetwork.getSinkTree(root);
     Tree constructedSinkTree = constructedNetwork.getSinkTree(root);
     if (!expectedSinkTree.equals(constructedSinkTree)) {
