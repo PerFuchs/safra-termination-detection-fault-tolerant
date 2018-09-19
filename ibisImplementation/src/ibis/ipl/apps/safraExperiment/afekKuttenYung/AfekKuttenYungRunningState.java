@@ -105,33 +105,47 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private void stepLoop() throws IOException, InterruptedException, CrashException {
     OurTimer timer = new OurTimer();
-    while (true) {
-      synchronized (synchronizer) {
-        synchronized (this) {
-          timer.start();
-          copyNeighbourStates();
+    try {
+      while (true) {
+        synchronized (synchronizer) {
+          synchronized (this) {
+            if (neighbourData.isEmpty()) {
+              throw new NoNeighbourLeftException();
+            }
 
-          step();
+            timer.start();
+            copyNeighbourStates();
 
-          if (changed) {
-//          logger.trace(String.format("%04d Updating neighbours", me));
-            sendDataToAllNeighbours(timer);
+            step();
+
+            if (changed) {
+              sendDataToAllNeighbours(timer);
+            }
+            timer.stopAndCreateBasicTimeSpentEvent();
+            if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
+              setActive(false, "Step done");
+              if (!changed && neighbourData.isEmpty()) {
+                break;
+              }
+            } else {
+              logger.trace(String.format("Updatebeforestep: %b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling)", gotUpdatesBeforeStep, iAmRoot(), notHandling(), maxRoot(), notHandling()));
+            }
             changed = false;
+            gotUpdatesBeforeStep = false;
+            waitingForPulse = true;
           }
-          timer.stopAndCreateBasicTimeSpentEvent();
-          if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
-            setActive(false, "Step done");
-          }
-          gotUpdatesBeforeStep = false;
-          waitingForPulse = true;
         }
+        logger.trace(String.format("%04d waiting", me));
+        synchronizer.awaitPulse();
+        waitingForPulse = false;
       }
-      logger.trace(String.format("%04d waiting", me));
-      synchronizer.awaitPulse();
-      if (me == 0) {
-        logger.debug("Pulse");
-      }
+    } catch (NoNeighbourLeftException e) {
+      becomeRoot();
+      resetRequest();
+      changed = false;
+      gotUpdatesBeforeStep = false;
       waitingForPulse = false;
+      setActive(false, "No neighbours left");
     }
   }
 
@@ -430,5 +444,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   public AlphaSynchronizer getSynchronizer() {
     return synchronizer;
+  }
+
+  private class NoNeighbourLeftException extends Exception {
   }
 }
