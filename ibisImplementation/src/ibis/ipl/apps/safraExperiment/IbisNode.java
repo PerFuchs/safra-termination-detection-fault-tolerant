@@ -219,8 +219,8 @@ class IbisNode {
   }
 
   private static void setupNetwork() {
-    network = Network.getLineNetwork(communicationLayer);
-//    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
+//    network = Network.getLineNetwork(communicationLayer);
+    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
 
     communicationLayer.setNetwork(network);

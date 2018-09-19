@@ -122,6 +122,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         gotUpdatesBeforeStep = false;
         waitingForPulse = true;
       }
+      logger.trace(String.format("%04d waiting", me));
       synchronizer.awaitPulse();
       if (me == 0) {
         logger.debug("Pulse");

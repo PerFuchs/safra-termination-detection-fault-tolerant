@@ -60,11 +60,11 @@ public class AlphaSynchronizer implements CrashHandler {
     prepareNextPulse();
   }
 
-  public void sendMessage(int destination, Message m, OurTimer timer) throws IOException, CrashException {
+  public synchronized void sendMessage(int destination, Message m, OurTimer timer) throws IOException, CrashException {
     if (pulseFinished) {
       throw new IllegalStateException("Client tried to send message after declaring pulse finished");
     }
-
+    logger.trace(String.format("%04d sends message to %04d", communicationLayer.getID(), destination));
     increaseMessageCounter(destination);
 
     communicationLayer.sendMessage(destination, m, timer);
@@ -76,13 +76,14 @@ public class AlphaSynchronizer implements CrashHandler {
     } else if (m instanceof SafeMessage) {
       handleSafeMessage(source, (SafeMessage) m);
     } else {
+      logger.trace(String.format("%04d got message from %04d", communicationLayer.getID(), source));
       communicationLayer.sendMessage(source, new AckMessage(), new OurTimer());
       client.handleMessage(source, m);
     }
   }
 
   private void handleAckMessage(int source, AckMessage m) throws IOException, CrashException {
-    logger.trace(String.format("%04d received ack message. pulse finished %b", communicationLayer.getID(), pulseFinished));
+    logger.trace(String.format("%04d received ack message from %04d. pulse finished %b", communicationLayer.getID(), source, pulseFinished));
 
     increaseAckCounter(source);
 
@@ -123,6 +124,9 @@ public class AlphaSynchronizer implements CrashHandler {
 
   private void handleSafeMessage(int source, SafeMessage m) {
     if (safeMessageReceived.containsKey(source)) {
+      int safeMessages = safeMessageReceived.get(source);
+      safeMessageReceived.put(source, safeMessages + 1);
+      tryEndPulse();
       if (logger.isTraceEnabled()) {
         StringBuilder b = new StringBuilder();
         for (int n : safeMessageReceived.keySet()) {
@@ -130,9 +134,6 @@ public class AlphaSynchronizer implements CrashHandler {
         }
         logger.trace(String.format("%04d safe messages: %s", communicationLayer.getID(), b.toString()));
       }
-      int safeMessages = safeMessageReceived.get(source);
-      safeMessageReceived.put(source, safeMessages + 1);
-      tryEndPulse();
     }
   }
 
@@ -151,9 +152,15 @@ public class AlphaSynchronizer implements CrashHandler {
   }
 
   private void sendSafeMessageToAllNeighbours() throws IOException, CrashException {
+    StringBuilder b = new StringBuilder();
+
     for (int i : safeMessageReceived.keySet()) {
+      b.append(i);
+      b.append(", ");
       communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
     }
+    logger.trace(String.format("%04d sends safe message to: %s", communicationLayer.getID(), b.toString()));
+
     semaphore.release();
   }
 
@@ -188,7 +195,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
 
   @Override
-  public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException, CrashException {
+  public synchronized void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException, CrashException {
     if (safeMessageReceived.containsKey(crashedNode)) {
       logger.debug(String.format("%04d Detected crash of neighbour %04d", communicationLayer.getID(), crashedNode));
       safeMessageReceived.remove(crashedNode);
