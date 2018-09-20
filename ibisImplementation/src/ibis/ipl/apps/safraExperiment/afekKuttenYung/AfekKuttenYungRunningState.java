@@ -123,12 +123,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             }
             timer.stopAndCreateBasicTimeSpentEvent();
             if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
-              setActive(false, "Step done");
-              if (!changed && neighbourData.isEmpty()) {
-                break;
+              if (active) {
+                setActive(false, "Step done");
               }
             } else {
-              logger.trace(String.format("Updatebeforestep: %b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling)", gotUpdatesBeforeStep, iAmRoot(), notHandling(), maxRoot(), notHandling()));
+              logger.trace(String.format("%04d Updatebeforestep: %b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling)", me, gotUpdatesBeforeStep, iAmRoot(), notHandling(), maxRoot(), notHandling()));
             }
             changed = false;
             gotUpdatesBeforeStep = false;
@@ -214,10 +213,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         logger.trace(String.format("%04d Parent state: %s", me, neighbourData.keySet().contains(ownData.parent) ? neighbourData.get(ownData.parent).toString() : ""));
       }
     }
-
-    if (logger.isDebugEnabled()) {
-      logger.debug(String.format("%04d: %s", me, ownData.toString()));
-    }
+    logger.trace(String.format("%04d: %s", me, ownData.toString()));
   }
 
   private void handleFor(int requestBy) {
