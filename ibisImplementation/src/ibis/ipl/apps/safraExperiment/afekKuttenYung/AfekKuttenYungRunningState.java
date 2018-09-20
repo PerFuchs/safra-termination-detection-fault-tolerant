@@ -59,6 +59,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   public void startAlgorithm() throws IOException, CrashException {
     logger.debug(String.format("%04d Starting algorihtm", me));
+    loopThread = new Thread(this);
+    loopThread.start();
+  }
+
+  private void startup() throws IOException, CrashException {
     synchronized (synchronizer) {
       synchronized (this) {
         try {
@@ -72,18 +77,16 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     }
     try {
       synchronizer.awaitPulse();
+      logger.trace(String.format("%04d finished first pulse", me));
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    logger.trace(String.format("%04d finished first pulse", me));
-
-    loopThread = new Thread(this);
-    loopThread.start();
   }
 
   @Override
   public void run() {
     try {
+      startup();
       stepLoop();
     } catch (CrashException e) {
       if (!terminated) {
