@@ -200,7 +200,7 @@ public class AlphaSynchronizer implements CrashHandler {
     }
 
     if (!semaphore.tryAcquire(30, TimeUnit.SECONDS)) {
-      logger.error("%04d seems to be blocked waiting for a pulse");
+      logger.error(String.format("%04d seems to be blocked waiting for a pulse", communicationLayer.getID()));
       semaphore.acquire();
     }
     pulses++;
