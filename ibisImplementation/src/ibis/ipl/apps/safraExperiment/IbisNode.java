@@ -30,6 +30,7 @@ import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
 import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
+import ibis.ipl.apps.safraExperiment.utils.barrier.SignalledBarrier;
 import org.apache.log4j.*;
 
 import java.io.IOException;
@@ -176,6 +177,7 @@ class IbisNode {
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
     Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
+    Logger.getLogger(SignalledBarrier.class).setLevel(Level.TRACE);
     Logger.getLogger(Tree.class).setLevel(Level.TRACE);
   }
 
@@ -224,8 +226,8 @@ class IbisNode {
   }
 
   private static void setupNetwork() {
-    network = Network.getLineNetwork(communicationLayer);
-//    network = Network.getRandomOutdegreeNetwork(communicationLayer, synchronizedRandom, crashSimulator.getCrashingNodes());
+//    network = Network.getLineNetwork(communicationLayer);
+    network = Network.getRandomOutdegreeNetwork(communicationLayer.getIbisCount(), synchronizedRandom);
     network = network.combineWith(Network.getUndirectedRing(communicationLayer), 100000);
     network = network.combineWith(Network.getFailSafeNetwork(network, crashSimulator.getCrashingNodes(), getExpectedRoot(), synchronizedRandom), 40000);
 
@@ -302,7 +304,9 @@ class IbisNode {
       OurTimer totalTime = new OurTimer();
 
       try {
+        logger.trace(String.format("%04d Starting safra", communicationLayer.getID()));
         safraNode.startAlgorithm();
+        logger.trace(String.format("%04d Starting basic algorithm", communicationLayer.getID()));
         basicAlgorithm.startAlgorithm();
       } catch (CrashException e) {
         // Pass

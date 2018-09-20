@@ -3,6 +3,7 @@ package ibis.ipl.apps.safraExperiment.utils.barrier;
 import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.IbisSignal;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -16,6 +17,8 @@ import java.util.concurrent.CountDownLatch;
  * break the barrier.
  */
 public class SignalledBarrier implements Barrier {
+  private final static Logger logger = Logger.getLogger(SignalledBarrier.class);
+
   private String name;
   private CountDownLatch barrier;
   private CommunicationLayer communicationLayer;
@@ -38,17 +41,20 @@ public class SignalledBarrier implements Barrier {
 
   public void await() throws InterruptedException, IOException {
     if (!communicationLayer.isRoot()) {
+      logger.debug(String.format("%04d sends signal for %s", communicationLayer.getID(), name));
       IbisSignal.signal(registry,
           Collections.singletonList(communicationLayer.getIbisIdentifier(communicationLayer.getRoot())),
           new IbisSignal("barrier", name));
     }
     barrier.await();
     if (communicationLayer.isRoot()) {
+      logger.debug(String.format("%04d sends signal for %s", communicationLayer.getID(), name));
       IbisSignal.signal(registry,
           communicationLayer.getOtherIbises(),
           new IbisSignal("barrier", name));
 
     }
+    logger.info(String.format("%04d broke barrier %s", communicationLayer.getID(), name));
     barrier = new CountDownLatch(getBarrierSize());
   }
 
