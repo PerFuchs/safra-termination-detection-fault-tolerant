@@ -8,6 +8,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
+import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * An Awebruch's Alpha Synchronizer as described in "Distributed Algorithms an intuitive approach" by Wan Fokkink.
- *
+ * <p>
  * Slightly changed to only release a process into the next pulse when its received safe messages from all neighbours
  * AND received all ACK messages for this pulse.
  */

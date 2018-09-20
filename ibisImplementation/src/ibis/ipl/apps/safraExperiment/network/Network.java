@@ -270,7 +270,7 @@ public class Network {
     marked.add(currentNode);
 
     if (!adjancencyMap.containsKey(currentNode)) {
-      logger.error(String.format("%04d not in network"));
+      logger.error(String.format("%04d not in network", currentNode));
     }
     for (Channel c : adjancencyMap.get(currentNode)) {
       if (c.dest != parent) {
