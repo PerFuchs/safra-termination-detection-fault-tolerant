@@ -38,6 +38,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private boolean waitingForPulse = false;
   private boolean gotUpdatesBeforeStep = false;
+  private int noChangeCounter;
 
 
   AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine, CrashDetector crashDetector) {
@@ -115,6 +116,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
             if (ownStateChanged) {
               sendDataToAllNeighbours(timer);
+              noChangeCounter = 0;
+            } else {
+              noChangeCounter++;
             }
             timer.stopAndCreateBasicTimeSpentEvent();
 
@@ -129,6 +133,10 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             ownStateChanged = false;
             gotUpdatesBeforeStep = false;
             waitingForPulse = true;
+
+            if (!notHandling() && noChangeCounter > communicationLayer.getIbisCount() + 2) {
+              logger.error(String.format("%04d waits for a request to be fulfilled. Request: %d. State: %s", communicationLayer.getID(), ownData.req, ownData.toString()));
+            }
           }
         }
         logger.trace(String.format("%04d Waiting for pulse", me));

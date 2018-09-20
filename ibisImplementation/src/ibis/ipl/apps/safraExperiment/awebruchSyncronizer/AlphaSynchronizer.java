@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An Awebruch's Alpha Synchronizer as described in "Distributed Algorithms an intuitive approach" by Wan Fokkink.
@@ -198,11 +199,16 @@ public class AlphaSynchronizer implements CrashHandler {
       semaphore.release();
     }
 
-    semaphore.acquire();
+    if (!semaphore.tryAcquire(30, TimeUnit.SECONDS)) {
+      logger.error("%04d seems to be blocked waiting for a pulse");
+      semaphore.acquire();
+    }
     pulses++;
     logger.debug(String.format("%04d finished pulse %d", communicationLayer.getID(), pulses));
     prepareNextPulse();
   }
+
+
 
   private synchronized void prepareNextPulse() {
     pulseFinished = false;
