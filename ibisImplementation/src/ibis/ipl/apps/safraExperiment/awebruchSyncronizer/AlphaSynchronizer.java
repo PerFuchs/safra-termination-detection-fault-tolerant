@@ -42,6 +42,7 @@ public class AlphaSynchronizer implements CrashHandler {
    * been received.
    */
   private Semaphore semaphore;
+  private boolean allSafeHandled;
 
   public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client, CrashDetector crashDetector) {
     this.communicationLayer = communicationLayer;
@@ -133,23 +134,28 @@ public class AlphaSynchronizer implements CrashHandler {
         }
         logger.trace(String.format("%04d safe messages: %s", communicationLayer.getID(), b.toString()));
       }
-      tryEndPulse();
+      if (allSafe()) {
+        handleAllSafe();
+      }
     }
   }
 
-
-  // TODO rename to convey this function is not idempotent at all
-  private void tryEndPulse() {
+  private boolean allSafe() {
     boolean allSafe = true;
     for (int safe : safeMessageReceived.values()) {
       allSafe &= safe > 0;
     }
-    if (allSafe) {
+    return allSafe;
+  }
+
+  private void handleAllSafe() {
+    if (!allSafeHandled) {
       for (int n : safeMessageReceived.keySet()) {
         int messages = safeMessageReceived.get(n);
         safeMessageReceived.put(n, messages - 1);
       }
       semaphore.release();
+      allSafeHandled = true;
     }
   }
 
@@ -192,6 +198,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
   private synchronized void prepareNextPulse() {
     pulseFinished = false;
+    allSafeHandled = false;
     semaphore = new Semaphore(-1);
 
     for (int neighbour : safeMessageReceived.keySet()) {
@@ -214,6 +221,8 @@ public class AlphaSynchronizer implements CrashHandler {
     if (pulseFinished && allMessagesAcked()) {
       sendSafeMessageToAllNeighbours();
     }
-    tryEndPulse();
+    if (allSafe()) {
+      handleAllSafe();
+    }
   }
 }
