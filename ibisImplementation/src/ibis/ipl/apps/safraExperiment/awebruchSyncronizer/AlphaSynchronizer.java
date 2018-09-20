@@ -8,7 +8,6 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
-import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -67,8 +66,8 @@ public class AlphaSynchronizer implements CrashHandler {
       throw new IllegalStateException("Client tried to send message after declaring pulse finished");
     }
     logger.trace(String.format("%04d sends message to %04d", communicationLayer.getID(), destination));
-    increaseMessageCounter(destination);
 
+    increaseMessageCounter(destination);
     communicationLayer.sendMessage(destination, m, timer);
   }
 
@@ -79,13 +78,14 @@ public class AlphaSynchronizer implements CrashHandler {
       handleSafeMessage(source, (SafeMessage) m);
     } else {
       logger.trace(String.format("%04d got message from %04d", communicationLayer.getID(), source));
+
       communicationLayer.sendMessage(source, new AckMessage(), new OurTimer());
       client.handleMessage(source, m);
     }
   }
 
   private void handleAckMessage(int source, AckMessage m) throws IOException, CrashException {
-    logger.trace(String.format("%04d received ack message from %04d. pulse finished %b", communicationLayer.getID(), source, pulseFinished));
+    logger.trace(String.format("%04d received ack message from %04d", communicationLayer.getID(), source, pulseFinished));
 
     increaseAckCounter(source);
 
@@ -126,15 +126,17 @@ public class AlphaSynchronizer implements CrashHandler {
 
   private void handleSafeMessage(int source, SafeMessage m) {
     if (safeMessageReceived.containsKey(source)) {
-      int safeMessages = safeMessageReceived.get(source);
-      safeMessageReceived.put(source, safeMessages + 1);
       if (logger.isTraceEnabled()) {
         StringBuilder b = new StringBuilder();
         for (int n : safeMessageReceived.keySet()) {
-          b.append(String.format("%04d: %s, ", n, safeMessageReceived.get(n) == 0 ? "no" : "yes"));
+          b.append(String.format("%04d: %d, ", n, safeMessageReceived.get(n)));
         }
-        logger.trace(String.format("%04d safe messages: %s", communicationLayer.getID(), b.toString()));
+        logger.trace(String.format("%04d safe message state: %s", communicationLayer.getID(), b.toString()));
       }
+
+      int safeMessages = safeMessageReceived.get(source);
+      safeMessageReceived.put(source, safeMessages + 1);
+
       if (allSafe()) {
         handleAllSafe();
       }
@@ -161,14 +163,19 @@ public class AlphaSynchronizer implements CrashHandler {
   }
 
   private void sendSafeMessageToAllNeighbours() throws IOException, CrashException {
-    StringBuilder b = new StringBuilder();
+    if (logger.isTraceEnabled()) {
+      StringBuilder b = new StringBuilder();
+
+      for (int i : safeMessageReceived.keySet()) {
+        b.append(i);
+        b.append(", ");
+      }
+      logger.trace(String.format("%04d sends safe messages to: %s", communicationLayer.getID(), b.toString()));
+    }
 
     for (int i : safeMessageReceived.keySet()) {
-      b.append(i);
-      b.append(", ");
       communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
     }
-    logger.trace(String.format("%04d sends safe message to: %s", communicationLayer.getID(), b.toString()));
 
     semaphore.release();
   }

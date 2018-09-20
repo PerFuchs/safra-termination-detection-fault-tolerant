@@ -138,14 +138,11 @@ public class Network {
         c = new Channel(node, expectedRoot, 1);
         aliveNetwork.adjancencyMap.get(node).add(c);
         failSafeChannels.add(c);
-        logger.trace(String.format("Connected %04d to %04d", node, expectedRoot));
       }
 
       unreachableVertices = aliveNetwork.getUnconnectedNodes(expectedRoot);
       Collections.sort(unreachableVertices);
     }
-
-    logger.trace(String.format("Fail safe channels: %d", failSafeChannels.size()));
 
     return new Network(failSafeChannels);
   }

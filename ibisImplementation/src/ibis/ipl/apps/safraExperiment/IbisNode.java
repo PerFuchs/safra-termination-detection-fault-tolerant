@@ -162,19 +162,18 @@ class IbisNode {
     ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("[%t] - %m%n"));
     BasicConfigurator.configure(consoleAppender);
 
-//      Logger.getLogger("ibis").setLevel(Level.INFO);
     Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
-    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.TRACE);
+    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.DEBUG);
     Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.TRACE);
     Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraFS.class).setLevel(Level.TRACE);
+    Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraFS.class).setLevel(Level.INFO);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
-    Logger.getLogger(Network.class).setLevel(Level.TRACE);
+    Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
     Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
     Logger.getLogger(Tree.class).setLevel(Level.TRACE);
@@ -231,6 +230,14 @@ class IbisNode {
     network = network.combineWith(Network.getFailSafeNetwork(network, crashSimulator.getCrashingNodes(), getExpectedRoot(), synchronizedRandom), 40000);
 
     communicationLayer.setNetwork(network);
+
+    if (communicationLayer.isRoot()) {
+      if (!network.getUnconnectedNodes(getExpectedRoot()).isEmpty()) {
+        logger.warn("Fail safe did not work");
+      } else {
+        logger.trace("Fail safe did work");
+      }
+    }
 
     logger.trace("Constructed network");
   }

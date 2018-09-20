@@ -34,7 +34,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private boolean terminated;
   private Thread loopThread;
   private int me;
-  private boolean changed; // If the node's data changed during the step
+  private boolean ownStateChanged; // If the node's data ownStateChanged during the step
 
   private boolean waitingForPulse = false;
   private boolean gotUpdatesBeforeStep = false;
@@ -57,30 +57,20 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     }
   }
 
-  public void startAlgorithm() throws IOException, CrashException {
-    logger.debug(String.format("%04d Starting algorihtm", me));
+  public void startAlgorithm() {
     loopThread = new Thread(this);
     loopThread.start();
   }
 
-  private void startup() throws IOException, CrashException {
+  private void startup() throws IOException, CrashException, InterruptedException {
+    logger.info(String.format("%04d Starting AKY", me));
     synchronized (synchronizer) {
       synchronized (this) {
-        try {
-          safra.setActive(true, "Start AKY");
-          sendDataToAllNeighbours(new OurTimer());
-        } catch (CrashException e) {
-          afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
-          throw e;
-        }
+        safra.setActive(true, "Start AKY");
+        sendDataToAllNeighbours(new OurTimer());
       }
     }
-    try {
-      synchronizer.awaitPulse();
-      logger.trace(String.format("%04d finished first pulse", me));
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    synchronizer.awaitPulse();
   }
 
   @Override
@@ -95,7 +85,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
-      // This thread should be interupted when AKY terminates or crashes if so don't print the stack trace.
+      // This thread should be interrupted when AKY terminates or crashes if so don't print the stack trace.
       if (!terminated && afekKuttenYungMachine.getState() == this) {
         e.printStackTrace();
       }
@@ -104,6 +94,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         afekKuttenYungMachine.setState(new AfekKuttenYungTerminatedState(ownData.parent, ownData.distance, ownData.root));
       }
     }
+    logger.info(String.format("%04d Finished AKY: terminated: %b, crashed: %b",
+        me, terminated, afekKuttenYungMachine.getState() instanceof AfekKuttenYungCrashedState));
   }
 
   private void stepLoop() throws IOException, InterruptedException, CrashException {
@@ -121,33 +113,36 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
             step();
 
-            if (changed) {
+            if (ownStateChanged) {
               sendDataToAllNeighbours(timer);
             }
             timer.stopAndCreateBasicTimeSpentEvent();
-            if (!gotUpdatesBeforeStep && (iAmRoot() || notRoot()) && maxRoot() && notHandling()) {
-              if (active) {
-                setActive(false, "Step done");
-              }
+
+            if (active && !gotUpdatesBeforeStep && ((iAmRoot() || notRoot()) && maxRoot() && notHandling())) {
+              setActive(false, "Step done");
             } else {
-              logger.trace(String.format("%04d Updatebeforestep: %b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling)", me, gotUpdatesBeforeStep, iAmRoot(), notHandling(), maxRoot(), notHandling()));
+              if (active) {
+                logger.trace(String.format("%04d AKY not becoming passive: Updatebeforestep: %b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling)", me, gotUpdatesBeforeStep, iAmRoot(), notHandling(), maxRoot(), notHandling()));
+              }
             }
-            changed = false;
+
+            ownStateChanged = false;
             gotUpdatesBeforeStep = false;
             waitingForPulse = true;
           }
         }
-        logger.trace(String.format("%04d waiting", me));
+        logger.trace(String.format("%04d Waiting for pulse", me));
         synchronizer.awaitPulse();
         waitingForPulse = false;
       }
     } catch (NoNeighbourLeftException e) {
       becomeRoot();
       resetRequest();
-      changed = false;
+      ownStateChanged = false;
       gotUpdatesBeforeStep = false;
       waitingForPulse = false;
       setActive(false, "No neighbours left");
+      logger.info(String.format("%04d Finished, no neighbours left"));
     }
   }
 
@@ -158,9 +153,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   // TODO remove logging statements or put them in ifs
   private synchronized void step() {
-    if (neighbourData.keySet().contains(ownData.parent) && granted(ownData.parent)) {
-      logger.trace(String.format("%04d parents grants.", me));
-    }
+    logger.debug(String.format("%04d: %s", me, ownData.toString()));
+
     if (!(notRoot() && maxRoot()) && !iAmRoot()) {
       logger.trace(String.format("%04d becomes root", me));
       becomeRoot();
@@ -171,14 +165,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       }
 
       if (!isAsking) {
-        logger.trace(String.format("%04d asks", me));
-
         ask();
       } else if (requesting() && granted(ownData.to)) {
-        logger.trace(String.format("%04d joins", me));
         join();
       } else {
-        logger.trace(String.format("%04d not max root, waiting for grant?", me));
+        logger.trace(String.format("%04d waits 1", me));
       }
     } else {
       boolean isHandling = false;
@@ -187,7 +178,6 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       }
       if (!isHandling) {
         if (!notHandling()) {
-          logger.trace(String.format("%04d resets", me));
           resetRequest();
         } else {
           boolean isRequested = false;
@@ -200,27 +190,25 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             }
           }
           if ((iAmRoot() || getParentData().from != me) && isRequested) {
-            logger.trace(String.format("%04d handles for %04d with state %s", me, requestBy, neighbourData.get(requestBy).toString()));
             handleFor(requestBy);
           } else {
-            logger.trace(String.format("%04d empty handle", me));
+            logger.trace(String.format("%04d waits 2", me));
           }
         }
       } else if (iAmRoot() && ownData.direction == AfekKuttenYungData.ASK) {
-        logger.trace(String.format("%04d grants", me));
         grant();
       } else if (ownData.parent != -1 && granted(ownData.parent)) {
-        logger.trace(String.format("%04d grants", me));
         grant();
       } else {
-        logger.trace(String.format("%04d Parent state: %s", me, neighbourData.keySet().contains(ownData.parent) ? neighbourData.get(ownData.parent).toString() : ""));
+        logger.trace(String.format("%04d waits 3", me));
       }
     }
-    logger.trace(String.format("%04d: %s", me, ownData.toString()));
   }
 
   private void handleFor(int requestBy) {
-    changed = true;
+    logger.trace(String.format("%04d handles for %04d", me, requestBy));
+
+    ownStateChanged = true;
     AfekKuttenYungData otherData = neighbourData.get(requestBy);
     ownData.req = otherData.req;
     ownData.from = requestBy;
@@ -248,7 +236,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void resetRequest() {
-    changed = true;
+    logger.trace(String.format("%04d resets request", me));
+    ownStateChanged = true;
     ownData.req = AfekKuttenYungData.EMPTY_NODE;
     ownData.from = AfekKuttenYungData.EMPTY_NODE;
     ownData.to = AfekKuttenYungData.EMPTY_NODE;
@@ -256,7 +245,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void grant() {
-    changed = true;
+    logger.trace(String.format("%04d grants", me));
+    ownStateChanged = true;
     ownData.direction = AfekKuttenYungData.GRANT;
   }
 
@@ -273,7 +263,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void join() {
-    changed = true;
+    logger.trace(String.format("%04d joins", me));
+    ownStateChanged = true;
     ownData.parent = ownData.to;
     ownData.root = neighbourData.get(ownData.to).root;
     ownData.distance = neighbourData.get(ownData.to).distance + 1;
@@ -281,7 +272,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void ask() {
-    changed = true;
+    logger.trace(String.format("%04d asks", me));
+    ownStateChanged = true;
     ownData.req = me;
     ownData.from = me;
     ownData.direction = AfekKuttenYungData.ASK;
@@ -319,7 +311,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private void becomeRoot() {
-    changed = true;
+    ownStateChanged = true;
     ownData.parent = AfekKuttenYungData.EMPTY_PARENT;
     ownData.root = me;
     ownData.distance = 0;
@@ -373,6 +365,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     if (!(m instanceof AfekKuttenYungDataMessage)) {
       throw new IllegalStateException("Afek Kutten Yung received illegal message type");
     }
+
     AfekKuttenYungDataMessage message = (AfekKuttenYungDataMessage) m;
 
     if (!safra.crashDetected(source)) {
@@ -400,7 +393,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     if (active) {
       throw new TerminationDetectedTooEarly(String.format("%d was still active", communicationLayer.getID()));
     }
-    logger.trace(String.format("AKY %04d terminating", me));
+    logger.debug(String.format("%04d AKY terminating", me));
     terminated = true;
     loopThread.interrupt();
   }
