@@ -99,7 +99,15 @@ public class Network {
           to = synchronizedRandom.getInt(ibisCount);
         }
         int weight = synchronizedRandom.getInt(50000);
+
+        if (!adjacenyMap.containsKey(i)) {
+          adjacenyMap.put(i, new HashSet<Channel>());
+        }
         adjacenyMap.get(i).add(new Channel(i, to, weight));
+
+        if (!adjacenyMap.containsKey(to)) {
+          adjacenyMap.put(to, new HashSet<Channel>());
+        }
         adjacenyMap.get(to).add(new Channel(to, i, weight));
         connectedTo.add(to);
       }
@@ -150,8 +158,10 @@ public class Network {
 
   private static Set<Integer> getNeighbours(Map<Integer, Set<Channel>> adjancencyMap, int node) {
     Set<Integer> neighbours = new HashSet<>();
-    for (Channel c : adjancencyMap.get(node)) {
-      neighbours.add(c.dest);
+    if (adjancencyMap.containsKey(node)) {
+      for (Channel c : adjancencyMap.get(node)) {
+        neighbours.add(c.dest);
+      }
     }
     return neighbours;
   }
