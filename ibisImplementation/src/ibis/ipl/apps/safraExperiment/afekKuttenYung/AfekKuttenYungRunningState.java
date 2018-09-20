@@ -25,7 +25,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   private AfekKuttenYungData ownData;
   private Map<Integer, AfekKuttenYungData> neighbourData;
-  private Map<Integer, AfekKuttenYungData> newNeighbourData;
+  private Map<Integer, LinkedList<AfekKuttenYungData>> newNeighbourData;
 
   private CommunicationLayer communicationLayer;
   private final AlphaSynchronizer synchronizer;
@@ -54,7 +54,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     newNeighbourData = new HashMap<>();
     for (int n : communicationLayer.getNeighbours()) {
       neighbourData.put(n, AfekKuttenYungData.getEmptyData());
-      newNeighbourData.put(n, AfekKuttenYungData.getEmptyData());
+      newNeighbourData.put(n, new LinkedList<AfekKuttenYungData>());
     }
   }
 
@@ -347,11 +347,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private synchronized void copyNeighbourStates() {
-    neighbourData = newNeighbourData;
-    newNeighbourData = new HashMap<>();
     for (int i : communicationLayer.getNeighbours()) {
       if (!safra.crashDetected(i)) {
-        newNeighbourData.put(i, new AfekKuttenYungData(neighbourData.get(i)));
+        if (!newNeighbourData.get(i).isEmpty()) {
+          neighbourData.put(i, new AfekKuttenYungData(newNeighbourData.get(i).poll()));
+        }
       }
     }
   }
@@ -391,7 +391,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         gotUpdatesBeforeStep = true;
       }
 
-      newNeighbourData.get(source).update(message);
+      AfekKuttenYungData data = AfekKuttenYungData.getEmptyData();
+      data.update(message);
+      newNeighbourData.get(source).offer(data);
       // No call to safra.setActive(false). Message handling is not done before the next call to step.
     }
     timer.stopAndCreateBasicTimeSpentEvent();
@@ -412,6 +414,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
     if (newNeighbourData.containsKey(crashedNode)) {
       newNeighbourData.remove(crashedNode);
+      neighbourData.remove(crashedNode);
 
       timer.pause();
       try {
