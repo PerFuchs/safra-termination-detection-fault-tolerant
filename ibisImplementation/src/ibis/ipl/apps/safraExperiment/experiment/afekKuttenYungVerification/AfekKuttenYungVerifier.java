@@ -33,6 +33,20 @@ public class AfekKuttenYungVerifier {
     Network usedConnectedNetwork = usedNetworkTopology.getConnectedSubnetwork(expectedRoot);
 
     if (!constructedConnectedNetwork.hasEqualNodes(usedConnectedNetwork)) {
+      StringBuilder sb = new StringBuilder();
+      Set<Integer> constructedExtraNodes = constructedConnectedNetwork.getNodesMissingIn(usedConnectedNetwork);
+      Set<Integer> constructedMissingNodes = usedConnectedNetwork.getNodesMissingIn(constructedConnectedNetwork);
+      sb.append("Extra nodes: ");
+      for (int n : constructedExtraNodes) {
+        sb.append(n);
+        sb.append(", ");
+      }
+      sb.append("Missing nodes: ");
+      for (int n : constructedMissingNodes) {
+        sb.append(n);
+        sb.append(", ");
+      }
+      logger.error(sb.toString());
       throw new IncorrectTreeException();
     }
     logger.trace("Network contains expected connected nodes");

@@ -295,7 +295,7 @@ class IbisNode {
   }
 
   private static void runToTermination() throws IOException, InterruptedException {
-    long maxExperimentTime = 90000;
+    long maxExperimentTime = 600000;
     ThreadInteruptTimeout timeout = new ThreadInteruptTimeout(Thread.currentThread(), maxExperimentTime);
     Thread interuptThread = new Thread(timeout);
     interuptThread.start();

@@ -331,6 +331,12 @@ public class Network {
     }
     return b.toString();
   }
+
+  public Set<Integer> getNodesMissingIn(Network usedConnectedNetwork) {
+    Set<Integer> temp = adjancencyMap.keySet();
+    temp.removeAll(usedConnectedNetwork.adjancencyMap.keySet());
+    return temp;
+  }
 }
 
 
