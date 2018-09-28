@@ -18,11 +18,13 @@ import java.util.*;
  */
 public class BarrierFactory implements Observer {
   private final Registry registry;
+  private SignalPollerThread signalHandler;
   private final CommunicationLayer communicationLayer;
   private Map<String, Barrier> barriers = new HashMap<>();
 
   public BarrierFactory(Registry registry, SignalPollerThread signalHandler, CommunicationLayer communicationLayer) {
     this.registry = registry;
+    this.signalHandler = signalHandler;
     this.communicationLayer = communicationLayer;
 
     if (signalBarrierWorking()) {
@@ -61,6 +63,10 @@ public class BarrierFactory implements Observer {
    * SignalBarriers are not scalable so use different barrier instead.
    */
   public boolean signalBarrierWorking() {
-    return registry.getPoolSize() < 200;
+    return registry.getPoolSize() < 0;
+  }
+
+  public void close() {
+    signalHandler.deleteObserver(this);
   }
 }

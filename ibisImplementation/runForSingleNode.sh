@@ -22,39 +22,14 @@ startChandyMisraInstance () {
     -Dibis.server.address=10.100.255.254:${serverPort} \
     -Dibis.pool.name=chandyMisra \
     -Dibis.pool.size=${networkSize} \
-    ibis.ipl.apps.safraExperiment.IbisNode ${outputFolder} ${crashPercentage} ${isFaultTolerant} ${basicAlgorithm}
+    ibis.ipl.apps.safraExperiment.IbisNode ${outputFolder} ${crashPercentage} ${isFaultTolerant} ${basicAlgorithm} ${repetitions}
 }
 
-waitForAllNodesToFinish () {
-    local outputFolder=$1
-    local nodes=$2
 
-    touch "$outputFolder/$(hostname).done"
-
-    local gl="*.done"
-    local a="$outputFolder/$gl"
-    while [ "$(ls -1q ${a} | wc -l)" != "$nodes" ]
-    do
-     sleep 1
-    done
-}
-
-for j in $(seq 1 ${repetitions})
- do
-    echo "Starting repetition ${j}"
-    for i in $(seq 1 ${instancesPerNode})
-    do
-       startChandyMisraInstance ${instancesInTotal} "$outputFolder/${j}" ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} &
-       pids[${i}]=$!
-    done
-
-    for pid in ${pids[*]}; do
-        wait $pid
-    done
-    mkdir -p "$outputFolder/${j}/"
-    waitForAllNodesToFinish "$outputFolder/$j" ${numberOfNodes}
-    sleep 5
-    echo "Done repetition ${j}"
+for i in $(seq 1 ${instancesPerNode})
+do
+   startChandyMisraInstance ${instancesInTotal} "$outputFolder" ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} &
+   pids[${i}]=$!
 done
 
 echo "Done"

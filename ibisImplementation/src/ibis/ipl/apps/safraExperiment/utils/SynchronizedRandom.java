@@ -13,8 +13,10 @@ import java.util.Random;
 /**
  * Wrapper around util.Random to ensure the same seed is used on every node.
  *
- * Uses elections to generate a seed out of the hashe's of the identifiers of 5 elections winners.
+ * Uses elections to generate a seed out of the hashes of the identifiers of 5 elections winners.
  * This is random as long as different nodes reach the elections first - first to contact a server for an election wins.
+ *
+ * Always initializes with the same seed as the first SynchronizedRandom created.
  */
 public class SynchronizedRandom {
   private final static Logger logger = Logger.getLogger(SynchronizedRandom.class);
@@ -22,7 +24,7 @@ public class SynchronizedRandom {
   private int seed = 0;
   private final Random random;
 
-  public SynchronizedRandom(IbisIdentifier me, Registry registry) throws IOException {
+  public  SynchronizedRandom(IbisIdentifier me, Registry registry) throws IOException {
     int seedElections = Math.min(5, registry.getPoolSize());
     int completedElection = 0;
     List<IbisIdentifier> seedIdentifier = new LinkedList<>();
