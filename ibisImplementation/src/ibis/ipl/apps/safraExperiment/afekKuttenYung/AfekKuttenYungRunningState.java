@@ -199,14 +199,11 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
           }
           if ((iAmRoot() || getParentData().from != me) && isRequested) {
             handleFor(requestBy);
+            grant();
           } else {
             logger.trace(String.format("%04d waits 2", me));
           }
         }
-      } else if (iAmRoot() && ownData.direction == AfekKuttenYungData.ASK) {
-        grant();
-      } else if (ownData.parent != -1 && granted(ownData.parent)) {
-        grant();
       } else {
         logger.trace(String.format("%04d waits 3", me));
       }
