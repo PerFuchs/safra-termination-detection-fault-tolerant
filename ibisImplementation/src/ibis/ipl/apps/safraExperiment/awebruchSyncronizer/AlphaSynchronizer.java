@@ -199,15 +199,11 @@ public class AlphaSynchronizer implements CrashHandler {
       semaphore.release();
     }
 
-    if (!semaphore.tryAcquire(30, TimeUnit.SECONDS)) {
-      logger.error(String.format("%04d seems to be blocked waiting for a pulse", communicationLayer.getID()));
-      semaphore.acquire();
-    }
+    semaphore.acquire();
     pulses++;
     logger.debug(String.format("%04d finished pulse %d", communicationLayer.getID(), pulses));
     prepareNextPulse();
   }
-
 
 
   private synchronized void prepareNextPulse() {
