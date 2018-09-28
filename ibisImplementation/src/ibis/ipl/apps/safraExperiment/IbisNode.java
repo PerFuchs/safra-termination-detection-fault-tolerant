@@ -8,6 +8,7 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.SynchronizerMessageFactory;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
+import ibis.ipl.apps.safraExperiment.communication.IbisDetectionService;
 import ibis.ipl.apps.safraExperiment.communication.MessageFactory;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
@@ -61,6 +62,7 @@ class IbisNode {
   private static BasicAlgorithm basicAlgorithm;
   private static OnlineExperiment experiment;
   private static BarrierFactory barrierFactory;
+  private static IbisDetectionService detectionService;
 
   public static void main(String[] args) {
     try {
@@ -71,6 +73,8 @@ class IbisNode {
 
       PortType porttype = new PortType(PortType.CONNECTION_MANY_TO_ONE, PortType.COMMUNICATION_RELIABLE, PortType.RECEIVE_AUTO_UPCALLS, PortType.SERIALIZATION_DATA, PortType.COMMUNICATION_FIFO);
       setupIBISAndWaitForPoolClosed(porttype);
+
+      detectionService = new IbisDetectionService(ibis.identifier(), registry);
 
       synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
       logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
@@ -113,6 +117,8 @@ class IbisNode {
       }
 
       barrierFactory.getBarrier("End").await();
+
+      communicationLayer.close();
 
       shutdownIbis();
 
@@ -197,7 +203,7 @@ class IbisNode {
   }
 
   private static void setupCommunicationLayer(PortType porttype) {
-    communicationLayer = new CommunicationLayer(ibis, registry, porttype);
+    communicationLayer = new CommunicationLayer(detectionService.getIbises(), ibis, detectionService.getMe(), porttype);
 
     if (basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG) {
       MessageFactory.registerFactory(new AfekKuttenYungMessageFactory());

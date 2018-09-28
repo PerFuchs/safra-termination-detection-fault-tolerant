@@ -32,7 +32,6 @@ public class CommunicationLayer {
   private static Logger logger = Logger.getLogger(CommunicationLayer.class);
 
   private Ibis ibis;
-  private Registry registry;
   private PortType portType;
   private IbisIdentifier[] ibises;
   private CrashSimulator crashSimulator;
@@ -47,21 +46,11 @@ public class CommunicationLayer {
   private AlphaSynchronizer synchronizer;
   private Safra safraNode;
 
-  public CommunicationLayer(Ibis ibis, Registry registry, PortType portType) {
+  public CommunicationLayer(IbisIdentifier[] allIbises, Ibis ibis, int me, PortType portType) {
     this.ibis = ibis;
-    this.registry = registry;
     this.portType = portType;
-    this.ibises = new IbisIdentifier[registry.getPoolSize()];
-    findAllIbises();
-  }
-
-  private void findAllIbises() {
-    ibises = registry.joinedIbises();
-    if (ibises.length != registry.getPoolSize()) {
-      logger.error("Not all ibises reported by joinedIbises");
-    }
-    Arrays.sort(ibises);
-    me = Arrays.asList(ibises).indexOf(ibis.identifier());
+    this.ibises = allIbises;
+    this.me = me;
   }
 
   private String getGeneralReceivePortName() {
@@ -252,10 +241,6 @@ public class CommunicationLayer {
     return Arrays.asList(ibises);
   }
 
-  public IbisIdentifier getIbisIdentifier() {
-    return getIbisIdentifier(getID());
-  }
-
   public List<IbisIdentifier> getOtherIbises() {
     List<IbisIdentifier> otherIbises = new LinkedList<IbisIdentifier>(Arrays.asList(ibises));
     otherIbises.remove(getID());
@@ -322,4 +307,16 @@ public class CommunicationLayer {
   public void setNetwork(Network network) {
     this.network = network;
   }
-}
+
+  public void close() throws IOException {
+    for (SendPort sp : sendPorts.values()) {
+      sp.close();
+    }
+    for (SendPort sp : crashSendPorts.values()) {
+      sp.close();
+    }
+    for (ReceivePort rp : receivePorts.values()) {
+      rp.close();
+    }
+  }
+ }
