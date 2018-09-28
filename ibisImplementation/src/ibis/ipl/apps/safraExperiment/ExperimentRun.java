@@ -46,8 +46,8 @@ class ExperimentRun {
   static Logger logger = Logger.getLogger(ExperimentRun.class);
   private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
-  static Ibis ibis;
-  static Registry registry;
+  private final Ibis ibis;
+  private Registry registry;
   private Path outputFolder;
   private double faultPercentage;
   private boolean faultTolerant;
@@ -65,21 +65,23 @@ class ExperimentRun {
   private IbisDetectionService detectionService;
 
 
-  public ExperimentRun(Path outputFolder, BasicAlgorithms basicAlgorithmChoice, boolean faultTolerant, double faultPercentage, IbisDetectionService detectionService, SignalPollerThread signalHandler, SynchronizedRandom synchronizedRandom) {
+  public ExperimentRun(Path outputFolder, BasicAlgorithms basicAlgorithmChoice, boolean faultTolerant, double faultPercentage, Ibis ibis, IbisDetectionService detectionService, SignalPollerThread signalHandler, SynchronizedRandom synchronizedRandom) {
+
     this.outputFolder = outputFolder;
     this.faultTolerant = faultTolerant;
     this.faultPercentage = faultPercentage;
+    this.ibis = ibis;
+    this.registry = ibis.registry();
     this.detectionService = detectionService;
     this.basicAlgorithmChoice = basicAlgorithmChoice;
     this.signalHandler = signalHandler;
+    this.synchronizedRandom = synchronizedRandom;
   }
 
   public void run(PortType portType) throws IOException, InterruptedException {
       long startTime = System.nanoTime();
 
       setupOutput();
-
-      logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
 
       setupCommunicationLayer(portType);
 

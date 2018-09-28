@@ -42,6 +42,7 @@ class IbisNode {
   private static SignalPollerThread signalHandler;
   private static SynchronizedRandom synchronizedRandom;
   private static IbisDetectionService detectionService;
+  private static int repetitions;
 
   public static void main(String[] args) {
     try {
@@ -63,9 +64,15 @@ class IbisNode {
       dd.start();
 
       synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
+      logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
 
-      ExperimentRun run = new ExperimentRun(outputFolder, basicAlgorithmChoice, faultTolerant, faultPercentage, detectionService, signalHandler, synchronizedRandom);
-      run.run(porttype);
+      for (int i = 0; i < repetitions; i++) {
+        logger.info(String.format("Starting repetition: %d", i));
+        Path outputFolderForRun = outputFolder.resolve(String.format("%d", i));
+        ExperimentRun run = new ExperimentRun(outputFolderForRun, basicAlgorithmChoice, faultTolerant, faultPercentage, ibis, detectionService, signalHandler, synchronizedRandom);
+        run.run(porttype);
+        logger.info(String.format("Finishing repetition: %d", i));
+      }
 
       shutdownIbis();
 
@@ -106,11 +113,12 @@ class IbisNode {
     faultPercentage = Double.valueOf(args[1]);
     faultTolerant = args[2].equals("ft");
     basicAlgorithmChoice = args[3].equals("cm") ? BasicAlgorithms.CHANDY_MISRA : BasicAlgorithms.AFEK_KUTTEN_YUNG;
+    repetitions = Integer.valueOf(args[4]);
   }
 
   private static void validateArgs(String[] args) {
-    if (args.length < 4) {
-      System.err.println("Too less arguments. Use: <outputFolder> <faultPercentage> <fs|ft> <cm|aky");
+    if (args.length < 5) {
+      System.err.println("Too less arguments. Use: <outputFolder> <faultPercentage> <fs|ft> <cm|aky> <repetitions>");
       System.exit(1);
     }
     try {
@@ -125,6 +133,12 @@ class IbisNode {
     }
     if (!(args[3].equals("cm") || args[3].equals("aky"))) {
       System.err.println("Use either 'cm' or 'aky' as fourth argument");
+      System.exit(1);
+    }
+    try {
+      Integer.valueOf(args[4]);
+    } catch (NumberFormatException e) {
+      System.err.println("The repetition argument should be an integer");
       System.exit(1);
     }
   }
