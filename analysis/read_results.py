@@ -1,18 +1,10 @@
 import csv
 import operator
-import sys
 from collections import defaultdict
 
 from os import listdir
 
 from os.path import isdir, basename, isfile
-
-import plotly
-import plotly.graph_objs as go
-
-import scipy.stats as st
-
-from graphing import get_scatter_graph_with_mean_and_confidence_interval, get_box_trace
 
 USE_REANALYSING_RESULTS = False
 

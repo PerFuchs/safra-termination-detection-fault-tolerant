@@ -1,21 +1,12 @@
-import csv
 import sys
 from collections import defaultdict
 
-from os import listdir
-
-from os.path import isdir, basename, isfile
 from pprint import pprint
 
-import plotly
-import plotly.graph_objs as go
-
-import scipy.stats as st
-
-from compare_safra_versions import compare_safra_versions
-from graphing import get_scatter_graph_with_mean_and_confidence_interval, get_box_trace
-from influence_network_size import analyse_influence_of_network_size
-from influence_of_faults import analyse_influence_of_faults
+from report.compare_safra_versions import compare_safra_versions
+from report.graphing import get_box_trace
+from report.influence_network_size import analyse_influence_of_network_size
+from report.influence_of_faults import analyse_influence_of_faults
 from read_results import get_configurations
 
 experiment_folder = sys.argv[1]

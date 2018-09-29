@@ -1,12 +1,8 @@
-import operator
-import statistics
 from collections import defaultdict, OrderedDict
 
 import plotly
-from plotly import graph_objs as go
 
-import graphing
-from utils import difference_in_percent, present_linear_relationship
+from report import graphing
 
 
 def analyse_influence_of_network_size(configurations):

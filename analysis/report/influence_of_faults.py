@@ -3,7 +3,7 @@ from collections import defaultdict, OrderedDict
 
 import plotly
 
-import graphing
+from report import graphing
 from utils import write_csv
 
 
