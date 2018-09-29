@@ -309,6 +309,7 @@ public class CommunicationLayer {
   }
 
   public void close() throws IOException {
+    logger.trace(String.format("%04d closing communication layer", me));
     for (SendPort sp : sendPorts.values()) {
       sp.close();
     }
@@ -318,5 +319,6 @@ public class CommunicationLayer {
     for (ReceivePort rp : receivePorts.values()) {
       rp.close();
     }
+    logger.trace(String.format("%04d closed communication layer", me));
   }
  }

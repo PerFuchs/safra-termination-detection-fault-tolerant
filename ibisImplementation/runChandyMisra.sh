@@ -11,6 +11,8 @@ serverPort=$8
 
 prunArguments=$9
 
+rm -fr ${outputFolder}
+
 date > out.log
 echo $0 $@ >> out.log
 

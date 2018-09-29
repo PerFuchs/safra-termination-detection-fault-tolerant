@@ -6,24 +6,24 @@ import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.IbisDetectionService;
-import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
+import ibis.ipl.apps.safraExperiment.communication.MessageUpcall;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
 import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungVerifier;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
 import ibis.ipl.apps.safraExperiment.network.Tree;
-import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.utils.DeadlockDetector;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
-import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
+import ibis.ipl.apps.safraExperiment.utils.barrier.FileBasedBarrier;
 import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
 import ibis.ipl.apps.safraExperiment.utils.barrier.SignalledBarrier;
 import org.apache.log4j.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
@@ -72,6 +72,9 @@ class IbisNode {
         ExperimentRun run = new ExperimentRun(outputFolderForRun, basicAlgorithmChoice, faultTolerant, faultPercentage, ibis, detectionService, signalHandler, synchronizedRandom);
         run.run(porttype);
         logger.info(String.format("Finishing repetition: %d", i));
+
+        FileBasedBarrier endBarrier = new FileBasedBarrier("end", outputFolderForRun, detectionService.getMe(), detectionService.getIbises().length);
+        endBarrier.await();
       }
 
       shutdownIbis();
@@ -88,9 +91,29 @@ class IbisNode {
     }
   }
 
+  private static void deleteDirectory(Path directory) throws IOException {
+    File d = directory.toFile();
+    if (d.isDirectory()) {
+      File[] fs = d.listFiles();
+      if (fs != null) {
+        for (File f : fs) {
+          if (f.isDirectory()) {
+            deleteDirectory(f.toPath());
+          } else {
+            Files.delete(f.toPath());
+          }
+        }
+      }
+      Files.delete(directory);
+    }
+    throw new IllegalArgumentException("Argument needs to be a directory");
+  }
+
   private static void setupLoggingLevel() {
     Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
+    Logger.getLogger(ExperimentRun.class).setLevel(Level.TRACE);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
+    Logger.getLogger(MessageUpcall.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.DEBUG);
     Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.TRACE);
@@ -102,7 +125,7 @@ class IbisNode {
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
-    Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
+    Logger.getLogger(MessageBarrier.class).setLevel(Level.TRACE);
     Logger.getLogger(SignalledBarrier.class).setLevel(Level.TRACE);
     Logger.getLogger(Tree.class).setLevel(Level.TRACE);
   }

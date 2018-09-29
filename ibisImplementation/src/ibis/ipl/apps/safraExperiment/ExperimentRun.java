@@ -64,9 +64,7 @@ class ExperimentRun {
   private BarrierFactory barrierFactory;
   private IbisDetectionService detectionService;
 
-
   public ExperimentRun(Path outputFolder, BasicAlgorithms basicAlgorithmChoice, boolean faultTolerant, double faultPercentage, Ibis ibis, IbisDetectionService detectionService, SignalPollerThread signalHandler, SynchronizedRandom synchronizedRandom) {
-
     this.outputFolder = outputFolder;
     this.faultTolerant = faultTolerant;
     this.faultPercentage = faultPercentage;
@@ -79,48 +77,47 @@ class ExperimentRun {
   }
 
   public void run(PortType portType) throws IOException, InterruptedException {
-      long startTime = System.nanoTime();
+    long startTime = System.nanoTime();
 
-      setupOutput();
+    setupOutput();
 
-      setupCommunicationLayer(portType);
+    setupCommunicationLayer(portType);
 
-      barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
+    barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
-      crashDetector = new CrashDetector();
+    crashDetector = new CrashDetector();
 
-      setupCrashSimulator();
+    setupCrashSimulator();
 
-      setupNetwork();
+    setupNetwork();
 
-      experiment = new OnlineExperiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant, basicAlgorithmChoice);
+    experiment = new OnlineExperiment(outputFolder, communicationLayer, network, crashSimulator, faultTolerant, basicAlgorithmChoice);
 
-      setupSafra();
+    setupSafra();
 
-      setupBasicAlgorithm();
+    setupBasicAlgorithm();
 
-      connectIbises();
+    connectIbises();
 
-      runToTermination();
+    runToTermination();
 
-      writeResults();
+    writeResults();
 
-      rootNodeVerifyAndEvaluateResults();
+    rootNodeVerifyAndEvaluateResults();
 
-      if (communicationLayer.isRoot()) {
-        long endTime = System.nanoTime();
-        double time = ((double) (endTime - startTime)) / 1000000000.0;
-        System.out.println("ExecutionTime: " + time);
-        System.out.println("End");
+    if (communicationLayer.isRoot()) {
+      long endTime = System.nanoTime();
+      double time = ((double) (endTime - startTime)) / 1000000000.0;
+      System.out.println("ExecutionTime: " + time);
+      System.out.println("End");
 
-        // Copy the output log file
-        Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
-      }
+      // Copy the output log file
+      Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
+    }
 
-      barrierFactory.getBarrier("End").await();
-
-      communicationLayer.close();
-      barrierFactory.close();
+    barrierFactory.getBarrier("End").await();
+    barrierFactory.close();
+    communicationLayer.close();
   }
 
   private void setupOutput() {

@@ -63,7 +63,7 @@ public class BarrierFactory implements Observer {
    * SignalBarriers are not scalable so use different barrier instead.
    */
   public boolean signalBarrierWorking() {
-    return registry.getPoolSize() < 0;
+    return registry.getPoolSize() < 200;
   }
 
   public void close() {
