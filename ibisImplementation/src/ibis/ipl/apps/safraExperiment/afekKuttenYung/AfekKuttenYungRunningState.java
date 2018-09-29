@@ -150,7 +150,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       gotUpdatesBeforeStep = false;
       waitingForPulse = false;
       setActive(false, "No neighbours left");
-      logger.info(String.format("%04d Finished, no neighbours left"));
+      logger.info(String.format("%04d Finished, no neighbours left", me));
     }
   }
 
