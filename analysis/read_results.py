@@ -135,7 +135,7 @@ class Configuration:
       fault_percentage = 0.0
     else:
       fault_sensitive = False
-      fault_percentage = float(fault_percentage) / 100
+      fault_percentage = float(fault_percentage)
 
     if fault_sensitive:
       fault_group = '0 fs'

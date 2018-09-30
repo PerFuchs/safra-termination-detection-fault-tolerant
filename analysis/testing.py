@@ -11,7 +11,11 @@ def main():
 
   configurations = get_configurations(experiment_folder)
 
-  expected_configurations = {(25, '0'): 10}
+  expected_configurations = {
+    (25, '0'): 10,
+    (50, '5n'): 4,
+    (50, '0'): 4
+  }
 
   test_configurations_complete(configurations, expected_configurations)
 
@@ -35,33 +39,35 @@ def test_configurations_complete(configurations, expected_configurations):
 
   for ((number_of_nodes, fault_group), difference) in differences.items():
     if difference:
-      print("Configurations %i %s is missing %i repetitions from %i" % (number_of_nodes, fault_group, difference, expected_configurations[(number_of_nodes, fault_group)]))
+      print("  Configurations %i %s is missing %i repetitions from %i" % (number_of_nodes, fault_group, difference, expected_configurations[(number_of_nodes, fault_group)]))
       passed = False
 
   print_testcase_end(name, passed)
 
 
 def test_no_error_files(configurations, summary):
-  name = "Error file"
+  name = 'Error file'
   print_testcase(name)
 
   passed = True
   for c in configurations:
     if len(c.invalid_repetitions) != 0:
       passed = False
-      print("Configuration %i %s has %i errors" % (c.number_of_nodes, c.fault_group, len(c.invalid_repetitions)))
+      print("  Configuration %i %s has %i errors" % (c.number_of_nodes, c.fault_group, len(c.invalid_repetitions)))
     if not summary:
       for r in c.invalid_repetitions:
+        print('    Repetition: %i' % r.number)
         for e in r.errors:
-          print(e)
-        print("")
-      print("---------\n")
+          print('      ' + e)
+        print()
+      if c.invalid_repetitions:
+        print("---------\n")
 
   print_testcase_end(name, passed)
 
 
 def test_words_not_in_log_file(configurations, summary):
-  name = "Clean logs"
+  name = 'Clean logs'
   print_testcase(name)
   bad_words = ['error', 'exception']
 
@@ -71,20 +77,19 @@ def test_words_not_in_log_file(configurations, summary):
     for r in c.repetitions + c.invalid_repetitions:
       first_error_for_repetition = True
       for l in r.get_log_file().readlines():
-        lower = l.lower()
+        lower_line = l.lower()
         for w in bad_words:
-          if w in lower:
-            passed = False
+          if w in lower_line:
             if first_error_for_configuration:
               first_error_for_configuration = False
-              print("In configuration: %d %s" % (c.number_of_nodes, c.fault_group))
+              print("  In configuration: %d %s" % (c.number_of_nodes, c.fault_group))
             if first_error_for_repetition:
               first_error_for_repetition = False
               print("    Repetition %d" % r.number)
             if not summary:
-              print("        %s" % l)
+              print("      %s" % l)
 
-    print_testcase_end(name, passed)
+  print_testcase_end(name, passed)
 
 
 def test_results_correct(configurations, summary):
@@ -110,12 +115,15 @@ def test_results_correct(configurations, summary):
 
 def print_testcase(name):
   print('+' * len(name))
+  print('+' * len(name))
   print(name)
+  print('-' * len(name))
 
 
 def print_testcase_end(name, passed):
+  print('')
   print('Passed' if passed else 'Failed')
-  print('+' * len(name))
+  print('-' * len(name))
   print('')
 
 
