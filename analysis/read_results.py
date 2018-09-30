@@ -111,6 +111,8 @@ class Repetition:
     self.print_errors()
     self.print_warnings()
 
+  def get_log_file(self):
+    return open('%s/out.log' % self.folder)
 
 class Configuration:
 
