@@ -8,8 +8,14 @@ faultPercentage=$5
 faultTolerance=$6
 basicAlgorithm=$7
 serverPort=$8
-
 prunArguments=$9
+
+faultGroup=${faultPercentage}
+if [ ${faultTolerance} == 'fs' ]
+then
+  faultGroup="fs"
+fi
+outputFolder="${outputFolder}/${instancesInTotal}-${faultGroup}-${repetitions}.run"
 
 rm -fr ${outputFolder}
 mkdir -p ${outputFolder}
