@@ -34,7 +34,10 @@ import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
 import ibis.ipl.apps.safraExperiment.utils.barrier.SignalledBarrier;
 import org.apache.log4j.*;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,6 +51,7 @@ class ExperimentRun {
 
   private final Ibis ibis;
   private Registry registry;
+  private final int repetition_number;
   private Path outputFolder;
   private double faultPercentage;
   private boolean faultTolerant;
@@ -64,7 +68,8 @@ class ExperimentRun {
   private BarrierFactory barrierFactory;
   private IbisDetectionService detectionService;
 
-  public ExperimentRun(Path outputFolder, BasicAlgorithms basicAlgorithmChoice, boolean faultTolerant, double faultPercentage, Ibis ibis, IbisDetectionService detectionService, SignalPollerThread signalHandler, SynchronizedRandom synchronizedRandom) {
+  public ExperimentRun(int repetition_number, Path outputFolder, BasicAlgorithms basicAlgorithmChoice, boolean faultTolerant, double faultPercentage, Ibis ibis, IbisDetectionService detectionService, SignalPollerThread signalHandler, SynchronizedRandom synchronizedRandom) {
+    this.repetition_number = repetition_number;
     this.outputFolder = outputFolder;
     this.faultTolerant = faultTolerant;
     this.faultPercentage = faultPercentage;
@@ -78,8 +83,6 @@ class ExperimentRun {
 
   public void run(PortType portType) throws IOException, InterruptedException {
     long startTime = System.nanoTime();
-
-    setupOutput();
 
     setupCommunicationLayer(portType);
 
@@ -112,7 +115,7 @@ class ExperimentRun {
       System.out.println("End");
 
       // Copy the output log file
-      Files.copy(Paths.get("./out.log"), Paths.get(outputFolder.toString(), "out.log"), StandardCopyOption.REPLACE_EXISTING);
+      copy_log_file();
     }
 
     barrierFactory.getBarrier("End").await();
@@ -120,8 +123,25 @@ class ExperimentRun {
     communicationLayer.close();
   }
 
-  private void setupOutput() {
-    // TODO use fileappender
+  private void copy_log_file() throws IOException {
+    BufferedReader br = Files.newBufferedReader(Paths.get("./out.log"), Charset.defaultCharset());
+    BufferedWriter bw = Files.newBufferedWriter(outputFolder.resolve("out.log"), Charset.defaultCharset());
+    String line;
+
+    String starting_repetition_line = String.format("Starting repetition: %d", repetition_number);
+    boolean part_of_this_repetition_log = false;
+
+    while ((line = br.readLine()) != null) {
+      if (part_of_this_repetition_log || line.endsWith(starting_repetition_line)) {
+        part_of_this_repetition_log = true;
+      }
+      if (part_of_this_repetition_log) {
+        bw.write(line);
+        bw.newLine();
+      }
+    }
+    br.close();
+    bw.close();
   }
 
   private void setupCommunicationLayer(PortType porttype) {
