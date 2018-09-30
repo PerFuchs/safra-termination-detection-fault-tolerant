@@ -117,18 +117,19 @@ class Repetition:
 
 class Configuration:
 
-  def __init__(self, repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive, fault_group):
+  def __init__(self, repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive, fault_group, expected_repetitions):
     self.fault_group = fault_group
     self.fault_sensitive = fault_sensitive
     self.fault_percentage = fault_percentage
     self.number_of_nodes = number_of_nodes
     self.invalid_repetitions = invalid_repetitions
     self.repetitions = repetitions
+    self.expected_repetitions = expected_repetitions
 
   @classmethod
   def from_folder(cls, folder):
     configuration_name = basename(folder)
-    number_of_nodes, fault_percentage, _ = configuration_name.split('-')
+    number_of_nodes, fault_percentage, expected_repetitions = configuration_name.split('-')
     number_of_nodes = int(number_of_nodes)
     if fault_percentage == 'fs':
       fault_sensitive = True
@@ -146,6 +147,9 @@ class Configuration:
     else:
       fault_group = '5n'
 
+    expected_repetitions = expected_repetitions.replace('.run', '')
+    expected_repetitions = int(expected_repetitions)
+
     repetitions = []
     invalid_repetitions = []
     for file_name in listdir(folder):
@@ -156,7 +160,7 @@ class Configuration:
         else:
           invalid_repetitions.append(r)
     return Configuration(repetitions, invalid_repetitions, number_of_nodes, fault_percentage, fault_sensitive,
-                         fault_group)
+                         fault_group, expected_repetitions)
 
   def get_tokens(self):
     return list(map(lambda r: r.tokens, self.repetitions))
@@ -197,6 +201,7 @@ class Configuration:
     assert self.fault_percentage == other.fault_percentage
     self.repetitions += other.repetitions
     self.invalid_repetitions += other.invalid_repetitions
+    self.expected_repetitions += other.expected_repetitions
     return self
 
 
@@ -212,7 +217,7 @@ def get_configurations(folder):
 
   merged_configurations = []
   for key_values, similiar_configurations in configurations.items():
-    merged = Configuration([], [], *key_values)
+    merged = Configuration([], [], *key_values, expected_repetitions=0)
     for c in similiar_configurations:
       merged = merged.merge_with(c)
     merged_configurations.append(merged)
