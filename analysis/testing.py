@@ -55,10 +55,18 @@ def test_no_error_files(configurations, summary):
   print_testcase_end(name, passed)
 
 
+def contains_either(string, words):
+  return any(map(lambda w: w in string, words))
+
+
+def contains_none(string, words):
+  return all(map(lambda w: w not in string, words))
+
 def test_words_not_in_log_file(configurations, summary):
   name = 'Clean logs'
   print_testcase(name)
   bad_words = ['error', 'exception']
+  exclude = ['terminationdetectedtooearly']
 
   passed = True
   for c in configurations:
@@ -67,16 +75,16 @@ def test_words_not_in_log_file(configurations, summary):
       first_error_for_repetition = True
       for l in r.get_log_file().readlines():
         lower_line = l.lower()
-        for w in bad_words:
-          if w in lower_line:
-            if first_error_for_configuration:
-              first_error_for_configuration = False
-              print("  In configuration: %d %s" % (c.number_of_nodes, c.fault_group))
-            if first_error_for_repetition:
-              first_error_for_repetition = False
-              print("    Repetition %d" % r.number)
-            if not summary:
-              print("      %s" % l)
+
+        if contains_either(lower_line, bad_words) and contains_none(lower_line, exclude):
+          if first_error_for_configuration:
+            first_error_for_configuration = False
+            print("  In configuration: %d %s" % (c.number_of_nodes, c.fault_group))
+          if first_error_for_repetition:
+            first_error_for_repetition = False
+            print("    Repetition %d" % r.number)
+          if not summary:
+            print("      %s" % l)
 
   print_testcase_end(name, passed)
 
