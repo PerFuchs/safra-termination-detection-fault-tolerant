@@ -15,7 +15,11 @@ def main():
 
   test_configurations_complete(configurations, expected_configurations)
 
-  test_no_error_files(configurations, expected_configurations)
+  test_no_error_files(configurations, summary)
+
+  test_words_not_in_log_file(configurations, summary)
+
+  test_results_correct(configurations, summary)
 
 
 def test_configurations_complete(configurations, expected_configurations):
@@ -24,14 +28,14 @@ def test_configurations_complete(configurations, expected_configurations):
 
   differences = copy.deepcopy(expected_configurations)
   passed = True
-  for c in configurations.values():
+  for c in configurations:
     expected_count = expected_configurations[(c.number_of_nodes, c.fault_group)]
     difference = expected_count - len(c.repetitions) - len(c.invalid_repetitions)
     differences[(c.number_of_nodes, c.fault_group)] = difference
 
-  for (key, difference) in differences.items():
+  for ((number_of_nodes, fault_group), difference) in differences.items():
     if difference:
-      print("Configurations %i %s is missing %i repetitions from %i" % (c.number_of_nodes, c.fault_group, difference, expected_configurations[key]))
+      print("Configurations %i %s is missing %i repetitions from %i" % (number_of_nodes, fault_group, difference, expected_configurations[(number_of_nodes, fault_group)]))
       passed = False
 
   print_testcase_end(name, passed)
@@ -42,8 +46,8 @@ def test_no_error_files(configurations, summary):
   print_testcase(name)
 
   passed = True
-  for c in configurations.values():
-    if len(c.invalid_repetitions):
+  for c in configurations:
+    if len(c.invalid_repetitions) != 0:
       passed = False
       print("Configuration %i %s has %i errors" % (c.number_of_nodes, c.fault_group, len(c.invalid_repetitions)))
     if not summary:
@@ -51,7 +55,7 @@ def test_no_error_files(configurations, summary):
         for e in r.errors:
           print(e)
         print("")
-    print("---------\n")
+      print("---------\n")
 
   print_testcase_end(name, passed)
 
@@ -62,7 +66,7 @@ def test_words_not_in_log_file(configurations, summary):
   bad_words = ['error', 'exception']
 
   passed = True
-  for c in configurations.values():
+  for c in configurations:
     first_error_for_configuration = True
     for r in c.repetitions + c.invalid_repetitions:
       first_error_for_repetition = True
@@ -88,7 +92,7 @@ def test_results_correct(configurations, summary):
   print_testcase(name)
 
   passed = True
-  for c in configurations.values():
+  for c in configurations:
     first_error_for_configuration = True
     for r in c.repetitions + c.invalid_repetitions:
       for l in r.get_log_file().readlines():
@@ -112,6 +116,7 @@ def print_testcase(name):
 def print_testcase_end(name, passed):
   print('Passed' if passed else 'Failed')
   print('+' * len(name))
+  print('')
 
 
 main()

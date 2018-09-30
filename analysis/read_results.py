@@ -81,9 +81,10 @@ class Repetition:
 
     logs = len(list(filter(lambda f: f.endswith('.log'), listdir(folder))))
     chandy_misra_results = len(list(filter(lambda f: f.endswith('.chandyMisra'), listdir(folder))))
+    afek_kutten_yung_results = len(list(filter(lambda f: f.endswith('.afekKuttenYung'), listdir(folder))))
 
     assert logs == number_of_nodes + 1, folder  # 1 is the out.log file summarizing the whole run
-    assert chandy_misra_results == number_of_nodes, folder
+    assert chandy_misra_results == number_of_nodes or afek_kutten_yung_results == number_of_nodes, folder
 
   def print_warnings(self):
     if self.warnings:
