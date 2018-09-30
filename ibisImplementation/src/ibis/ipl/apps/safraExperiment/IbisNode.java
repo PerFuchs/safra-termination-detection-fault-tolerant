@@ -68,7 +68,7 @@ class IbisNode {
 
       for (int i = 0; i < repetitions; i++) {
         logger.info(String.format("Starting repetition: %d", i));
-        Path outputFolderForRun = outputFolder.resolve(String.format("%d", i));
+        Path outputFolderForRun = outputFolder.resolve(String.format("%04d", i));
         ExperimentRun run = new ExperimentRun(i, outputFolderForRun, basicAlgorithmChoice, faultTolerant, faultPercentage, ibis, detectionService, signalHandler, synchronizedRandom);
         run.run(porttype);
         logger.info(String.format("Finishing repetition: %d", i));

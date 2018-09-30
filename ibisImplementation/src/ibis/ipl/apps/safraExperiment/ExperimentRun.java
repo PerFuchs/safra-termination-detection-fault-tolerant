@@ -114,7 +114,6 @@ class ExperimentRun {
       System.out.println("ExecutionTime: " + time);
       System.out.println("End");
 
-      // Copy the output log file
       copy_log_file();
     }
 
