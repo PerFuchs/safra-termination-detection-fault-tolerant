@@ -35,13 +35,16 @@ public class SafraFS implements Safra {
 
   private boolean terminationDetected = false;
 
-  public SafraFS(CommunicationLayer communicationLayer, boolean isInitiator) throws IOException {
+  public SafraFS(CommunicationLayer communicationLayer, boolean isBasicInitiator) throws IOException {
     this.communicationLayer = communicationLayer;
     isBlackUntil = communicationLayer.getID();
-    this.isInitiator = isInitiator;
+    this.isInitiator = isBasicInitiator;
 
-    if (isInitiator) {
+    if (communicationLayer.isRoot()) {
       token = new TokenFS(0, communicationLayer.getIbisCount() - 1);
+    }
+
+    if (isBasicInitiator) {
       setActive(true, "Initiator");
     }
   }
@@ -84,9 +87,7 @@ public class SafraFS implements Safra {
     OurTimer timer = new OurTimer();
     semaphore.acquire();
     started = true;
-    if (isInitiator) {
-      handleToken(timer);
-    }
+    handleToken(timer);
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
