@@ -115,6 +115,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             step();
 
             if (ownStateChanged) {
+              logger.debug(String.format("%04d sends data messages to all neighbours", me));
               sendDataToAllNeighbours(timer);
               noChangeCounter = 0;
             } else {
@@ -122,7 +123,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             }
             timer.stopAndCreateBasicTimeSpentEvent();
 
-            if (active && !gotUpdatesBeforeStep && ((iAmRoot() || notRoot()) && maxRoot() && notHandling())) {
+            if (active && !gotUpdatesBeforeStep && ((iAmRoot() || notRoot()) && maxRoot() && notHandling() && isRequested() == AfekKuttenYungData.EMPTY_NODE)) {
               setActive(false, "Step done");
             } else {
               if (active) {
@@ -188,16 +189,8 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         if (!notHandling()) {
           resetRequest();
         } else {
-          boolean isRequested = false;
-          int requestBy = AfekKuttenYungData.EMPTY_NODE;
-          for (int i : neighbourData.keySet()) {
-            if (request(i)) {
-              isRequested = true;
-              requestBy = i;
-              break;
-            }
-          }
-          if ((iAmRoot() || getParentData().from != me) && isRequested) {
+          int requestBy = isRequested();
+          if ((iAmRoot() || getParentData().from != me) && requestBy != AfekKuttenYungData.EMPTY_NODE) {
             handleFor(requestBy);
             grant();
           } else {
@@ -208,6 +201,17 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         logger.trace(String.format("%04d waits 3", me));
       }
     }
+  }
+
+  private int isRequested() {
+    int requestBy = AfekKuttenYungData.EMPTY_NODE;
+    for (int i : neighbourData.keySet()) {
+      if (request(i)) {
+        requestBy = i;
+        break;
+      }
+    }
+    return requestBy;
   }
 
   private void handleFor(int requestBy) {
@@ -374,6 +378,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     AfekKuttenYungDataMessage message = (AfekKuttenYungDataMessage) m;
 
     if (!safra.crashDetected(source)) {
+      logger.debug(String.format("%04d got messages from %04d.", me, source));
       timer.pause();
       try {
         setActive(true, "Got state update");
