@@ -43,7 +43,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine, CrashDetector crashDetector) {
     me = communicationLayer.getID();
-    synchronizer = new AlphaSynchronizer(communicationLayer, this, crashDetector);
+    synchronizer = new AlphaSynchronizer(communicationLayer, this, crashDetector, safra);
 
     this.communicationLayer = communicationLayer;
     this.safra = safra;

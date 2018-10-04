@@ -6,6 +6,7 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashException;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashHandler;
 import ibis.ipl.apps.safraExperiment.safra.api.CrashDetectionAfterTerminationException;
+import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import org.apache.log4j.Logger;
@@ -30,7 +31,7 @@ public class AlphaSynchronizer implements CrashHandler {
 
   private CommunicationLayer communicationLayer;
   private AwebruchClient client;
-  private final CrashDetector crashDetector;
+  private final Safra safra;
 
   private boolean pulseFinished;
   private Map<Integer, Integer> safeMessageReceived;
@@ -45,11 +46,11 @@ public class AlphaSynchronizer implements CrashHandler {
   private Semaphore semaphore;
   private boolean allSafeHandled;
 
-  public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client, CrashDetector crashDetector) {
+  public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client, CrashDetector crashDetector, Safra safra) {
     this.communicationLayer = communicationLayer;
     this.client = client;
 
-    this.crashDetector = crashDetector;
+    this.safra = safra;
     crashDetector.addHandler(this);
 
     safeMessageReceived = new HashMap<>();
@@ -96,15 +97,14 @@ public class AlphaSynchronizer implements CrashHandler {
     }
   }
 
-  // TODO crash detector or safra node. Should be safra node correct?
   private void increaseAckCounter(int index) {
-    if (!crashDetector.hasCrashed(index)) {
+    if (!safra.crashDetected(index)) {
       increaseMapCounter(ackMessages, index);
     }
   }
 
   private void increaseMessageCounter(int index) {
-    if (!crashDetector.hasCrashed(index)) {
+    if (!safra.crashDetected(index)) {
       increaseMapCounter(messagesSent, index);
     }
   }
