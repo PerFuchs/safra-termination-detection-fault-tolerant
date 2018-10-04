@@ -48,10 +48,13 @@ public abstract class Experiment {
     boolean ret = true;
     List<Event> events = getEvents();
     for (Event e : events) {
-      if (e.getLevel() == Level.ERROR || e.getLevel() == Level.WARN) {
-        logger.error(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
-        writeToErrorFile(String.format("Logs contain error or warning: %s on %d", e.getEvent(), e.getNode()));
+      if (e.getLevel() == Level.ERROR) {
+        logger.error(String.format("Logs contain error: %s on %d", e.getEvent(), e.getNode()));
+        writeToErrorFile(String.format("Logs contain error: %s on %d", e.getEvent(), e.getNode()));
         ret = false;
+      } else if (e.getLevel() == Level.WARN) {
+        logger.warn(String.format("Logs contain warning: %s on %d", e.getEvent(), e.getNode()));
+        writeToWarnFile(String.format("Logs contain warning: %s on %d", e.getEvent(), e.getNode()));
       }
     }
     return ret;

@@ -30,7 +30,7 @@ public class CrashDetector {
       try {
         ch.handleCrash(crashedNode);
       } catch (CrashDetectionAfterTerminationException e) {
-        experimentLogger.error(Event.getDetectedCrashAfterTerminationEvent());
+        experimentLogger.warn(Event.getDetectedCrashAfterTerminationEvent());
       }
     }
   }

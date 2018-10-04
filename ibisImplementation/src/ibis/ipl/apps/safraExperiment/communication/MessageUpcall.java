@@ -112,7 +112,7 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
               try {
                 synchronizer.receiveMessage(origin, m);
               } catch (TerminationDetectedTooEarly terminationDetectedTooEarly) {
-                experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
+                experimentLogger.warn(Event.getTerminationDetectedToEarlyEvent());
                 terminationDetectedTooEarly.printStackTrace();
               }
             }
