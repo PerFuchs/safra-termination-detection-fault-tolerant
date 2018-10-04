@@ -1,4 +1,3 @@
-import copy
 import sys
 
 from read_results import get_configurations
@@ -62,11 +61,12 @@ def contains_either(string, words):
 def contains_none(string, words):
   return all(map(lambda w: w not in string, words))
 
+
 def test_words_not_in_log_file(configurations, summary):
   name = 'Clean logs'
   print_testcase(name)
   bad_words = ['error', 'exception']
-  exclude = ['terminationdetectedtooearly']
+  exclude = ['terminationdetectedtooearly', 'crashdetectedaftertermination']
 
   passed = True
   for c in configurations:
@@ -96,7 +96,7 @@ def test_results_correct(configurations, summary):
   passed = True
   for c in configurations:
     first_error_for_configuration = True
-    for r in c.repetitions + c.invalid_repetitions:
+    for r in c.repetitions:
       for l in r.get_log_file().readlines():
         if 'result is correct' in l:
           break
@@ -107,7 +107,7 @@ def test_results_correct(configurations, summary):
           print("In configuration: %d %s" % (c.number_of_nodes, c.fault_group))
         print("    Repetition %i results are not correct" % r.number)
 
-    print_testcase_end(name, passed)
+  print_testcase_end(name, passed)
 
 
 def print_testcase(name):
