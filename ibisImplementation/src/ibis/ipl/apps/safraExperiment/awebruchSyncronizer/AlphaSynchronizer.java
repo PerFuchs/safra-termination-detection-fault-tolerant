@@ -45,6 +45,7 @@ public class AlphaSynchronizer implements CrashHandler {
    */
   private Semaphore semaphore;
   private boolean allSafeHandled;
+  private boolean safeMessagesSent;
 
   public AlphaSynchronizer(CommunicationLayer communicationLayer, AwebruchClient client, CrashDetector crashDetector, Safra safra) {
     this.communicationLayer = communicationLayer;
@@ -136,6 +137,9 @@ public class AlphaSynchronizer implements CrashHandler {
       }
 
       int safeMessages = safeMessageReceived.get(source);
+      if (safeMessages > 1) {
+        logger.error("Problem");
+      }
       safeMessageReceived.put(source, safeMessages + 1);
 
       if (allSafe()) {
@@ -164,21 +168,25 @@ public class AlphaSynchronizer implements CrashHandler {
   }
 
   private void sendSafeMessageToAllNeighbours() throws IOException, CrashException {
-    if (logger.isTraceEnabled()) {
-      StringBuilder b = new StringBuilder();
+    if (!safeMessagesSent) {
+      safeMessagesSent = true;
+      if (logger.isTraceEnabled()) {
+        StringBuilder b = new StringBuilder();
+
+        for (int i : safeMessageReceived.keySet()) {
+          b.append(i);
+          b.append(", ");
+        }
+        logger.trace(String.format("%04d sends safe messages to: %s", communicationLayer.getID(), b.toString()));
+      }
+
 
       for (int i : safeMessageReceived.keySet()) {
-        b.append(i);
-        b.append(", ");
+        communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
       }
-      logger.trace(String.format("%04d sends safe messages to: %s", communicationLayer.getID(), b.toString()));
-    }
 
-    for (int i : safeMessageReceived.keySet()) {
-      communicationLayer.sendMessage(i, new SafeMessage(), new OurTimer());
+      semaphore.release();
     }
-
-    semaphore.release();
   }
 
   public synchronized void finishPulse() throws IOException, CrashException {
@@ -209,6 +217,7 @@ public class AlphaSynchronizer implements CrashHandler {
   private synchronized void prepareNextPulse() {
     pulseFinished = false;
     allSafeHandled = false;
+    safeMessagesSent = false;
     semaphore = new Semaphore(-1);
 
     for (int neighbour : safeMessageReceived.keySet()) {
