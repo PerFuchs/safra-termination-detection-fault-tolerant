@@ -7,6 +7,7 @@ import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.communication.IbisDetectionService;
 import ibis.ipl.apps.safraExperiment.communication.MessageUpcall;
+import ibis.ipl.apps.safraExperiment.crashSimulation.CrashDetector;
 import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
@@ -48,7 +49,7 @@ class IbisNode {
     try {
       System.setErr(System.out);  // Redirect because DAS4 does not show err.
 
-      ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("[%t] - %m%n"));
+      ConsoleAppender consoleAppender = new ConsoleAppender(new PatternLayout("%p - [%t] - %m%n"));
       BasicConfigurator.configure(consoleAppender);
 
       setupLoggingLevel();
@@ -116,18 +117,19 @@ class IbisNode {
     Logger.getLogger(MessageUpcall.class).setLevel(Level.TRACE);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.DEBUG);
-    Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.TRACE);
+    Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
     Logger.getLogger(SafraFS.class).setLevel(Level.INFO);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
-    Logger.getLogger(MessageBarrier.class).setLevel(Level.TRACE);
+    Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
     Logger.getLogger(SignalledBarrier.class).setLevel(Level.TRACE);
     Logger.getLogger(Tree.class).setLevel(Level.TRACE);
+    Logger.getLogger(CrashDetector.class).setLevel(Level.TRACE);
   }
 
   private static void parseArgs(String[] args) {

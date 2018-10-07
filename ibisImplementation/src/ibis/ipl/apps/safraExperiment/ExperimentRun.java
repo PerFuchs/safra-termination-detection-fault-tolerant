@@ -88,7 +88,7 @@ class ExperimentRun {
 
     barrierFactory = new BarrierFactory(registry, signalHandler, communicationLayer);
 
-    crashDetector = new CrashDetector();
+    crashDetector = new CrashDetector(communicationLayer.getID());
 
     setupCrashSimulator();
 

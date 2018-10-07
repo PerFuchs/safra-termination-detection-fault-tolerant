@@ -162,8 +162,6 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
 
   // TODO remove logging statements or put them in ifs
   private synchronized void step() {
-    logger.debug(String.format("%04d: %s", me, ownData.toString()));
-
     if (!(notRoot() && maxRoot()) && !iAmRoot()) {
       logger.trace(String.format("%04d becomes root", me));
       becomeRoot();
@@ -200,6 +198,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       } else {
         logger.trace(String.format("%04d waits 3", me));
       }
+    }
+    if (ownStateChanged) {
+      logger.debug(String.format("%04d: %s", me, ownData.toString()));
     }
   }
 

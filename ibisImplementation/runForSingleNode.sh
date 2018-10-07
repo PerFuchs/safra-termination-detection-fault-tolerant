@@ -31,5 +31,3 @@ do
    startChandyMisraInstance ${instancesInTotal} "$outputFolder" ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} &
    pids[${i}]=$!
 done
-
-echo "Done"

@@ -44,4 +44,14 @@ public class TokenFT extends Token {
     // isBlackUntil + sequenceNumber + + messageCounters and crashed size + messageCounters  + crashed
     return INT_SIZE + LONG_SIZE + INT_SIZE * 2 + LONG_SIZE * messageCounters.size() + INT_SIZE * crashed.size();
   }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(String.format("< BlackUntil: %04d, SequenceNumber: %d Crashed: ", isBlackUntil, sequenceNumber));
+    for (int c : crashed) {
+      sb.append(c);
+      sb.append(", ");
+    }
+    return sb.toString();
+  }
 }
