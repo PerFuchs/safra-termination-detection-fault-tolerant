@@ -177,7 +177,7 @@ public class SafraFT implements Safra, CrashHandler {
           backupToken.isBlackUntil = communicationLayer.getID();
           backupToken.crashed.addAll(report);
           if (nextNode < communicationLayer.getID()) {
-            backupToken.sequenceNumber++;  // TODO should be = getSequenceNumber() + 1
+            backupToken.sequenceNumber = getSequenceNumber() + 1;
           }
 
           timer.pause();
