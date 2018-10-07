@@ -36,10 +36,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private int me;
   private boolean ownStateChanged; // If the node's data ownStateChanged during the step
 
-  private boolean waitingForPulse = false;
-  private boolean gotUpdatesBeforeStep = false;
   private int noChangeCounter;
-
 
   AfekKuttenYungRunningState(CommunicationLayer communicationLayer, Safra safra, AfekKuttenYungStateMachine afekKuttenYungMachine, CrashDetector crashDetector) {
     me = communicationLayer.getID();
@@ -123,18 +120,16 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
             }
             timer.stopAndCreateBasicTimeSpentEvent();
 
-            if (active && !gotUpdatesBeforeStep && ((iAmRoot() || notRoot()) && maxRoot() && notHandling() && isRequested() == AfekKuttenYungData.EMPTY_NODE)) {
+            if (active && allMessagesProcessed() && ((iAmRoot() || notRoot()) && maxRoot() && notHandling() && isRequested() == AfekKuttenYungData.EMPTY_NODE)) {
+              logger.trace(String.format("%04d AKY becoming passive: allmessagesprocessed: !%b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling) && %d (isRequested)", me, allMessagesProcessed(), iAmRoot(), notHandling(), maxRoot(), notHandling(), isRequested()));
               setActive(false, "Step done");
             } else {
               if (active) {
-                logger.trace(String.format("%04d AKY not becoming passive: Updatebeforestep: %b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling)", me, gotUpdatesBeforeStep, iAmRoot(), notHandling(), maxRoot(), notHandling()));
+                logger.trace(String.format("%04d AKY not becoming passive: allmessagesprocessed: !%b && (%b (root) || %b (notroot) && %b (maxroot) && %b (nothandling) && %d (isRequested)", me, allMessagesProcessed(), iAmRoot(), notHandling(), maxRoot(), notHandling(), isRequested()));
               }
             }
 
             ownStateChanged = false;
-            gotUpdatesBeforeStep = false;
-            waitingForPulse = true;
-
             if (!notHandling() && noChangeCounter > communicationLayer.getIbisCount() + 2) {
               logger.error(String.format("%04d waits for a request to be fulfilled. Request: %d. State: %s", communicationLayer.getID(), ownData.req, ownData.toString()));
             }
@@ -142,17 +137,23 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         }
         logger.trace(String.format("%04d Waiting for pulse", me));
         synchronizer.awaitPulse();
-        waitingForPulse = false;
       }
     } catch (NoNeighbourLeftException e) {
       becomeRoot();
       resetRequest();
       ownStateChanged = false;
-      gotUpdatesBeforeStep = false;
-      waitingForPulse = false;
       setActive(false, "No neighbours left");
       logger.info(String.format("%04d Finished, no neighbours left", me));
     }
+  }
+
+  private boolean allMessagesProcessed() {
+    for (List<AfekKuttenYungData> ds : newNeighbourData.values()) {
+      if (!ds.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void setActive(boolean status, String reason) throws IOException, CrashException {
@@ -389,10 +390,6 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
         throw e;
       }
       timer.start();
-
-      if (!waitingForPulse) {
-        gotUpdatesBeforeStep = true;
-      }
 
       AfekKuttenYungData data = AfekKuttenYungData.getEmptyData();
       data.update(message);
