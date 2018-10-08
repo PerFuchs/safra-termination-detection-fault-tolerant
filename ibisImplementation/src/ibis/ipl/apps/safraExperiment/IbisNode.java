@@ -113,23 +113,23 @@ class IbisNode {
   private static void setupLoggingLevel() {
     Logger.getLogger(IbisNode.class).setLevel(Level.TRACE);
     Logger.getLogger(ExperimentRun.class).setLevel(Level.TRACE);
-    Logger.getLogger(CommunicationLayer.class).setLevel(Level.TRACE);
-    Logger.getLogger(MessageUpcall.class).setLevel(Level.TRACE);
+    Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
+    Logger.getLogger(MessageUpcall.class).setLevel(Level.INFO);
     Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
-    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.DEBUG);
+    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.INFO);
     Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.INFO);
-    Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.TRACE);
-    Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
+    Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.INFO);
+    Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFS.class).setLevel(Level.INFO);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
-    Logger.getLogger(SafraStatistics.class).setLevel(Level.DEBUG);
+    Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);
     Logger.getLogger(CrashSimulator.class).setLevel(Level.INFO);
     Logger.getLogger(Network.class).setLevel(Level.INFO);
     Logger.getLogger(SynchronizedRandom.class).setLevel(Level.INFO);
     Logger.getLogger(MessageBarrier.class).setLevel(Level.INFO);
-    Logger.getLogger(SignalledBarrier.class).setLevel(Level.TRACE);
-    Logger.getLogger(Tree.class).setLevel(Level.TRACE);
-    Logger.getLogger(CrashDetector.class).setLevel(Level.TRACE);
+    Logger.getLogger(SignalledBarrier.class).setLevel(Level.INFO);
+    Logger.getLogger(Tree.class).setLevel(Level.INFO);
+    Logger.getLogger(CrashDetector.class).setLevel(Level.INFO);
   }
 
   private static void parseArgs(String[] args) {

@@ -36,6 +36,11 @@ public class AfekKuttenYungStateMachine implements BasicAlgorithm, AwebruchClien
   }
 
   @Override
+  public void crash() {
+    state.crash();
+  }
+
+  @Override
   public void handleCrash(int crashedNode) throws IOException, CrashDetectionAfterTerminationException, CrashException {
     state.handleCrash(crashedNode);
   }

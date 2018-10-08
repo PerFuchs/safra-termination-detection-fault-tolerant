@@ -32,7 +32,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   private Safra safra;
   private boolean active;
   private boolean terminated;
-  private Thread loopThread;
+  private Thread loopThread = null;
   private int me;
   private boolean ownStateChanged; // If the node's data ownStateChanged during the step
 
@@ -76,10 +76,6 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     try {
       startup();
       stepLoop();
-    } catch (CrashException e) {
-      if (!terminated) {
-        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
-      }
     } catch (IOException e) {
       e.printStackTrace();
     } catch (InterruptedException e) {
@@ -87,13 +83,14 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       if (!terminated && afekKuttenYungMachine.getState() == this) {
         e.printStackTrace();
       }
+    } catch (CrashException e) {
+      // Pass
     } finally {
       if (terminated) {
         afekKuttenYungMachine.setState(new AfekKuttenYungTerminatedState(ownData.parent, ownData.distance, ownData.root));
       }
     }
-    logger.info(String.format("%04d Finished AKY: terminated: %b, crashed: %b",
-        me, terminated, afekKuttenYungMachine.getState() instanceof AfekKuttenYungCrashedState));
+    logger.info(String.format("%04d Finished AKY: terminated: %b, crashed: %b", me, terminated, afekKuttenYungMachine.getState() instanceof AfekKuttenYungCrashedState));
   }
 
   private void stepLoop() throws IOException, InterruptedException, CrashException {
@@ -350,11 +347,9 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private synchronized void copyNeighbourStates() {
-    for (int i : communicationLayer.getNeighbours()) {
-      if (!safra.crashDetected(i)) {
-        if (!newNeighbourData.get(i).isEmpty()) {
-          neighbourData.put(i, new AfekKuttenYungData(newNeighbourData.get(i).poll()));
-        }
+    for (int i : newNeighbourData.keySet()) {
+      if (!newNeighbourData.get(i).isEmpty()) {
+        neighbourData.put(i, new AfekKuttenYungData(newNeighbourData.get(i).poll()));
       }
     }
   }
@@ -382,13 +377,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
     if (!safra.crashDetected(source)) {
       logger.debug(String.format("%04d got messages from %04d.", me, source));
       timer.pause();
-      try {
-        setActive(true, "Got state update");
-      } catch (CrashException e) {
-        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
-        loopThread.interrupt();
-        throw e;
-      }
+      setActive(true, "Got state update");
       timer.start();
 
       AfekKuttenYungData data = AfekKuttenYungData.getEmptyData();
@@ -417,14 +406,7 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
       neighbourData.remove(crashedNode);
 
       timer.pause();
-      try {
-        setActive(true, "Crash detected");
-      } catch (CrashException e) {
-        afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
-        loopThread.interrupt();
-        throw e;
-      }
-
+      setActive(true, "Crash detected");
       experimentLogger.info(Event.getParentCrashEvent());
     }
     timer.stopAndCreateBasicTimeSpentEvent();
@@ -450,5 +432,10 @@ public class AfekKuttenYungRunningState extends AfekKuttenYungState implements R
   }
 
   private class NoNeighbourLeftException extends Exception {
+  }
+
+  public void crash() {
+    afekKuttenYungMachine.setState(new AfekKuttenYungCrashedState());
+    loopThread.interrupt();
   }
 }

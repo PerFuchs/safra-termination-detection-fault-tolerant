@@ -149,6 +149,11 @@ public class ChandyMisraNode implements CrashHandler, BasicAlgorithm {
     terminated = true;
   }
 
+  @Override
+  public void crash() {
+    // Nothing to handle
+  }
+
   public int getParentEdgeWeight() {
     if (parent != -1) {
       return network.getWeight(me, parent);

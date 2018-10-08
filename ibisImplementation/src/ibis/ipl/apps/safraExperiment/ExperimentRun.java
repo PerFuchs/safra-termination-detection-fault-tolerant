@@ -228,6 +228,7 @@ class ExperimentRun {
     } else {
       throw new IllegalArgumentException("Unknown basic algorithm");
     }
+    crashSimulator.setBasicAlgorithm(basicAlgorithm);
   }
 
   private void connectIbises() throws IOException, InterruptedException {
@@ -271,7 +272,7 @@ class ExperimentRun {
     try {
       basicAlgorithm.terminate();
     } catch (TerminationDetectedTooEarly e) {
-      logger.error("Termination was detected to early");
+      logger.error("Termination was detected too early");
       experimentLogger.error(Event.getTerminationDetectedToEarlyEvent());
     }
     Thread.sleep(5000);  // Give events after termination a chance to be logged

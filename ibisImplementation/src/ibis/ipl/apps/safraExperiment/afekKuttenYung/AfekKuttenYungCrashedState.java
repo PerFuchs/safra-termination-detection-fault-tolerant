@@ -29,6 +29,11 @@ public class AfekKuttenYungCrashedState extends AfekKuttenYungState {
   }
 
   @Override
+  public void crash() {
+    throw new IllegalStateException("Nodes cannot crash twice");
+  }
+
+  @Override
   public int getParent() {
     return 0;
   }

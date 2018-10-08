@@ -39,6 +39,11 @@ public class AfekKuttenYungTerminatedState extends AfekKuttenYungState {
   }
 
   @Override
+  public void crash() {
+    // Ignore
+  }
+
+  @Override
   public int getParent() {
     return parent;
   }

@@ -1,5 +1,6 @@
 package ibis.ipl.apps.safraExperiment.crashSimulation;
 
+import ibis.ipl.apps.safraExperiment.BasicAlgorithm;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
@@ -24,6 +25,7 @@ public class CrashSimulator {
   private final Map<CrashPoint, Integer> crashPointCounters = new HashMap<>();
 
   private CommunicationLayer communicationLayer;
+  private BasicAlgorithm basicAlgorithm;
   private boolean simulateCrashes;
   private final Set<CrashPoint> enabledCrashPoints;
   private final boolean throwCrashException;
@@ -105,6 +107,8 @@ public class CrashSimulator {
     communicationLayer.broadcastCrashMessage();
     communicationLayer.crash();
 
+    basicAlgorithm.crash();
+
     if (throwCrashException) {
       throw new CrashException();
     }
@@ -116,5 +120,9 @@ public class CrashSimulator {
 
   public Set<Integer> getCrashingNodes() {
     return crashingNodes;
+  }
+
+  public void setBasicAlgorithm(BasicAlgorithm basicAlgorithm) {
+    this.basicAlgorithm = basicAlgorithm;
   }
 }

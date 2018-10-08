@@ -45,13 +45,34 @@ def test_no_error_files(configurations, summary):
     if not summary:
       for r in c.invalid_repetitions:
         print('    Repetition: %i' % r.number)
-        for e in r.errors:
+        for e in categorize_errors(r.errors):
           print('      ' + e)
         print()
       if c.invalid_repetitions:
         print("---------\n")
 
   print_testcase_end(name, passed)
+
+
+def categorize_errors(errors):
+  unified_errors = []
+
+  termination_detected_to_early_encountered = False
+  termination_not_detected_encountered = False
+  for e in errors:
+    if '<<TerminationDetectedTooEarly>>' in e:
+      if not termination_detected_to_early_encountered:
+        termination_detected_to_early_encountered = True
+        unified_errors.append(e)
+    elif 'Termination wasn\'t detected in' in e:
+      if not termination_not_detected_encountered:
+        termination_not_detected_encountered = True
+        unified_errors.append(e)
+    else:
+      unified_errors.append(e)
+
+  return unified_errors
+
 
 
 def contains_either(string, words):
@@ -66,7 +87,7 @@ def test_words_not_in_log_file(configurations, summary):
   name = 'Clean logs'
   print_testcase(name)
   bad_words = ['error', 'exception']
-  exclude = ['terminationdetectedtooearly', 'crashdetectedaftertermination']
+  exclude = ['terminationdetectedtooearly', 'crashdetectedaftertermination', 'termination was detected to early']
 
   passed = True
   for c in configurations:
@@ -81,10 +102,12 @@ def test_words_not_in_log_file(configurations, summary):
             first_error_for_configuration = False
             print("  In configuration: %d %s" % (c.number_of_nodes, c.fault_group))
           if first_error_for_repetition:
+            printed_already = set()
             first_error_for_repetition = False
             print("    Repetition %d" % r.number)
-          if not summary:
+          if not summary and l not in printed_already:
             print("      %s" % l)
+            printed_already.add(l)
 
   print_testcase_end(name, passed)
 

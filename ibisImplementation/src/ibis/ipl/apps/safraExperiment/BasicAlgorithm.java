@@ -7,5 +7,6 @@ import java.io.IOException;
 
 public interface BasicAlgorithm {
   public void terminate() throws TerminationDetectedTooEarly;
+  public void crash();
   public void startAlgorithm() throws IOException, CrashException;
 }
