@@ -34,6 +34,8 @@ class IbisNode {
   static Logger logger = Logger.getLogger(IbisNode.class);
   private final static Logger experimentLogger = Logger.getLogger(OnlineExperiment.experimentLoggerName);
 
+  public static final Path generalOutputFile = Paths.get(String.format("/var/scratch/%s/safraExperiment.log", System.getProperty("user.name")));
+
   static Ibis ibis;
   static Registry registry;
   private static Path outputFolder;

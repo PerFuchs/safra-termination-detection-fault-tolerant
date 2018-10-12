@@ -123,7 +123,7 @@ class ExperimentRun {
   }
 
   private void copy_log_file() throws IOException {
-    BufferedReader br = Files.newBufferedReader(Paths.get("./out.log"), Charset.defaultCharset());
+    BufferedReader br = Files.newBufferedReader(IbisNode.generalOutputFile, Charset.defaultCharset());
     BufferedWriter bw = Files.newBufferedWriter(outputFolder.resolve("out.log"), Charset.defaultCharset());
     String line;
 
@@ -243,7 +243,7 @@ class ExperimentRun {
   }
 
   private void runToTermination() throws IOException, InterruptedException {
-    long maxExperimentTime = 600000;
+    long maxExperimentTime = 90000;
     ThreadInteruptTimeout timeout = new ThreadInteruptTimeout(Thread.currentThread(), maxExperimentTime);
     Thread interuptThread = new Thread(timeout);
     interuptThread.start();
@@ -266,8 +266,8 @@ class ExperimentRun {
 
       totalTime.stopAndCreateTotalTimeSpentEvent();
     } catch (InterruptedException e) {
-      logger.error("Termination wasn't detected in 1:30 minutes.");
-      experiment.writeToErrorFile("Termination wasn't detected in 1:30 minutes.");
+      logger.error(String.format("Termination wasn't detected in %d seconds.", maxExperimentTime / 1000));
+      experiment.writeToErrorFile(String.format("Termination wasn't detected in %d seconds.", maxExperimentTime / 1000));
     }
     try {
       basicAlgorithm.terminate();

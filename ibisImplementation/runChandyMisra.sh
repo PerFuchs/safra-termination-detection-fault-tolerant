@@ -28,4 +28,4 @@ prun -np ${numberOfNodes} ${prunArguments} \
 ./runForSingleNode.sh \
 ${instancesPerNode} ${instancesInTotal} ${repetitions} ${outputFolder} \
 ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} \
-${numberOfNodes} >> out.log
+${numberOfNodes} >> /var/scratch/$(whoami)/safraExperiment.log
