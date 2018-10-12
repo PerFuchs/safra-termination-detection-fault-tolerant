@@ -25,9 +25,8 @@ public class SafraFT implements Safra, CrashHandler {
   private boolean basicAlgorithmIsActive = false;
   private int isBlackUntil;
   private long[] messageCounters;
-  private Set<Integer> crashed = new HashSet<>();  // All nodes which crash has been reported by a token
-  private Set<Integer> oldCrashed = new HashSet<>();  // All nodes which crash has been repoorted by a token from the last round
-  private Set<Integer> report = new HashSet<>();  // All nodes which crash has been reported by the failure detector but not by a token so far.
+  private Set<Integer> crashed = new HashSet<>();
+  private Set<Integer> report = new HashSet<>();
 
   private int nextNode;
 
@@ -114,6 +113,7 @@ public class SafraFT implements Safra, CrashHandler {
     timer.stopAndCreateSafraTimeSpentEvent();
   }
 
+  @SuppressWarnings("Duplicates")
   public synchronized void startAlgorithm() throws InterruptedException, IOException, CrashException {
     OurTimer timer = new OurTimer();
     semaphore.acquire();
@@ -223,8 +223,6 @@ public class SafraFT implements Safra, CrashHandler {
       if (terminationDetected) {
         experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
       }
-      t.crashed.removeAll(oldCrashed);
-      crashed.addAll(t.crashed);
       this.token = t;
       handleToken(timer);
     } else {
@@ -246,6 +244,10 @@ public class SafraFT implements Safra, CrashHandler {
         }
         logger.debug(String.format("%04d crashed: %s", me, crashedString.toString()));
       }
+
+      token.crashed.removeAll(crashed);
+      crashed.addAll(token.crashed);
+
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
       logger.debug(String.format("%04d is black until %04d", me, isBlackUntil));
       report.removeAll(token.crashed);
@@ -302,7 +304,6 @@ public class SafraFT implements Safra, CrashHandler {
       crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_TOKEN);
       sequenceNumber++;
       isBlackUntil = me;
-      oldCrashed.addAll(crashed);
     }
   }
 
@@ -357,6 +358,6 @@ public class SafraFT implements Safra, CrashHandler {
 
   @Override
   public boolean crashDetected(int origin) {
-    return crashed.contains(origin) || report.contains(origin);
+    return crashed.contains(origin) || report.contains(origin) || (token != null && token.crashed.contains(origin));
   }
 }
