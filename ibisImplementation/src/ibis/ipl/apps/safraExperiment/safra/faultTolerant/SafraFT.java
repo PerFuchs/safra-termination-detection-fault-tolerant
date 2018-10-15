@@ -226,7 +226,7 @@ public class SafraFT implements Safra, CrashHandler {
       this.token = t;
       handleToken(timer);
     } else {
-      logger.debug(String.format("%04d accepts token", communicationLayer.getID()));
+      logger.debug(String.format("%04d disregards token", communicationLayer.getID()));
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -301,6 +301,7 @@ public class SafraFT implements Safra, CrashHandler {
 
       crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_SENDING_TOKEN);
       forwardToken(token, timer);
+      this.token = null;
       crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_TOKEN);
       sequenceNumber++;
       isBlackUntil = me;
@@ -325,7 +326,6 @@ public class SafraFT implements Safra, CrashHandler {
     timer.start();
 
     this.backupToken = token;
-    this.token = null;
     if (nextNode == communicationLayer.getID()) {
       if (!basicAlgorithmIsActive) {
         announce();
