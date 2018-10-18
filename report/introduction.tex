@@ -1,13 +1,13 @@
 \section{Introduction} 
-This technical report presents an experiment using our fault tolerant Safra version (short SafraFT) \cite{ourpaper}
-to detect termination of a fault tolerant Chandy Misra routing algorithm.
-The fault-tolerant Chandy Misra version is developed for this project as an extension of the fault sensitive Chandy Misra algorithm described in \cite{Fokkink:2018} on page 57.
+This technical report presents an experiment using our fault tolerant Safra version (short SafraFT)~\cite{safraFT2018}
+to detect termination of a fault tolerant version of Chandy Misra's routing algorithm and Afek-Kutten-Yung's self-stabilizing spanning tree algorithm.
+The fault-tolerant Chandy Misra version is developed for this project as an extension of the fault sensitive Chandy Misra algorithm described in~\cite{Fokkink:2018} on page 57.
 An explanation of the extension and further important implementation decisions can be found in \cref{sec:methods}.
 
 The experiment aims to
 \begin{itemize}
 	\item backup our claim that SafraFT is correct by using it in a realistic setting and verifying that termination is detected in a timely manner after actual termination occurred
-	\item compare the performance of SafraFT to a fault sensitive Safra implementation (abbreviated SafraFS) from \cite{demirbas2000optimal}
+	\item compare the performance of SafraFT to the fault sensitive Safra implementation (abbreviated SafraFS) from \cite{demirbas2000optimal}
 	\item demonstrate the ability of SafraFT to handle networks of 25 and up to 2000 nodes in a fault-free, 1 to 5 faults and highly faulty (90\% node failure) environment
 \end{itemize}
 
@@ -72,8 +72,8 @@ more noticable for many faults but than there are also less tokens also in that 
 
 
 
-Before performing this experiment George applied SafraFT to a simulated basic algorithm in a multi-threaded environment emulating a distributed system.
+Before performing this experiment George Karlos applied SafraFT to a simulated basic algorithm in a multi-threaded environment emulating a distributed system.
 These experiments showed strong evidence towards correctness and scalability of SafraFT.
-The implementation, technical report and results can be found here: \cite{georgework}.
+The implementation, technical report and results can be found in George's bachelor thesis~\cite{karlos}.
 
-The experiment presented here is performed on a reviewers recommendation to add `compelling end-to-end application'.
+The experiment presented here is performed on the recommendation of a reviewer to add `compelling end-to-end application'.

@@ -1,21 +1,35 @@
 \section{Methods}
 \label{sec:methods}
-This sections describes the most important software design decission of this experiment e.g. how a fault tolerant Chandy Misra algorithm can be implemented or how I simulate faults.
+This section describes the most important software design decission taken during implementation e.g. how to add fault-tolerance to Chandy-Misra or how to simulate faults.
 Later, I describe the software and machines used.
-\subsection{Chandy Misra}
-- src Distributed algorithms by Fokking
-- either write and connec this ro just reference this in the next chapter
-\subsection {Fault tolerant Chandy Misra}
-\label{ssec:fault-tolerant-chandy-misra}
-The fault-tolerant Chandy Misra version used for our experiments constructs a sink tree in an undirected network under the assumption that a perfect failure detector is present at each node (a detector that does not suspect nodes that haven't actually failed and detects each failure eventually). 
-Other than the original Chandy Misra algorithm, the fault tolerant version requires FIFO-channels.
-Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
 
-As far as Chandy-Misra is concerned nodes are only interested in crashes of their parents and other ancestors on their path to the root node.
-If a node \co{X} detects a crash of its parent, it sends a \co{REQUEST} message to each neighbour. 
-If a neighbour \co{Y} of \co{X} receives a \co{REQUEST} message, it answers with a \co{DIST d} message where \co{d} is its own distance. 
-To save messages \co{DIST d} is only send if $d < \infty $.
-If \co{Y} happens to be a child of \co{X}, it resets its own \co{dist} and \co{parent} value to $\infty$ respectively $\bot$ and sends a \co{REQUEST} message to all its neighbours. In this case \co{Y} sends no \co{DIST} message as answer to \co{X}.
+\subsection {Fault-tolerant Chandy Misra}
+\label{ssec:fault-tolerant-chandy-misra}
+This subsection describes the fault-tolerant extentsion of Chandy-Misra's routing algorithm. 
+For a description of the original algorithm refer to \cite[page 56]{Fokkink:2018}.
+The fault-tolerant version used for the experiments constructs a sink tree in an undirected network under the assumption that a perfect failure detector \footnote{a perfect failure detector does not suspect nodes that haven't actually failed and detects each failure eventually} is present at each node. 
+Other than the original Chandy Misra algorithm, the fault tolerant version requires FIFO-channels.
+Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct. 
+The following assumes that the reader is familiar with the original Chandy-Misra algorithm and describes only the extensions necessary to add fault-tolerance.
+
+In the context of Chandy-Misra, a node is only interested in crashes of its parent and other ancestors on its path to the root node.
+If a node \co{X} detects a crash of its parent, it sends a \co{REQUEST} message to all its neighbours. 
+If a neighbour \co{Y} of \co{X} receives a \co{REQUEST} message, it answers with a \co{DIST d} message where \co{d} is its own current distance to the root node. 
+\co{Y} only sends this message if $d < \infty $.
+If \co{Y} happens to be a child of \co{X}, it resets its own \co{dist} and \co{parent} variables to $\infty$ respectively $\bot$ and sends a \co{REQUEST} message to all its neighbours.
+In this case \co{Y} sends no \co{DIST} message as answer to \co{X}.
+
+Next, I present an intuition why this extentsion is fault-tolerant.
+Each failure only affects nodes that see themselves as children, grandchildren or deeper ancestor of the crashing node; that is, a failure only affects subtrees.
+The children of the failing node eventually send \co{REQUEST} messages to all their neighbours because the perfect failure detector guarantees that each node failure is eventually detected by them.
+The neighbours send \co{REQUEST} messages to all their neighbours if they receive a \co{REQUEST} message from their parent. 
+Therefore, eventually, all nodes in the subtrees of a failing node are reached by a \co{REQUEST} message and reset their \co{dist} and \co{parent} values.
+Also, all neighbours that receive a \co{REQUEST} message from a node that is not their parent, answer it with their current \co{dist} value.
+This allows nodes in the affected subtree to rebuild new paths toward the root node.
+These new paths are correct when the answering node is not part of any affected subtree.
+However, if they are part of an affected subtree (e.g. grandchildren of the crashed nodes), invalid paths are introduced - as these nodes might have not been reached by any \co{REQUEST} message and therefore still believe they have a valid path towards the root.
+These invalid paths are corrected when the grandchildren are reached by the \co{REQUEST} message of their parent because on the receipt they send \co{REQUEST} messages which reset all nodes considering them parents. 
+This behaviour of introducing invalid paths that are corrected later might lead to a bad theoretical message complexity but did not hinder the experiments.
 
 The requirement for FIFO channels is best understood by a counterexample example based on a none FIFO network.
 The network used for this example is shown in \cref{fig:fifoNecessaryNetwork}. 
@@ -28,13 +42,11 @@ Now \co{B} crashes and when \co{C} detects this, it sends a \co{REQUEST} message
 If \co{M2} overtakes \co{M1}, \co{D} resets its variabbles and on receive of \co{M1} considers \co{C} its parent which is correct but with an incorrect \co{dist} value of 2.
 All \co{DIST} messages received by \co{D} from now on have a higher distance value and are dismissed. 
 So the error is never corrected.
-
 A straightforward fix for this is to use FIFO networks because the original problem is that \co{M2} overtook \co{M1}.
-
-SafraFT uses the same FIFO channels as its basic algorithm during the experiment.
-Nonetheless, we still claim it does not need this property.
-This claim is straightforward to proof: SafraFT guarantees that at most one message is in any channel at all times because it forwards a single token and when a backup token is issued, it is sent to a different node than the original token and only the first of both tokens are forwarded afterwards.
-Following the reasoning that only one message is in flight between any two nodes, SafraFT is indifferent to the property FIFO property of the channels.
+\footnote{During the experiments, SafraFT uses the same FIFO channels as its basic algorithm.
+Nonetheless, we still claim it does not require this property.
+This claim is straightforward to proof: SafraFT guarantees that at most one message is in any channel at all times because it forwards a single token and when a backup token is issued, it is sent to a different node than the original token and only one of both tokens is forwarded.
+Following the reasoning that only one message is in flight between any two nodes, SafraFT is indifferent to the property FIFO property of the channels.}
 
 \begin{figure}[h]
 	\includegraphics[height=5cm]{figures/FIFO_necessary}
@@ -43,28 +55,28 @@ Following the reasoning that only one message is in flight between any two nodes
 	\label{fig:fifoNecessaryNetwork}
 \end{figure}
 
-I argue the this augmented Chandy Misra algorithm constructs correct sink trees in presence of fail-safe failures. 
-Each failure only affects nodes that see themselves as children, grandchildren or deeper ancestor of the crashing node; that is, a failure only affects subtrees.
-The children eventually send \co{REQUEST} messages to all their neighbours because the perfect failure detector guarantees that each node failure is eventually detected by them.
-The neighbours send \co{REQUEST} messages to all their neighbours if they receive a \co{REQUEST} message from their parent. 
-Therefore, eventually, all nodes in the subtrees of a failing node are reached by a \co{REQUEST} message and reset their \co{dist} and \co{parent} values.
-Also, all neighbours that receive a \co{REQUEST} message from a node that is not their parent, answer it with their current \co{dist} value.
-This allows nodes in the affected subtree to rebuild new paths toward the root node.
-These new paths are correct when the answering node is not part of any affected subtree.
-However, if they are part of an affected subtree (e.g. grandchildren of the crashed nodes), invalid paths are introduced - as these nodes might have not been reached by any \co{REQUEST} message and therefore still believe they have a valid path towards the root.
-These invalid paths are corrected when the grandchildren are reached by the \co{REQUEST} message of their parent because on the receipt they send \co{REQUEST} messages which reset all nodes considering them parents. 
-This behaviour of introducing invalid paths that are corrected later might lead to a bad theoretical message complexity but did not hinder the experiments.
-
-The presented fault tolerant Chandy Misra algorithm could be incorrect as it calculated the wrong tree in 12 out of 1500, 
+% TODO i thought I fixed this?
+The presented fault tolerant Chandy Misra algorithm could be incorrect as it calculated the wrong tree in 12 out of 1500 runs, 
 %number
 Unfortunately, I could not fix it in time for the final experiment runs. 
-However, this does not influence the evaluation of SafraFT because the correctness check for SafraFT and Chandy Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:verification}).
+However, this does not influence the evaluation of SafraFT because the correctness check for SafraFT and Chandy Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:offline-analysis}).
 The verification of SafraFT does show that SafraFT detected termination correctly in these cases and did not cause the corrupted Chandy Misra result.
 
 Additionally, to fixing the last bugs, fault-tolerant Chandy Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis. 
 
 %TODO Provide pseudo code?
-% TODO provide example?
+
+\subsection{An adaption to Afek-Kutten-Yung}
+I implement Afek-Kutten-Yung's self-stabilizing spanning tree algorithm as described in \cite[page 183ff]{fokkink:2018}.
+The original Afek-Kutten-Yung is a synchronized algorithm for shared-memory environments.
+Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
+Hence, I optimize it to allow runs up to 2000 nodes.
+The optimization exhibits infinite runs.
+In our experiment setup, these runs do not occur. 
+Next, I explain the optimization, give a counter example to its correctness and explain why the infinite runs are unlikely in our setup.
+
+% TODO there is a weaknes in my argumentation why they do not occur
+
 
 \subsection{Fault Simulation}
 I simulate faults by stopping Safra and the basic algorithm on the failing instance.
