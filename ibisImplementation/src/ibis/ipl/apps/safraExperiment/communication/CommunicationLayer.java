@@ -161,7 +161,6 @@ public class CommunicationLayer {
       m.writeInt(MessageTypes.DISTANCE.ordinal());
       m.writeLong(safraNode.getSequenceNumber());
       m.writeInt(dm.getDistance());
-      m.send();
       m.finish();
     }
     crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
@@ -201,7 +200,6 @@ public class CommunicationLayer {
     SendPort sendPort = crashSendPorts.get(receiver);
     WriteMessage m = sendPort.newMessage();
     m.writeInt(MessageTypes.CRASHED.ordinal());
-    m.send();
     m.finish();
   }
 
@@ -214,7 +212,6 @@ public class CommunicationLayer {
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.REQUEST.ordinal());
       m.writeLong(safraNode.getSequenceNumber());
-      m.send();
       m.finish();
     }
     crashSimulator.reachedCrashPoint(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
@@ -225,7 +222,6 @@ public class CommunicationLayer {
     WriteMessage m = sendPort.newMessage();
     m.writeInt(MessageTypes.BARRIER.ordinal());
     m.writeString(name);
-    m.send();
     m.finish();
   }
 
@@ -262,7 +258,6 @@ public class CommunicationLayer {
       WriteMessage m = sendPort.newMessage();
       m.writeInt(MessageTypes.TOKEN.ordinal());
       token.writeToMessage(m);
-      m.send();
       m.finish();
     }
   }
@@ -271,7 +266,6 @@ public class CommunicationLayer {
     SendPort sendPort = sendPorts.get(receiver);
     WriteMessage m = sendPort.newMessage();
     m.writeInt(MessageTypes.ANNOUNCE.ordinal());
-    m.send();
     m.finish();
   }
 
@@ -292,7 +286,6 @@ public class CommunicationLayer {
       WriteMessage m = sendPorts.get(receiver).newMessage();
       m.writeInt(MessageTypes.MESSAGECLASS.ordinal());
       message.writeToIPLMessage(m);
-      m.send();
       m.finish();
     }
     if (message instanceof BasicMessage) {
