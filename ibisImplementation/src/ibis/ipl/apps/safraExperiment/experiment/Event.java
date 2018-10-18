@@ -33,7 +33,7 @@ public class Event implements Comparable<Event> {
   private final boolean isMessageCounterUpdate;
   private final boolean isParentCrashDetected;
   private final boolean isSafraTimeSpentEvent;
-  private final boolean isSafraReduceTime;    // TODO delete in the end
+  private final boolean isSafraReduceTime;
   private final boolean isBasicTimeSpent;
   private final boolean isTotalTimeSpentEvent;
   private final boolean isAnnounce;

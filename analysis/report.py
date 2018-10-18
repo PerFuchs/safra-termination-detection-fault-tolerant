@@ -2,12 +2,14 @@ import sys
 from collections import defaultdict
 
 from pprint import pprint
+import plotly
 
 from report.compare_safra_versions import compare_safra_versions
 from report.graphing import get_box_trace
 from report.influence_network_size import analyse_influence_of_network_size
 from report.influence_of_faults import analyse_influence_of_faults
 from read_results import get_configurations
+
 
 experiment_folder = sys.argv[1]
 configurations = get_configurations(experiment_folder)
@@ -16,7 +18,7 @@ expected_configurations = {}
 
 for network_size in [50, 250, 500, 1000, 2000]:
   for fault_group in ['0 fs', '0', '5n', '90']:
-    expected_configurations[(network_size, fault_group)] = 100
+    expected_configurations[(network_size, fault_group)] = 50
 
 for c in configurations:
   expected_configurations[(c.number_of_nodes, c.fault_group)] = expected_configurations[
@@ -64,8 +66,8 @@ for f in fields:
     data[f].append(get_box_trace(getattr(c, 'get_' + f)(),
                                  "%i-%f-%r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive)))
 
-# for plot_name, plot_data in data.items():
-#     plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
+for plot_name, plot_data in data.items():
+    plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
 
 # for configuration in merged_configurations:
 #     data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")

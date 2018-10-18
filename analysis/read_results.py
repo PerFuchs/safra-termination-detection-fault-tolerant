@@ -160,6 +160,8 @@ class Configuration:
       fault_group = '5n'
 
     expected_repetitions = expected_repetitions.replace('.run', '')
+    if '_' in expected_repetitions:
+      expected_repetitions, _ = expected_repetitions.split('_')
     expected_repetitions = int(expected_repetitions)
 
     repetitions = []

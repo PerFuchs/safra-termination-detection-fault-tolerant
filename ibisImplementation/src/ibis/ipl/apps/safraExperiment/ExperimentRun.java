@@ -165,7 +165,6 @@ class ExperimentRun {
     enabledCrashPoints.add(CrashPoint.BEFORE_SENDING_BASIC_MESSAGE);
     enabledCrashPoints.add(CrashPoint.AFTER_SENDING_BASIC_MESSAGE);
 
-    // TODO test and use for CM as well
     boolean enableCrashException = basicAlgorithmChoice == BasicAlgorithms.AFEK_KUTTEN_YUNG;
 
     crashSimulator = new CrashSimulator(communicationLayer, synchronizedRandom, faultPercentage, faultTolerant, enabledCrashPoints, enableCrashException);
