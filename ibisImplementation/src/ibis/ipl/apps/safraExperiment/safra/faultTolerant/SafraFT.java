@@ -221,7 +221,7 @@ public class SafraFT implements Safra, CrashHandler {
     if (t.sequenceNumber == getSequenceNumber() + 1) {
       logger.debug(String.format("%04d accepts token", communicationLayer.getID()));
       if (terminationDetected) {
-        experimentLogger.error(String.format("%d received token after termination.", communicationLayer.getID()));
+        experimentLogger.warn(String.format("%d received token after termination.", communicationLayer.getID()));
       }
       this.token = t;
       handleToken(timer);
