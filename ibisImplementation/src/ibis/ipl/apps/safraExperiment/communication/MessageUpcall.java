@@ -78,14 +78,16 @@ public class MessageUpcall implements ibis.ipl.MessageUpcall {
           Token token = safraNode.getTokenFactory().readTokenFromMessage(readMessage);
           readMessage.finish();
           synchronized (MessageUpcall.class) {
-            if (!crashed) {
-              safraNode.receiveToken(token);
-            } else {
-              // This is to inform the predecessor in the ring that its successor crashed as it is obviously not aware.
-              // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
-              // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
-              // crash happens but only will become so on receive of the token.
-              communicationLayer.sendCrashMessage(origin);
+            synchronized (safraNode) {
+              if (!crashed) {
+                safraNode.receiveToken(token);
+              } else {
+                // This is to inform the predecessor in the ring that its successor crashed as it is obviously not aware.
+                // This situation arises if the token is send at the predecessor concurrently to the crash event at this node and this
+                // node is not the original successor. Then this node is not a neighbour of it's predecessor at when the
+                // crash happens but only will become so on receive of the token.
+                communicationLayer.sendCrashMessage(origin);
+              }
             }
           }
           break;
