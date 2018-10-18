@@ -49,8 +49,8 @@ public class SafraFT implements Safra, CrashHandler {
     messageCounters = new long[communicationLayer.getIbisCount()];
     nextNode = (communicationLayer.getID() + 1) % communicationLayer.getIbisCount();
 
-    backupToken = new TokenFT(new ArrayList<Long>(
-        Collections.nCopies(communicationLayer.getIbisCount(), 0L)),
+    backupToken = new TokenFT(new ArrayList<Integer>(
+        Collections.nCopies(communicationLayer.getIbisCount(), 0)),
         communicationLayer.getID(),
         0,
         new HashSet<Integer>());
@@ -59,8 +59,8 @@ public class SafraFT implements Safra, CrashHandler {
     token = null;
 
     if (communicationLayer.isRoot()) {
-      token = new TokenFT(new ArrayList<Long>(
-          Collections.nCopies(communicationLayer.getIbisCount(), 0L)),
+      token = new TokenFT(new ArrayList<Integer>(
+          Collections.nCopies(communicationLayer.getIbisCount(), 0)),
           communicationLayer.getIbisCount() - 1,
           1,
           new HashSet<Integer>());
@@ -256,7 +256,7 @@ public class SafraFT implements Safra, CrashHandler {
         logger.debug(String.format("%04d report is not empty", me));
       }
       if (isBlackUntil == me || report.isEmpty()) {
-        long mySum = 0;
+        int mySum = 0;
         for (int i = 0; i < messageCounters.length; i++) {
           if (i != me && !crashed.contains(i)) {
             mySum += messageCounters[i];

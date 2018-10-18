@@ -11,11 +11,11 @@ import java.util.Set;
 
 public class TokenFT extends Token {
   public int isBlackUntil;
-  public List<Long> messageCounters;
+  public List<Integer> messageCounters;
   public long sequenceNumber;
   public Set<Integer> crashed;
 
-  public TokenFT(List<Long> messageCounters,
+  public TokenFT(List<Integer> messageCounters,
                  int isBlackUntil,
                  long sequenceNumber,
                  Set<Integer> crashed) {
@@ -35,14 +35,14 @@ public class TokenFT extends Token {
     }
 
     m.writeInt(messageCounters.size());
-    for (long mc : messageCounters) {
-      m.writeLong(mc);
+    for (int mc : messageCounters) {
+      m.writeInt(mc);
     }
   }
 
   public int getSize() {
     // isBlackUntil + sequenceNumber + + messageCounters and crashed size + messageCounters  + crashed
-    return INT_SIZE + LONG_SIZE + INT_SIZE * 2 + LONG_SIZE * messageCounters.size() + INT_SIZE * crashed.size();
+    return INT_SIZE + LONG_SIZE + INT_SIZE * 2 + INT_SIZE * messageCounters.size() + INT_SIZE * crashed.size();
   }
 
   public String toString() {

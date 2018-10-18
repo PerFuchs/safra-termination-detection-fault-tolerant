@@ -21,9 +21,9 @@ public class TokenFactoryFT implements TokenFactory {
     }
 
     int mcLength = m.readInt();
-    List<Long> mcs = new ArrayList<>();
+    List<Integer> mcs = new ArrayList<>();
     for (int i=0; i < mcLength; i++) {
-      mcs.add(m.readLong());
+      mcs.add(m.readInt());
     }
 
     return new TokenFT(mcs, isBlackUntil, sequenceNumber, crashed);
