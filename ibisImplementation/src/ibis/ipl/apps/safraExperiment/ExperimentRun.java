@@ -1,10 +1,10 @@
 package ibis.ipl.apps.safraExperiment;
 
-import ibis.ipl.*;
+import ibis.ipl.Ibis;
+import ibis.ipl.PortType;
+import ibis.ipl.Registry;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungMessageFactory;
-import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungRunningState;
 import ibis.ipl.apps.safraExperiment.afekKuttenYung.AfekKuttenYungStateMachine;
-import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.AlphaSynchronizer;
 import ibis.ipl.apps.safraExperiment.awebruchSyncronizer.SynchronizerMessageFactory;
 import ibis.ipl.apps.safraExperiment.chandyMisra.ChandyMisraNode;
 import ibis.ipl.apps.safraExperiment.communication.CommunicationLayer;
@@ -17,32 +17,27 @@ import ibis.ipl.apps.safraExperiment.crashSimulation.CrashSimulator;
 import ibis.ipl.apps.safraExperiment.experiment.Event;
 import ibis.ipl.apps.safraExperiment.experiment.OnlineExperiment;
 import ibis.ipl.apps.safraExperiment.experiment.SafraStatistics;
-import ibis.ipl.apps.safraExperiment.experiment.afekKuttenYungVerification.AfekKuttenYungVerifier;
 import ibis.ipl.apps.safraExperiment.ibisSignalling.SignalPollerThread;
-import ibis.ipl.apps.safraExperiment.network.Tree;
+import ibis.ipl.apps.safraExperiment.network.Network;
 import ibis.ipl.apps.safraExperiment.safra.api.Safra;
 import ibis.ipl.apps.safraExperiment.safra.api.TerminationDetectedTooEarly;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
-import ibis.ipl.apps.safraExperiment.network.Network;
-import ibis.ipl.apps.safraExperiment.utils.DeadlockDetector;
 import ibis.ipl.apps.safraExperiment.utils.OurTimer;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.ThreadInteruptTimeout;
 import ibis.ipl.apps.safraExperiment.utils.barrier.BarrierFactory;
-import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
-import ibis.ipl.apps.safraExperiment.utils.barrier.SignalledBarrier;
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 
 class ExperimentRun {

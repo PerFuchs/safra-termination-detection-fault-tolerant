@@ -10,6 +10,8 @@ basicAlgorithm=$7
 serverPort=$8
 prunArguments=$9
 
+generalOutputFile="/var/scratch/$(whoami)/safraExperiment.log"
+
 faultGroup=${faultPercentage}
 if [ ${faultTolerance} == 'fs' ]
 then
@@ -20,12 +22,12 @@ outputFolder="${outputFolder}/${instancesInTotal}-${faultGroup}-${repetitions}.r
 rm -fr ${outputFolder}
 mkdir -p ${outputFolder}
 
-date > out.log
-echo $0 $@ >> out.log
+date > ${outputFolder}/runAt.date
+echo $0 $@ > ${outputFolder}/command.txt
 
 CLASSPATH=lib/cell1D.jar \
 prun -np ${numberOfNodes} ${prunArguments} \
 ./runForSingleNode.sh \
 ${instancesPerNode} ${instancesInTotal} ${repetitions} ${outputFolder} \
 ${faultPercentage} ${faultTolerance} ${basicAlgorithm} ${serverPort} \
-${numberOfNodes} > /var/scratch/$(whoami)/safraExperiment.log
+${numberOfNodes} > ${generalOutputFile}
