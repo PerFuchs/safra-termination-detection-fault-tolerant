@@ -113,11 +113,11 @@ class IbisNode {
     Logger.getLogger(ExperimentRun.class).setLevel(Level.TRACE);
     Logger.getLogger(CommunicationLayer.class).setLevel(Level.INFO);
     Logger.getLogger(MessageUpcall.class).setLevel(Level.INFO);
-    Logger.getLogger(ChandyMisraNode.class).setLevel(Level.TRACE);
-    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.TRACE);
-    Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.TRACE);
+    Logger.getLogger(ChandyMisraNode.class).setLevel(Level.INFO);
+    Logger.getLogger(AfekKuttenYungRunningState.class).setLevel(Level.INFO);
+    Logger.getLogger(AlphaSynchronizer.class).setLevel(Level.INFO);
     Logger.getLogger(AfekKuttenYungVerifier.class).setLevel(Level.INFO);
-    Logger.getLogger(SafraFT.class).setLevel(Level.TRACE);
+    Logger.getLogger(SafraFT.class).setLevel(Level.INFO);
     Logger.getLogger(SafraFS.class).setLevel(Level.INFO);
     Logger.getLogger(OnlineExperiment.class).setLevel(Level.INFO);
     Logger.getLogger(SafraStatistics.class).setLevel(Level.INFO);

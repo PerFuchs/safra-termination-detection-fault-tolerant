@@ -217,16 +217,12 @@ public class SafraFT implements Safra, CrashHandler {
     crashSimulator.reachedCrashPoint(CrashPoint.BEFORE_RECEIVING_TOKEN);
 
     TokenFT t = (TokenFT) token;
-    logger.debug(String.format("%04d received token %s", communicationLayer.getID(), token.toString()));
     if (t.sequenceNumber == getSequenceNumber() + 1) {
-      logger.debug(String.format("%04d accepts token", communicationLayer.getID()));
       if (terminationDetected) {
         experimentLogger.warn(String.format("%d received token after termination.", communicationLayer.getID()));
       }
       this.token = t;
       handleToken(timer);
-    } else {
-      logger.debug(String.format("%04d disregards token", communicationLayer.getID()));
     }
     timer.stopAndCreateSafraTimeSpentEvent();
   }
@@ -234,27 +230,13 @@ public class SafraFT implements Safra, CrashHandler {
   private synchronized void handleToken(OurTimer timer) throws IOException, CrashException {
     if (!basicAlgorithmIsActive && this.token != null) {
       int me = communicationLayer.getID();
-      if (logger.isDebugEnabled()) {
-        StringBuilder crashedString = new StringBuilder();
-        List<Integer> crashedSorted = new LinkedList<>(crashed);
-        Collections.sort(crashedSorted);
-        for (int c : crashedSorted) {
-          crashedString.append(c);
-          crashedString.append(", ");
-        }
-        logger.debug(String.format("%04d crashed: %s", me, crashedString.toString()));
-      }
 
       token.crashed.removeAll(crashed);
       crashed.addAll(token.crashed);
 
       isBlackUntil = furthest(token.isBlackUntil, isBlackUntil);
-      logger.debug(String.format("%04d is black until %04d", me, isBlackUntil));
       report.removeAll(token.crashed);
 
-      if (!report.isEmpty()) {
-        logger.debug(String.format("%04d report is not empty", me));
-      }
       if (isBlackUntil == me || report.isEmpty()) {
         int mySum = 0;
         for (int i = 0; i < messageCounters.length; i++) {
@@ -277,8 +259,6 @@ public class SafraFT implements Safra, CrashHandler {
           announce();
           this.token = null;
           return;
-        } else {
-          logger.debug(String.format("%04d sum %d", me, sum));
         }
       }
 
@@ -332,14 +312,12 @@ public class SafraFT implements Safra, CrashHandler {
         return;
       }
     } else {
-      logger.debug(String.format("%04d to %04d sends token: %s", communicationLayer.getID(), nextNode, token.toString()));
       communicationLayer.sendToken(token, nextNode);
     }
   }
 
   public synchronized void handleAnnounce() throws IOException {
     if (!terminationDetected) {
-      logger.debug(String.format("%d got announce signal", communicationLayer.getID()));
         communicationLayer.sendAnnounce((communicationLayer.getID() + 1) % communicationLayer.getIbisCount());
         terminationDetected = true;
         semaphore.release();
