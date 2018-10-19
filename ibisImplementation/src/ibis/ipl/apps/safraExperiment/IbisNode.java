@@ -17,7 +17,6 @@ import ibis.ipl.apps.safraExperiment.network.Tree;
 import ibis.ipl.apps.safraExperiment.safra.faultSensitive.SafraFS;
 import ibis.ipl.apps.safraExperiment.safra.faultTolerant.SafraFT;
 import ibis.ipl.apps.safraExperiment.network.Network;
-import ibis.ipl.apps.safraExperiment.utils.DeadlockDetector;
 import ibis.ipl.apps.safraExperiment.utils.SynchronizedRandom;
 import ibis.ipl.apps.safraExperiment.utils.barrier.FileBasedBarrier;
 import ibis.ipl.apps.safraExperiment.utils.barrier.MessageBarrier;
@@ -62,9 +61,6 @@ class IbisNode {
       setupIBISAndWaitForPoolClosed(porttype);
 
       detectionService = new IbisDetectionService(ibis.identifier(), registry);
-
-      DeadlockDetector dd = new DeadlockDetector(1, TimeUnit.SECONDS);
-      dd.start();
 
       synchronizedRandom = new SynchronizedRandom(ibis.identifier(), registry);
       logger.debug(String.format("Pseudo random seed: %d", synchronizedRandom.getSeed()));
