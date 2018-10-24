@@ -31,7 +31,8 @@ This higher bit complexity is the reason why SafraFT takes longer to detect term
 I would like to point out that my experimental setup imposes that the time taken by SafraFT to detect termination is unreasonably long.
 This is because Chandy Misra completes its task in no time and then SafraFT starts the seemingly long process of completing a token round.
 If I had chosen a basic algorithm that takes multiple hours to complete, the seconds taken by SafraFT to detect termination would be seen in a different perspective.
-Furthermore, the low processing time overhead (less than \OutputFileNum{figures/less-than-processing-time-overhead.txt}\%) of SafraFT plays a bigger role in long-running jobs.
+Furthermore, the low processing time overhead (less than TODO% TODO \OutputFileNum{figures/less-than-processing-time-overhead.txt}\%)
+of SafraFT plays a bigger role in long-running jobs.
 
 Towards SafraFT performance in the presence of faults, I conclude that the number of backup tokens issued is not limited by the number of faults but the average is lower than the number of faults.
 Also, the increase in bytes per token is only constant (8 bytes) for a few faults and grows only linearly with the network size for 90\% node failure.

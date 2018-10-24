@@ -10,21 +10,24 @@ SafraFT was also tested with 1 to 5 nodes failing per run (dubbed 5n) and with 9
 The raw data including a manual on how to interpret it can be found TODO here.
 \begin{table}[]
 	\centering
-	\begin{tabular}{@{}lllll@{}}
+	\begin{tabular}{@{}llrrr@{}}
 		\toprule
 		Algorithm & Network              & Faults & Repetitions  & \#Instances / DAS-4 node   \\ \midrule
-		SafraFS   & 50                   & 0      & 100          & 25                    \\
-		SafraFS   & 250/500/1000/2000    & 0      & 100          & 125                   \\
-		SafraFT   & 50                   & 0      & 100          & 25                    \\
-		SafraFT   & 250/500/1000/2000    & 0      & 100          & 125                   \\
-		SafraFT   & 50                   & 5n     & 100          & 25                    \\
-		SafraFT   &    250/500/1000/2000 & 5n     & 100          & 125                   \\
-		SafraFT   & 50                   & 90\%   & 100          & 25                    \\
-		SafraFT   &    250/500/1000/2000 & 90\%   & 100          & 125                   \\ \bottomrule
+		SafraFS on CM and AKY  & 50/250/500/1000      & 0      & 100          & 50                    \\
+		SafraFS on CM and AKY  & 2000                 & 0      & 100          & 125                   \\
+		SafraFT on CM and AKY  & 50/250/500/1000      & 0      & 100          & 50                    \\
+		SafraFT on CM and AKY  & 2000                 & 0      & 100          & 125                   \\
+		SafraFT on CM and AKY  & 50/250/500/1000      & 5n     & 100          & 50                    \\
+		SafraFT on CM and AKY  &    2000              & 5n     & 100          & 125                   \\
+		SafraFT on CM and AKY  & 50/250/500/1000/     & 90\%   & 100          & 50                    \\
+		SafraFT on CM and AKY  &    2000              & 90\%   & 100          & 125                   \\ \bottomrule
 	\end{tabular}
-	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple virtual instances in their own processes where run (columm '\#Instances / DAS-4 node`). The amount of physical node equates to network size divided by instances.}
+	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple multiple virtual instances in their own processes where run (columm '\#Instances / DAS-4 node`). The amount of physical node equates to network size divided by instances.}
 	\label{table:runs}
 \end{table}
+
+The results of runs with CM or AKY are quite similar and mostly show the same effect on the metrics.
+Therefore, I analyse both together and explicitly state if an observation or explanation only applies to one of both.
 
 \subsection{Correctness of SafraFT}
 \label{ssec:correctness}
@@ -75,43 +78,49 @@ The logs of these runs provide a summary of all detections of parent crashes clo
 This section compares SafraFS and SafraFT. 
 Additionally, it analysis how the network size influences both algorithms.
 
-The number of tokens sends in total and after termination is presented in \cref{fig:tokens-and-tokens-after}.
+The number of tokens sends in total and after termination is presented in \cref{fig:tokens-and-tokens-after-aky} for CM and in \cref{fig:tokens-and-tokens-after-aky} for AKY.
 
 \begin{sidewaysfigure}[ht]
-	\includegraphics{figures/tokens-and-tokens-after.png}
-	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes.}
-	\label{fig:tokens-and-tokens-after}
+	\includegraphics{figures/tokens-and-tokens-after-cm.png}
+	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Chandy-Misra.}
+	\label{fig:tokens-and-tokens-after-cm}
 \end{sidewaysfigure}
 
-The key observation is that SafraFS and SafraFT behave highly similar except for networks with 2000 nodes where SafraFS results show much more variance and some extraordinary outliers.
-For all other network sizes, the differences are small.
+%\begin{sidewaysfigure}[ht]
+%	\includegraphics{figures/tokens-and-tokens-after-aky.png}
+%	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Afek-Kutten-Yung.}
+%	\label{fig:tokens-and-tokens-after-aky}
+%\end{sidewaysfigure}
+% TODO
+
+
+The key observation is that SafraFS and SafraFT behave highly similar.
 SafraFT sends slightly fewer tokens in average.
-Also, the results for SafraFS show a slightly higher variance.
+Also, its results shows less variance.
 Most likely these differences are caused by implementation details and are not generalizable.
 
-As one would expect, the number of tokens grows linearly with the network size, again with 2000 node networks being an exception (here it grows overlinearly).
+As one would expect, the number of tokens grows linearly with the network size.
 Note that the first network size is 5 times smaller than the second for bigger networks the size doubles for each run.
 
-The exceptional results for networks with 2000 nodes might be caused by the fact that Chandy Misra does not scale linearly with the network size. 
-This does not directly affect the number of tokens. 
-Therefore, it does not show for smaller networks but only with 2000 nodes.
+The same can be observed for tokens sent after termination.
+By far most tokens are send after termination as one would expect.
 
 The bit complexity of SafraFS is constant.
 In this experiment, each token of SafraFS contains 12 bytes.
 SafraFT has a bit complexity linearly to the network size (when no faults occur).
-For a network of 50 nodes, each token has 420 bytes; a token in a 2000 node network counts 16020 bytes.
-The growth can be described by $bytes = 8 * <network size> + 20$.
+For a network of 50 nodes, each token has 220 bytes; a token in a 2000 node network counts 8020 bytes.
+The growth can be described by $bytes = 4 * <network size> + 20$.
 
 I measured two kinds of timing metrics in this experiment.
 On the one hand, there are the wall time metrics of total time and total time after termination.
 Both were recorded in elapsed seconds between two events. 
-For total time, these events are the start of the basic algorithm and the notification to the last node about termination. 
+For total time, these events are the start of the basic algorithm and termination detection event at the last node.
 Total time after termination is defined as the number of seconds between the actual termination (extended termination definition from \cref{ssec:correctness}) and the event of a node calling
 announce. % TODO is that too much explanation, does everybody but you know so?
 On the other hand, there are basic, Safra and Safra after termination processing times (including the time needed to send messages).
 These are the accumulated times all instances needed to process basic or Safra functions.
 Total times and processing times are measured in a different way and should not be compared directly for multiple reasons. 
-First, while total times include idle times, time spent for logging, processing time do not include these.
+First, while total times include idle times, e.g. time spent for logging, processing time do not include these.
 Secondly, total time is wall time between two events and processing times are accumulated over all processes. 
 One particular example of when this leads to differences is that time spent concurrently by two processes counts double in processing time metrics but only once in wall time metrics.
 
@@ -129,28 +138,66 @@ One particular example of when this leads to differences is that time spent conc
 		\multicolumn{1}{c}{Safra FT} 
 		\\
 		\midrule
-		\csvreader[head to column names]{figures/processing-times.csv}{}
+		\csvreader[head to column names]{figures/processing-times-cm.csv}{}
 		{\\\networkSize & \basic & \FS & \FT  & \FSoverhead \% & \FToverhead \% & \FSAfter & \FTAfter}
 		\\\bottomrule
 	\end{tabular}
-	\caption{Total processing times (left) and processing times after termination (right) in seconds and overhead over basic algorithm caused by Safa in percent}
-	\label{table:processing-times}
+	\caption{Total processing times (left) and processing times after termination (right) in seconds and overhead over Chandy-Misra caused by Safra in percent}
+	\label{table:processing-times-cm}
 \end{table}
 
-One can observe in \cref{table:processing-times} that SafraFT uses more processing time than SafraFS and much of the additional time is spent between actual termination and termination detection.
-Furthermore, one sees that SafraFS times grow roughly linear with the network size while SafraFT timings show a nearly three-fold increase for each network size.
-This hints for a change in time complexity between the two versions.
+\begin{table}
+	\centering
+	\begin{tabular}{rrrrrr||rr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{Basic} &
+		\multicolumn{1}{c}{Safra FS} &
+		\multicolumn{1}{c}{Safra FT} &
+		\multicolumn{1}{c}{Overhead FS} &
+		\multicolumn{1}{c||}{Overhead FT} &
+		\multicolumn{1}{c}{Safra FS}   &
+		\multicolumn{1}{c}{Safra FT}
+		\\
+		\midrule
+		\csvreader[head to column names]{figures/processing-times-aky.csv}{}
+		{\\\networkSize & \basic & \FS & \FT  & \FSoverhead \% & \FToverhead \% & \FSAfter & \FTAfter}
+		\\\bottomrule
+	\end{tabular}
+	\caption{Total processing times (left) and processing times after termination (right) in seconds and overhead over Afek-Kutten-Yung caused by Safra in percent}
+	\label{table:processing-times-aky}
+\end{table}
 
-A small sub-experiment of excluding the time spent to send messages from the processing time revealed that most of this difference can be tributed to writing tokens onto the wire.
-As we know from a previous paragraph, the number of token send does not differ between the algorithms.
+One can observe in \cref{table:processing-times-cm} and \cref{table:processing-times-aky} that SafraFT uses more processing time than SafraFS and much of the additional time is spent between actual termination and termination detection.
+The processing time increases linearly with the network size for SafraFS.
+For SafraFT doubling the network size leads to a 2 or threefold increase in processing time.
+Most of the additional processing time of SafraFT is spent betweeen termination and termination detection.
+One can also see that the processing time increased more than twofold for networks of 1000 nodes to 2000 nodes.
+This is most likely due to the fact that 2000 node networks were simulated by running 125 instances instead of 50 instances per physical node.
+
+A good candidate to explain the difference in processing time between SafraFS and SafraFT is the different token size of SafraFS and SafraFT: it takes longer to send bigger tokens.
+Also, this theory is supported by the fact that most additional time is spent after termination - Safra is only concerned with moving the token around after termination.
+To confirm this idea, I ran a ad-hoc experiment of excluding the time spent to send messages from the processing time.
+Indeed, this experiment revealed that most of the differences can be tributed to writing tokens onto the wire.
 Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT. 
-This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the change of time complexity.
-The time complexity would change because the increase in network size leads to more token being sent (as in SafraFS) but also to bigger tokens being sent.
+This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the bigger influence of network size - bigger networks lead to even larger tokens.
+
+The qualitative result is not surprising.
+However, we are surprised by the quantitative size it has.
+We would have expected that the difference between SafraFS and SafraFT in processing time is observable but much lower.
+A possible explanation can be found in my experiment setup: each physical node simulates between 50 and 125 instances.
+Each of this instances uses multiple threads; alltogether there are at least 4 times as many threads as cores on each machine.
+
+The huge quantitative effect could in part be caused by threads being preempted which happens more often for threads that try to send big messages.
+This theory is supported by the fact that the effect is stronger for networks with 2000 nodes.
+However, confirmation of that assumption is not in the scope of this project.
 
 The processing time \cref{table:processing-times} also presents a comparison of the time spent on the basic algorithm and both Safra versions.
-Although SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of 4.26\% for networks with 50 nodes.
-% number
-\\
+Although SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of 11.86\% for 2000 nodes and AKY.
+% TODO number
+
+
+
 \begin{table}
 	\centering
 	\begin{tabular}{rrrr||rrr}%
@@ -163,28 +210,50 @@ Although SafraFT uses significantly more time, the overhead on the processing ti
 		\multicolumn{1}{c}{SafraFT}  &
 		\multicolumn{1}{c}{$\Delta$}  \\
 		\midrule
-		\csvreader[head to column names]{figures/total-times.csv}{}
+		\csvreader[head to column names]{figures/total-times-cm.csv}{}
 		{\\\networkSize & \FS & \FT & \difference & \FSAfter & \FTAfter & \differenceAfter}
 		\\\bottomrule
 	\end{tabular}
-	\caption{Wall times total (left) and after termination (right) for SafraFT and SafraFS in seconds with ratios}
-	\label{table:total-times}
+	\caption{Wall times total (left) and after termination (right) for SafraFT and SafraFS in seconds with ratios run with CM}
+	\label{table:total-times-cm}
 \end{table}
 
-The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times}.
-Networks with 250 nodes show an exceptionally high ratio of \OutputFileNum{figures/total-time-ratio-250.txt} between SafraFS and SafraFT.
+\begin{table}
+	\centering
+	\begin{tabular}{rrrr||rrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{Safra FS} &
+		\multicolumn{1}{c}{Safra FT} &
+		\multicolumn{1}{c||}{$\Delta$} &
+		\multicolumn{1}{c}{SafraFS}  &
+		\multicolumn{1}{c}{SafraFT}  &
+		\multicolumn{1}{c}{$\Delta$}  \\
+		\midrule
+		\csvreader[head to column names]{figures/total-times-aky.csv}{}
+		{\\\networkSize & \FS & \FT & \difference & \FSAfter & \FTAfter & \differenceAfter}
+		\\\bottomrule
+	\end{tabular}
+	\caption{Wall times total (left) and after termination (right) for SafraFT and SafraFS in seconds with ratios run with AKY}
+	\label{table:total-times-aky}
+\end{table}
 
-For SafraFS roughly half of the time is spent after termination for small networks.
-In big networks, the part of the time spent after termination is lower because the fraction spent by the basic algorithm becomes dominant. 
+The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times-cm} and \cref{table:total-times-aky} for CM and AKY respectively.
 
-The systems using SafraFT spent the majority of their time to detect termination because of the already noted higher time complexity of SafraFT.
+For SafraFS and CM roughly half of the time is spent after termination for small networks.
+In big networks, the part of the time spent after termination is lower because the fraction spent by the basic algorithm becomes dominant.
+The systems using SafraFT spent half or more of their time to detect termination.
+
+For AKY most of the time is spent before termination (except for 1000 and 2000 nodes and SafraFT).
+This shows that the time measurments highly depend on the basic algorithm.
+AKY is a synchronized algorithm and needs more time than CM.
 
 I would like to note that the low processing time overhead of Safra is not in contradiction to a large amount of wall time spent after termination.
 These seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active at the beginning that is when it accumulates a lot of processing time; while Safra causes a lot of idle time in the end when all processes wait for their predecessor to pass on the token. 
 This idle time is not included in processing time but wall time does include it.
 
-To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes a higher time complexity which leads to a later termination detection. 
-Still, SafraFT causes only a moderate processing time overheads between \OutputFileNum{figures/min-ft-processing-time-overhead.txt}\% and \OutputFileNum{figures/max-ft-processing-time-overhead.txt}\%.
+To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes it to use more time which leads to a later termination detection.
+Still, SafraFT causes only a moderate processing time overheads between %TODO \OutputFileNum{figures/min-ft-processing-time-overhead.txt}\% and \OutputFileNum{figures/max-ft-processing-time-overhead.txt}\%.
 
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs in the presence of node crashes.

@@ -20,7 +20,7 @@ def analyse_influence_of_network_size(configurations):
 def present_token_and_token_after_termination(configurations):
   data = []
 
-  network_sizes = 5
+  network_sizes = 4
   for i in range(network_sizes):
     fs_configuration = configurations['0 fs'][i]
     ft_configuration = configurations['0'][i]

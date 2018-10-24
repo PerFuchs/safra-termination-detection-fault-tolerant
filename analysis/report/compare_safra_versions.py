@@ -6,7 +6,7 @@ from math import ceil
 from utils import write_csv, write_string
 
 
-def compare_safra_versions(configurations):
+def compare_safra_versions(configurations, algorithm):
   fault_free_configurations = list(filter(lambda c: c.fault_percentage == 0, configurations))
 
   paired_by_network_size = defaultdict(lambda: [None, None])
@@ -15,13 +15,13 @@ def compare_safra_versions(configurations):
 
   paired_by_network_size_sorted = OrderedDict(sorted(paired_by_network_size.items(), key=lambda i: i[0]))
 
-  present_processing_times(paired_by_network_size_sorted)
-  present_total_times(paired_by_network_size_sorted)
+  present_processing_times(paired_by_network_size_sorted, algorithm)
+  present_total_times(paired_by_network_size_sorted, algorithm)
 
   compare_token_bytes(paired_by_network_size_sorted)
 
 
-def present_processing_times(configurations):
+def present_processing_times(configurations, algorithm):
   headers = ['networkSize', 'basic', 'FT', 'FS', 'difference', 'FSoverhead', 'FToverhead', 'FSAfter', 'FTAfter']
 
 
@@ -50,12 +50,13 @@ def present_processing_times(configurations):
                  fs_overhead, ft_overhead,
                  fs_safra_time_mean_after, ft_safra_time_mean_after])
 
-  write_csv('../report/figures/processing-times.csv', headers, rows)
-  write_string('../report/figures/min-ft-processing-time-overhead.txt', '%.02f' % min_overhead)
-  write_string('../report/figures/max-ft-processing-time-overhead.txt', '%.02f' % max_overhead)
-  write_string('../report/figures/less-than-processing-time-overhead.txt', '%d' % ceil(max_overhead))
+  write_csv('../report/figures/processing-times-%s.csv' % algorithm, headers, rows)
+  write_string('../report/figures/min-ft-processing-time-overhead-%s.txt' % algorithm, '%.02f' % min_overhead)
+  write_string('../report/figures/max-ft-processing-time-overhead-%s.txt' % algorithm, '%.02f' % max_overhead)
+  write_string('../report/figures/less-than-processing-time-overhead-%s.txt' % algorithm, '%d' % ceil(max_overhead))
 
-def present_total_times(configurations):
+
+def present_total_times(configurations, algorithm):
   headers = ['networkSize', 'FT', 'FS', 'difference', 'FTAfter', 'FSAfter', 'differenceAfter']
 
   ratio_250 = -1
@@ -75,8 +76,8 @@ def present_total_times(configurations):
                  ft_total_time, fs_total_time, total_time_difference,
                  ft_total_time_after, fs_total_time_after, total_time_after_difference])
 
-  write_csv('../report/figures/total-times.csv', headers, rows)
-  write_string('../report/figures/total-time-ratio-250.txt', '%.02f' % ratio_250)
+  write_csv('../report/figures/total-times-%s.csv' % algorithm, headers, rows)
+  write_string('../report/figures/total-time-ratio-250-%s.txt' % algorithm, '%.02f' % ratio_250)
 
 def compare_token_bytes(configurations):
   for network_size, (fault_tolerant, fs) in configurations.items():

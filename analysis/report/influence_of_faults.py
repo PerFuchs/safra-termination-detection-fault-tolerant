@@ -33,7 +33,7 @@ def present_processing_times_table(configurations):
   headers =  ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
     , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
   rows = []
-  network_sizes = 5
+  network_sizes = 4
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
     c_5n = configurations['5n'][i]
@@ -69,7 +69,7 @@ def present_total_times_table(configurations):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
              , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
-  network_sizes = 5
+  network_sizes = 4
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -106,7 +106,7 @@ def present_token_table(configurations):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
     , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
-  network_sizes = 5
+  network_sizes = 4
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -182,7 +182,7 @@ def present_token_and_token_after_termination(configurations):
 def present_token_sizes_table(configurations):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
 
-  network_sizes = 5
+  network_sizes = 4
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]

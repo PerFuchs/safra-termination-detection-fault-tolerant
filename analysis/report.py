@@ -12,6 +12,7 @@ from read_results import get_configurations
 
 
 experiment_folder = sys.argv[1]
+algorithm = sys.argv[2]
 configurations = get_configurations(experiment_folder)
 
 expected_configurations = {}
@@ -43,9 +44,9 @@ for c in configurations:
 repetitions_with_crashes = 0
 repetitions_with_rea_warnings = 0
 for c in configurations:
-  if c.fault_group == '5n' or c.fault_group == '90':
+  if c.fault_percentage > 0.0:
     repetitions_with_crashes += len(c.repetitions)
-    repetitions_with_rea_warnings += len(list(filter(lambda r: r.reanalysis_warnings, c.repetitions)))
+    repetitions_with_rea_warnings += len(list(filter(lambda r: len(r.reanalysis_warnings), c.repetitions)))
 
 print('Runs with crashes: %i' % repetitions_with_crashes)
 print("Estimated ratio of repetition with early official termination: %f" % (
@@ -53,7 +54,7 @@ print("Estimated ratio of repetition with early official termination: %f" % (
 
 pprint(expected_configurations, indent=2)
 
-compare_safra_versions(configurations)
+compare_safra_versions(configurations, algorithm)
 analyse_influence_of_network_size(configurations)
 analyse_influence_of_faults(configurations)
 
@@ -66,8 +67,8 @@ for f in fields:
     data[f].append(get_box_trace(getattr(c, 'get_' + f)(),
                                  "%i-%f-%r" % (c.number_of_nodes, c.fault_percentage, c.fault_sensitive)))
 
-for plot_name, plot_data in data.items():
-    plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
+# for plot_name, plot_data in data.items():
+#     plotly.offline.plot(plot_data, filename='../graphs/%s.html' % plot_name)
 
 # for configuration in merged_configurations:
 #     data = get_scatter_graph_with_mean_and_confidence_interval(list(range(len(configuration.repetitions))), configuration.get_tokens(), "tokens")

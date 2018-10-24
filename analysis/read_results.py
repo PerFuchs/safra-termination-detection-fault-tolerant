@@ -7,7 +7,7 @@ from os import listdir
 
 from os.path import isdir, basename, isfile
 
-USE_REANALYSING_RESULTS = False
+USE_REANALYSING_RESULTS = True
 
 
 class MyDialect(csv.excel):
@@ -15,7 +15,7 @@ class MyDialect(csv.excel):
 
 
 class Repetition:
-  REANALYSIS_FOLDER = 'reanalysis'
+  REANALYSIS_FOLDER = 'reanalyse'
 
   def read_warning_file(self):
     warnings_file = '/'.join([self.folder, '.warn'])
