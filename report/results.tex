@@ -412,10 +412,21 @@ The influence on token size is between 5 and 8 bytes for networks with 1 to 5 fa
 
 \subsubsection{Processing Time}
 The observations of this chapter are backed by \cref{table:processing-times-faulty-cm} and \ref{table:processing-times-aky}.
-As for tokens, one can see an increase in total processing times under the presence of faults compared to fault-free runs which is no surprise because more tokens were sent.
+As for tokens, one can see an increase in total processing times under the presence of faults compared to fault-free runs which is no surprise because more tokens are sent.
 This also explains why the processing time is higher for the 90\% scenario than in th 5n configurations.
 There is one exception: the processing time for 2000 nodes and AKY in the 5n scenario decreased.
 
+Processing times after termination for 90\% drastically decreased for both algorithm and all network sizes - except for CM and 50 nodes where one sees a 20\% increase.
+The general result can be explained by less tokens being sent after termination.
+The exception cannot be explained with the data at hand because it does only occur for one algorithm.
+
+The influence of 5n scenarios on processing time after termination is highly varied.
+In many configurations, it shows no big effect e.g. 250 nodes and CM.
+In others, it decreases significantly e.g. 1000 and AKY.
+And finally, one observes a sharp increase for 50 or 2000 and CM.
+The available data does not allow for a good explanation.
+One highly interesting fact is that 5n scenarios lead to more token being sent after termination (see \cref{table:tokens-faulty-cm} and \ref{table:tokens-faulty-aky}) but to less processing time after termination in many configurations.
+This situation might be explained by the fact that the sum of all token counters is calculated by most nodes if no nodes failed and only by some nodes when other nodes crashed - due to the different \textit{blackUntil} values.
 
 % TODO 100 not 125 instances
 
@@ -471,16 +482,14 @@ There is one exception: the processing time for 2000 nodes and AKY in the 5n sce
 
 
 \subsubsection{Total time}
-Total time in faulty networks is presented in  \cref{table:total-times-faulty}.
+Total time in faulty networks is presented in \cref{table:total-times-faulty} and \ref{table:total-times-aky}.
 In line with the observations from the processing time section, one observes:
 \begin{itemize}
 	\item an increase in total time spent for fault scenarios
-	\item a higher variability for time spent before and after termination for less faulty networks
-	\item less time spent after termination by highly faulty networks
+	\item less time spent after termination by highly faulty networks - except for 50 nodes and CM
+	\item varied results for 5n scenarios and time spent after termination
 \end{itemize}
 
-For a network with 90\% node failure, the overhead for total time decreases for network sizes between 50 and 1000 nodes and increases to its maximum for 2000 nodes.
-The overhead of time after termination sinks with higher network sizes.
 \begin{table}
 	\centering
 	\begin{tabular}{rrrrrr||rrrrr}%
@@ -497,14 +506,38 @@ The overhead of time after termination sinks with higher network sizes.
 		\multicolumn{1}{c}{90\%} &
 		\multicolumn{1}{c}{$\Delta$} \\
 		\midrule
-		\csvreader[head to column names]{figures/total-times-faulty.csv}{}
+		\csvreader[head to column names]{figures/total-times-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
 			\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
 		\\\bottomrule
 	\end{tabular}
-	\caption{Total times (left) and after termination (right) in seconds. For different fault scenarios compared to fault-free networks.}
-	\label{table:total-times-faulty}
+	\caption{SafraFT and CM: Total times (left) and after termination (right) in seconds. For different fault scenarios compared to fault-free networks.}
+	\label{table:total-times-faulty-cm}
 \end{table}
 
+\begin{table}
+	\centering
+	\begin{tabular}{rrrrrr||rrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c||}{$\Delta$} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$} \\
+		\midrule
+		\csvreader[head to column names]{figures/total-times-faulty-aky.csv}{}
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
+		\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
+		\\\bottomrule
+	\end{tabular}
+	\caption{SafraFT and AKY Total times (left) and after termination (right) in seconds. For different fault scenarios compared to fault-free networks.}
+	\label{table:total-times-faulty-aky}
+\end{table}
 
 
