@@ -266,14 +266,22 @@ I used the extended definition of termination to determine the point of time of 
 \label{ssec:tokens-faulty}
 For both the networks where between 1 and 5 nodes failed, as well as, for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
 Runs with 90\% failure produced even more tokens than runs with only 1 to 5 node failing - except in networks of 2000 nodes where 5n exhibits a higher token sent average.
-The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:tokens-faulty}.
+The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:tokens-and-tokens-after-faulty-aky} and~\cref{table:tokens-faulty-cm}~/~\ref{table:tokens-faulty-aky} for CM respectively AKY.
 
 \begin{sidewaysfigure}[ht]
-	\includegraphics{figures/tokens-and-tokens-after-faulty.png}
-	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
-	\label{fig:tokens-and-tokens-after-faulty}
+	\includegraphics{figures/tokens-and-tokens-after-faulty-cm.png}
+	\caption{SafraFT and CM: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
+	\label{fig:tokens-and-tokens-after-faulty-cm}
 \end{sidewaysfigure}
-% TODO outliers to thick
+
+%\begin{sidewaysfigure}[ht]
+%	\includegraphics{figures/tokens-and-tokens-after-faulty-aky.png}
+%	\caption{SafraFT and AKY: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
+%	\label{fig:tokens-and-tokens-after-faulty-aky}
+%\end{sidewaysfigure}
+% TODO
+
+
 \begin{table}
 	\centering
 	\begin{tabular}{rrrrrr||rrrrr}%
@@ -290,49 +298,73 @@ The data is presented \cref{fig:tokens-and-tokens-after-faulty} and \cref{table:
 		\multicolumn{1}{c}{90\%} &
 		\multicolumn{1}{c}{$\Delta$} \\
 		\midrule
-		\csvreader[head to column names]{figures/tokens-faulty.csv}{}
+		\csvreader[head to column names]{figures/tokens-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
 			\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
 		\\\bottomrule
 	\end{tabular}
-	\caption{Tokens in total (left) and after termination (right) for different fault scenarios compared to fault-free networks.}
-	\label{table:tokens-faulty}
+	\caption{SafraFT and CM: Tokens in total (left) and after termination (right) for different fault scenarios compared to fault-free networks.}
+	\label{table:tokens-faulty-cm}
 \end{table}
 
-Otherwise, the two types of fault simulation had a highly different influence on the tokens and tokens after termination metrics.
+\begin{table}
+	\centering
+	\begin{tabular}{rrrrrr||rrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c||}{$\Delta$} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$} \\
+		\midrule
+		\csvreader[head to column names]{figures/tokens-faulty-aky.csv}{}
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
+		\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
+		\\\bottomrule
+	\end{tabular}
+	\caption{SafraFT and AKY: Tokens in total (left) and after termination (right) for different fault scenarios compared to fault-free networks.}
+	\label{table:tokens-faulty-aky}
+\end{table}
 
-Between 1 and 5 node failures lead to a strong increase in the variance of tokens sent and in tokens sent after termination.
+Otherwise, the two types of fault simulation have a highly different influence on the tokens and tokens after termination metrics.
+
+5n configurations lead to a strong increase in the variance of tokens sent and in tokens sent after termination.
 This seems reasonable because runs with failing nodes might lead to more different situations as runs without fails e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), at the same time, a single failing node that is a leaf in a Chandy Misra sink tree and that crashes just before the call of announce at the successor  causes no further activity.
 The same example provides an idea of why the variability increases in big networks. 
 That is because one extra round in a big network has a much higher impact on the token count than in a small network.
 
-The phenomenon explained in the last paragraph most likely causes the extremely high maximum of tokens sent and over linear increase of the average number of tokens in networks with 2000 nodes for 1 to 5 nodes failing.
-
-Other than networks with one to 5 failing nodes, networks with up to 90\% node failure lead to a similar low variance in tokens and tokens after termination as fault-free networks.
+Opposed to the results for 5n, networks with up to 90\% node failure lead to a similar low variance in tokens and tokens after termination as fault-free networks.
 A likely explanation is that the low survival rate of 1 out of 10 instances leads to less different scenarios than in the fault scenario treated in the last paragraphs.
 
 Even though only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
 That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty})
-As mentioned above there is one exception: networks with 2000 cause more token to be generated in 5n networks than in networks with 90\% node failure.
 
 Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
 
-The network size has no clear influence on the overhead in the number of tokens send before or after termination for the 5n scenario up to networks with 500 nodes. 
-For bigger networks, more nodes lead to higher overheads.
-
-The size of networks with 90\% node failures is positively correlated to the overhead of tokens in total and has no influence on the overhead of tokens after termination.
+As expected, faults lead to more token being sent.
+This is caused mostly because a fault detection requires an additional round.
+However, SafraFT handles faults kindly - neither 5n nor 90\% scenarios lead to an overhead higher than 2.13 compared to a fault free execution.
+Hence, not every fault causes an extra round but all faults together cost an extra round.
+This result holds for all network sizes, both basic algorithm and for two highly different fault scenarios.
 
 \subsubsection{Backup tokens}
 The average amount of backup tokens sent for either fault simulation or network size is lower than the number of faults.
 This is due to the fact that SafraFT only issues backup tokens when the fault of its successor is detected via the fault detector but not if this fault is noticed by receiving a token.
 There are even runs where 1 to 5 nodes fail but no backup token is issued up to networks containing 2000 nodes. 
 
-The other extreme were more backup tokens are issued than faults occur exists as well.
+The other extreme that more backup tokens, than faults occur, are issued exists as well.
 This can be explained by my decision to have node failing after issuing a backup token.
 For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node \co{C} fails which is detected by \co{B} and a backup token is issued.
 After, issueing the backup token \co{B} fails on detection \co{A} issues a backup token towards \co{C}.
-Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.  
+Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.
 
+Although both extremes exists, the average amount of backup token is close to the number of faulty nodes.
 
 \subsubsection{Token size}
 \begin{table}
@@ -346,39 +378,47 @@ Only then \co{A} detects the failing of \co{C} and issues a second backup token 
 		\multicolumn{1}{c}{90\%} &
 		\multicolumn{1}{c}{$\Delta$}  \\
 		\midrule
-		\csvreader[head to column names]{figures/token-sizes-faulty.csv}{}
+		\csvreader[head to column names]{figures/token-sizes-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety }
 		\\\bottomrule
 	\end{tabular}
-	\caption{Token size averages in bytes for both fault scenarios compared to token size with zero faults.}
-	\label{table:token-sizes-faulty}
+	\caption{SafraFT and CM: Token size averages in bytes for both fault scenarios compared to token size with zero faults.}
+	\label{table:token-sizes-faulty-cm}
 \end{table}
 
-The average token size increases with faults because the IDs of faulty nodes are propagated by the token (see \cref{table:token-sizes-faulty}).
+\begin{table}
+	\centering
+	\begin{tabular}{rrrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$}  \\
+		\midrule
+		\csvreader[head to column names]{figures/token-sizes-faulty-aky.csv}{}
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety }
+		\\\bottomrule
+	\end{tabular}
+	\caption{SafraFT and AKY: Token size averages in bytes for both fault scenarios compared to token size with zero faults.}
+	\label{table:token-sizes-faulty-aky}
+\end{table}
 
-The influence on token size is constant 8 bytes for networks with 1 to 5 failing nodes.
-
-90\% node failure leads to a linear increase of token bytes to the network size of a factor 1.15.
+The average token size increases with faults because the IDs of faulty nodes are propagated by the token (see~\cref{table:token-sizes-faulty} and~\ref{table:token-sizes-faulty-aky}).
+The influence on token size is between 5 and 8 bytes for networks with 1 to 5 failing nodes.  % NUMBER
+90\% node failure leads to a linear increase of token bytes to the network size of a factor 1.29. % NUMBER
 
 
 \subsubsection{Processing Time}
-The observations of this chapter are backed by \cref{table:processing-times-faulty}.
+The observations of this chapter are backed by \cref{table:processing-times-faulty-cm} and \ref{table:processing-times-aky}.
+As for tokens, one can see an increase in total processing times under the presence of faults compared to fault-free runs which is no surprise because more tokens were sent.
+This also explains why the processing time is higher for the 90\% scenario than in th 5n configurations.
+There is one exception: the processing time for 2000 nodes and AKY in the 5n scenario decreased.
 
-As for tokens, one can see an increase in processing times before termination under the presence of faults compared to fault-free runs. Which is no surprise because more tokens were sent.
 
-For runs with 1 to 5 failing node, a higher variability in the processing times before and after termination becomes apparent (not shown in the tables of the report). 
-Most likely this is because of the higher diversity of scenarios possible if some nodes fail as explained in \cref{ssec:tokens-faulty}.
-As the processing time grows for this runs, so does the processing time after termination.
+% TODO 100 not 125 instances
 
-For highly faulty networks one observes results in line with the results for tokens in these networks.
-The variability for processing time before or after termination is not raised compared to fault-free networks.
-The processing time taken is even higher than the one for less faulty networks.
-Less processing time after termination is spent than for fault-free networks because fewer tokens need to be sent.
-
-An interesting observation is that the difference between fault free processing time to processing time with faults does not necessarily increase with the network size:
-with 90\% node failure the differences sink.
-
-% TODO why is this interesting
 \begin{table}
 	\centering
 	\begin{tabular}{rrrrrr||rrrrr}%
@@ -395,14 +435,40 @@ with 90\% node failure the differences sink.
 		\multicolumn{1}{c}{90\%} &
 		\multicolumn{1}{c}{$\Delta$} \\
 		\midrule
-		\csvreader[head to column names]{figures/processing-times-faulty.csv}{}
+		\csvreader[head to column names]{figures/processing-times-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
 			\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
 		\\\bottomrule
 	\end{tabular}
-	\caption{Total processing times (left) and after termination (right) in seconds for different fault scenarios compared to fault-free networks.}
-	\label{table:processing-times-faulty}
+	\caption{SafraFT and CM: Total processing times (left) and after termination (right) in seconds for different fault scenarios compared to fault-free networks.}
+	\label{table:processing-times-faulty-cm}
 \end{table}
+
+\begin{table}
+	\centering
+	\begin{tabular}{rrrrrr||rrrrr}%
+		\toprule
+		\multicolumn{1}{c}{Network} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c||}{$\Delta$} &
+		\multicolumn{1}{c}{No faults} &
+		\multicolumn{1}{c}{5n} &
+		\multicolumn{1}{c}{$\Delta$} &
+		\multicolumn{1}{c}{90\%} &
+		\multicolumn{1}{c}{$\Delta$} \\
+		\midrule
+		\csvreader[head to column names]{figures/processing-times-faulty-aky.csv}{}
+		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
+		\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
+		\\\bottomrule
+	\end{tabular}
+	\caption{SafraFT and AKY: Total processing times (left) and after termination (right) in seconds for different fault scenarios compared to fault-free networks.}
+	\label{table:processing-times-faulty-aky}
+\end{table}
+
 
 \subsubsection{Total time}
 Total time in faulty networks is presented in  \cref{table:total-times-faulty}.

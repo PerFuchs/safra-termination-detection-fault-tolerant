@@ -7,7 +7,7 @@ from report import graphing
 from utils import write_csv
 
 
-def analyse_influence_of_faults(configurations):
+def analyse_influence_of_faults(configurations, algorithm):
   configurations = filter(lambda c: not c.fault_sensitive, configurations)
 
   grouped_by_fault_group = defaultdict(lambda: list())
@@ -18,22 +18,22 @@ def analyse_influence_of_faults(configurations):
   grouped_by_fault_group_sorted = OrderedDict(
     sorted(grouped_by_fault_group_sorted.items(), key=lambda i: i[0]))
 
-  present_token_and_token_after_termination(grouped_by_fault_group_sorted)
-  present_token_table(grouped_by_fault_group_sorted)
-  present_total_times_table(grouped_by_fault_group_sorted)
-  present_processing_times_table(grouped_by_fault_group_sorted)
+  present_token_and_token_after_termination(grouped_by_fault_group_sorted, algorithm)
+  present_token_table(grouped_by_fault_group_sorted, algorithm)
+  present_total_times_table(grouped_by_fault_group_sorted, algorithm)
+  present_processing_times_table(grouped_by_fault_group_sorted, algorithm)
 
-  present_processing_times(grouped_by_fault_group_sorted)
-  present_total_times(grouped_by_fault_group_sorted)
+  present_processing_times(grouped_by_fault_group_sorted, algorithm)
+  present_total_times(grouped_by_fault_group_sorted, algorithm)
 
-  present_token_sizes_table(grouped_by_fault_group_sorted)
+  present_token_sizes_table(grouped_by_fault_group_sorted, algorithm)
 
 
-def present_processing_times_table(configurations):
+def present_processing_times_table(configurations, algorithm):
   headers =  ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
     , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
   rows = []
-  network_sizes = 4
+  network_sizes = 5
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
     c_5n = configurations['5n'][i]
@@ -62,14 +62,14 @@ def present_processing_times_table(configurations):
                  mean_5n_after, overhead_5n_after,
                  mean_90_after, overhead_90_after])
 
-  write_csv('../report/figures/processing-times-faulty.csv', headers, rows)
+  write_csv('../report/figures/processing-times-faulty-%s.csv' % algorithm, headers, rows)
 
 
-def present_total_times_table(configurations):
+def present_total_times_table(configurations, algorithm):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
              , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
-  network_sizes = 4
+  network_sizes = 5
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -99,14 +99,14 @@ def present_total_times_table(configurations):
                  mean_5n_after, overhead_5n_after,
                  mean_90_after, overhead_90_after])
 
-  write_csv('../report/figures/total-times-faulty.csv', headers, rows)
+  write_csv('../report/figures/total-times-faulty-%s.csv' % algorithm, headers, rows)
 
 
-def present_token_table(configurations):
+def present_token_table(configurations, algorithm):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety'
     , 'noFaultsAfter', 'fiveNAfter', 'differenceFiveNAfter', 'ninetyAfter', 'differenceNinetyAfter']
 
-  network_sizes = 4
+  network_sizes = 5
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -136,23 +136,23 @@ def present_token_table(configurations):
                  mean_5n_after, overhead_5n_after,
                  mean_90_after, overhead_90_after])
 
-  write_csv('../report/figures/tokens-faulty.csv', headers, rows)
+  write_csv('../report/figures/tokens-faulty-%s.csv' % algorithm, headers, rows)
 
 
-def present_processing_times(configurations):
+def present_processing_times(configurations, algorithm):
   data = []
 
   for fault_group, configurations_sorted in configurations.items():
     for i, c in enumerate(configurations_sorted):
-      data.append(graphing.get_box_trace(c.get_basic_times(), 'B %s %i' % (fault_group, c.number_of_nodes)))
+      # data.append(graphing.get_box_trace(c.get_basic_times(), 'B %s %i' % (fault_group, c.number_of_nodes)))
       data.append(graphing.get_box_trace(c.get_safra_times(), 'T %s %i' % (fault_group, c.number_of_nodes)))
       data.append(graphing.get_box_trace(c.get_safra_times_after_termination(),
                                          'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
 
-  plotly.offline.plot(data, filename='../graphs/processing_times.html')
+  plotly.offline.plot(data, filename='../graphs/processing_times_%s.html' % algorithm)
 
 
-def present_total_times(configurations):
+def present_total_times(configurations, algorithm):
   data = []
 
   for fault_group, configurations_sorted in configurations.items():
@@ -161,10 +161,10 @@ def present_total_times(configurations):
       data.append(graphing.get_box_trace(c.get_total_times_after_termination(),
                                          'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(255,140,0)'))
 
-  plotly.offline.plot(data, filename='../graphs/total_times.html')
+  plotly.offline.plot(data, filename='../graphs/total_times-%s.html' % algorithm)
 
 
-def present_token_and_token_after_termination(configurations):
+def present_token_and_token_after_termination(configurations, algorithm):
   data = []
 
   for fault_group, configurations_sorted in configurations.items():
@@ -176,13 +176,13 @@ def present_token_and_token_after_termination(configurations):
         data.append(graphing.get_box_trace(c.get_backup_tokens(),
                                            'T %s %i' % (fault_group, c.number_of_nodes), 'rgb(140,255,0)'))
 
-  plotly.offline.plot(graphing.hide_layout(data), filename='../graphs/tokens_and_tokens_after_faulty.html')
+  plotly.offline.plot(graphing.hide_layout(data), filename='../graphs/tokens_and_tokens_after_faulty-%s.html' % algorithm)
 
 
-def present_token_sizes_table(configurations):
+def present_token_sizes_table(configurations, algorithm):
   headers = ['networkSize', 'noFaults', 'fiveN', 'differenceFiveN', 'ninety', 'differenceNinety']
 
-  network_sizes = 4
+  network_sizes = 5
   rows = []
   for i in range(network_sizes):
     c_0 = configurations['0'][i]
@@ -204,5 +204,5 @@ def present_token_sizes_table(configurations):
                  mean_5n, overhead_5n,
                  mean_90, overhead_90])
 
-  write_csv('../report/figures/token-sizes-faulty.csv', headers, rows)
+  write_csv('../report/figures/token-sizes-faulty-%s.csv' % algorithm, headers, rows)
 

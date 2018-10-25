@@ -56,7 +56,7 @@ pprint(expected_configurations, indent=2)
 
 compare_safra_versions(configurations, algorithm)
 analyse_influence_of_network_size(configurations)
-analyse_influence_of_faults(configurations)
+analyse_influence_of_faults(configurations, algorithm)
 
 fields = ['tokens', 'tokens_after_termination', 'number_of_nodes_crashed', 'safra_times', 'basic_times',
           'safra_times_after_termination', 'total_times', 'token_bytes', 'backup_tokens']
