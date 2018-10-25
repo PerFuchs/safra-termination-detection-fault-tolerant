@@ -1,6 +1,6 @@
 \section{Methods}
 \label{sec:methods}
-This section describes the most important software design decission taken during implementation e.g. how to add fault-tolerance to Chandy-Misra or how to simulate faults.
+This section describes the most important software design decision taken during implementation e.g. how to add fault-tolerance to Chandy-Misra or how to simulate faults.
 Later, I describe the software and machines used.
 
 \subsection {Fault-tolerant Chandy Misra}
@@ -55,28 +55,37 @@ Following the reasoning that only one message is in flight between any two nodes
 	\label{fig:fifoNecessaryNetwork}
 \end{figure}
 
-% TODO i thought I fixed this?
 The presented fault tolerant Chandy Misra algorithm could be incorrect as it calculated the wrong tree in 12 out of 1500 runs, 
 %number
 Unfortunately, I could not fix it in time for the final experiment runs. 
 However, this does not influence the evaluation of SafraFT because the correctness check for SafraFT and Chandy Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:offline-analysis}).
 The verification of SafraFT does show that SafraFT detected termination correctly in these cases and did not cause the corrupted Chandy Misra result.
+Additionaly, the bug also shows in runs with SafraFS.
 
 Additionally, to fixing the last bugs, fault-tolerant Chandy Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis. 
-
-%TODO Provide pseudo code?
 
 \subsection{An adaption to Afek-Kutten-Yung}
 I implement Afek-Kutten-Yung's self-stabilizing spanning tree algorithm as described in \cite[page 183ff]{fokkink:2018}.
 The original Afek-Kutten-Yung is a synchronized algorithm for shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
 Hence, I optimize it to allow runs up to 2000 nodes.
-The optimization exhibits infinite runs.
-In our experiment setup, these runs do not occur. 
-Next, I explain the optimization, give a counter example to its correctness and explain why the infinite runs are unlikely in our setup.
+The optimization could exhibit infinite runs.
+Next, I explain the optimization and present the idea why it might exhibit infinite runs and state why this is no problem for the experiments.
 
-% TODO there is a weaknes in my argumentation why they do not occur
+Afek-Kutten-Yung only allows nodes to join a tree after forwarding their join request to root and returning an approval.
+This is quite slow for big networks because each node is only allowed to handle a single join request at any time.
+Intuitively, it is not necessary to forward a join request to the root every time because every node who joined the tree has been approved before.
+Therefore, it can directly (without forwarding) approve further nodes.
+Following, this intuition I use an adapted Afek-Kutten-Yung algorithm that does not forward join requests but approves them directly.
 
+After implementation and successful testing of this optimization, I realized, by reading the original Afek-Kutten-Yung paper, that this variation could lead to infinite runs. % TODO cite
+It breaks the proof of Lemma 4.9 which states that the set of false roots is monotonically decreasing~\footnote{False roots are root variables set to a value that is not a valid ID in the network}.
+With this optimization, this cannot be proven as in the original paper because the rely on the fact that no node can join an illegal tree.
+This is the case in the original algorithm because no join request can be approved before reaching the root which is not possible for an illegal root.
+In the optimized version this is not case because nodes can join an illegal tree without noting that the root does not excist
+Although, the original proof is broken, it is not straightforward to find a concise example of an infinite run because joining a tree takes three rounds while the process of leaving a tree takes only one.
+I do not attempt to proof or disproof the existence of infinite executions in the scope of this project.
+However, I note that (1) infinite runs are no problem for Safra~\footnote{in this case announce is never called which is correct behaviour} and (2) no infinite run occurred in my experiments.
 
 \subsection{Fault Simulation}
 I simulate faults by stopping Safra and the basic algorithm on the failing instance.
@@ -111,9 +120,9 @@ Our Safra version assumes the presence of a perfect fault detector.
 This kind of fault detection is easy to implement and integrate with the system e.g.
 \cite{Fokkink:2018} on page 113 describes a straightforward implementation.
 
-As building a perfect fault detector is a well known and solved problem, but nonetheless, time-consuming, I decided to avoid implementing one.
+As building a perfect fault detector is a well known and solved problem, but nonetheless time-consuming, I decided to avoid implementing one.
 For this experiment, fault detection is simulated by sending \co{CRASH} messages from crashing nodes to their neighbours. 
-These crash messages are send through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with them and this would exclude situations where a basic messag is received after the crash of the sender has been detected.
+These crash messages are send through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with all other messages and this would exclude situations where a basic messag is received after the crash of the sender has been detected.
 
 \co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.  
 
@@ -128,13 +137,13 @@ Termination is commonly defined by:
 	\item All nodes are passive
 	\item No messages are in the channels
 \end{enumerate}
-To allow verification of 1. every node logs changes of its active status.
+To allow verification of the first part every node logs changes of its active status.
 The second point can be verified indirectly by logging all changes of the message counters managed by Safra's algorithm.
 These counters are incremented for each message sent and decremented when a message is received.
 Therefore, one can conclude that no messages are in flight when the sum of all counters is 0.
 All nodes log the aforementioned events combined with a timestamp.
 By sorting and keeping track of active statuses, as well as, the sum of message counters, one can estimate the time of basic termination by the timestamp of the last node becoming passive while the sum of all message counters is zero.
-This technique is similar to the one Safra uses but a global view on the system achieved by offline analysis allows to detect the time of basic termination more closely.
+This technique is similar to the one Safra uses but a global view on the system achieved by offline analysis allows to detect the time of basic termination precisely.
 
 With this system in place, it is possible to determine the number of tokens sent after termination by logging each token sent event and categorizing them during the offline analysis.
 
@@ -150,6 +159,7 @@ I use version 2.3.1 which can be found on GitHub: \href{https://github.com/Jungl
 
 Communication channels in IPL are backed by TCP and provide asynchronous messaging.
 For this experiments, I also used IPL's ability to guarantee FIFO channels.
+
 \subsubsection{DAS 4}
 The experiment is conducted on the part of DAS-4 that belongs to the Vrije Universiteit Amsterdam. 
 The nodes use primarily SuperMicro 2U-twins with Intel E5620 CPUs and a Linux CentOS build with the kernel version 3.10.0-693.17.1.el7.x86\_6.

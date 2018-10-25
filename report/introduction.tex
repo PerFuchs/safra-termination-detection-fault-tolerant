@@ -37,41 +37,6 @@ Therefore, detailing the dependence would not be helpful to anyone considering t
 However, this experiment should enable the reader to judge if SafraFT could be used for his system and convince him that SafraFT performance is comparable to that of SafraFS in a fault-free environment (except for its higher bit complexity).
 Furthermore, this report aims to show how SafraFT behaves in a faulty environment.
 
-\begin{comment}
-Hypothesis
-Safra compares to safra without signficant changes in with no failures on all network sizes
-tokens
-tokens after termination
-
-no signifcant change in token forwarding
-time ??
-no hard, complicated computations
-time after termination
-no hard, complicated computations and no change in token forwarding
-
-our Safra has higher bit complexity 
-increases linearly with network size network size of 1 == then upwards linearly
-
-%TODO    
-Influence from faults
-backup tokens == number of faults - not correct
-difference caused by backup tokens / network size under same fault conditions?
-reason:  // Not to write here
-node gets to know about failing node because of token
-e.g. if its a bit further out and it gets the crashed message later
-node crash behind each other in the ring and only one backup token is send?
-Token count increases for a low level of faults as it colors nodes black and incurs in further rounds when node detects crash or when nodes gets to know of crash of successor    x
-These are mostly done during computation because CM is not processing heavy and gets passive a lot
--> No change on tokens after termination
-Token count and time decrease for a high level of fault as network size is reduced. 
-Same for time spent
-
-Average token size grows as the crashes are propagated by the token each of them takes one round so impact on average token size depends on network size and the signficance also on number of rounds
-more noticable for many faults but than there are also less tokens also in that round
-\end{comment}
-
-
-
 Before performing this experiment George Karlos applied SafraFT to a simulated basic algorithm in a multi-threaded environment emulating a distributed system.
 These experiments showed strong evidence towards correctness and scalability of SafraFT.
 The implementation, technical report and results can be found in George's bachelor thesis~\cite{karlos}.
