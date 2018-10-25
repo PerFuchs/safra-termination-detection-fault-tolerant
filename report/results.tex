@@ -39,6 +39,7 @@ The analysis tools provided with the experiment point these logs out to make sur
 
 To proof termination is not detected too early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
 All 1000 runs using SafraFT under the presence of faults confirm that termination was never detected too early.
+% NUMBER
 
 However, the experiment revealed that the framework for termination chosen to develop SafraFT is not complete and does not cover all cases for my experimental setup.
 SafraFT is developed for the following and commonly used definition of termination:
@@ -55,20 +56,19 @@ Node \co{X} forwards the token to \co{Y} and crashes afterwards.
 Node \co{Y} calls announce after receipt of the token.
 Assume node \co{Z} is a child of \co{X} and detects the crash of its parent, it becomes active after termination has been formally reached and announced.
 By sending out \co{REQUEST} messages, it might activate other nodes again.
+To conclude, the definition of termination that our algorithm is built upon does not fully capture the reality of our basic algorithms which could lead to an early detection of termination.
 
-To conclude, the definition of termination that our algorithm is built upon does not fully capture the reality of our basic algorithm which could lead to an early detection of termination.
-
-To verify if situations like this actually occur during the experiment, I analysed the logs generated according to the definition of termination used to develop SafraFT (see above) and the following definition:
+I propose an extended definition of termination to close this gap between theory and practice:
 \begin{enumerate}
 	\item All nodes are passive
 	\item No messages are in the channels
 	\item Termination is postponed until the last node failure that leads to action is detected
 \end{enumerate}
 \label{extended-definition}
-
+All repetitions of this experiment have been analysed according to the common definition of termination used to develop SafraFT and the extended definition.
 As stated above, SafraFT did never detect termination too early according to its definition.
-According to the extended definition, it detects termination to early in \OutputFileNum{figures/early-termination.txt} out 1500 runs.
-However, due to the fact that repairing the sink tree after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes, only in \OutputFileNum{figures/early-termination-corrupted.txt} of these cases that leads to the situation that basic activity happened after detected termination.
+According to the extended definition, it detects termination to early in \OutputFileNum{figures/early-termination.txt} out 1500 runs.  % NUMBER NUMBER
+However, due to the fact that repairing the constructed trees after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes, only in \OutputFileNum{figures/early-termination-corrupted.txt} of these cases that leads to the situation that basic activity happened after detected termination. % NUMBNER
 
 
 I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact caused by a situation as described above.
