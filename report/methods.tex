@@ -78,7 +78,7 @@ Intuitively, it is not necessary to forward a join request to the root every tim
 Therefore, it can directly (without forwarding) approve further nodes.
 Following, this intuition I use an adapted Afek-Kutten-Yung algorithm that does not forward join requests but approves them directly.
 
-After implementation and successful testing of this optimization, I realized, by reading the original Afek-Kutten-Yung paper, that this variation could lead to infinite runs. % TODO cite
+After implementation and successful testing of this optimization, I realized, by reading the original Afek-Kutten-Yung paper~\cite{afek}, that this variation could lead to infinite runs.
 It breaks the proof of Lemma 4.9 which states that the set of false roots is monotonically decreasing~\footnote{False roots are root variables set to a value that is not a valid ID in the network}.
 With this optimization, this cannot be proven as in the original paper because they rely on the fact that no node can join an illegal tree.
 This is the case in the original algorithm because no join request can be approved before reaching the root which is not possible for an illegal root.
@@ -125,8 +125,6 @@ For this experiment, fault detection is simulated by sending \co{CRASH} messages
 These crash messages are sent through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with all other messages and this would exclude situations, where a basic message is received after the crash of the sender, has been detected.
 
 \co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.
-
-% TODO known bugs section: CM, null pointer in validation of AKY?
 
 \subsection{Offline Analysis}
 \label{ssec:offline-analysis}
