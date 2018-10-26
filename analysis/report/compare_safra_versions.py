@@ -51,9 +51,6 @@ def present_processing_times(configurations, algorithm):
                  fs_safra_time_mean_after, ft_safra_time_mean_after])
 
   write_csv('../report/figures/processing-times-%s.csv' % algorithm, headers, rows)
-  write_string('../report/figures/min-ft-processing-time-overhead-%s.txt' % algorithm, '%.02f' % min_overhead)
-  write_string('../report/figures/max-ft-processing-time-overhead-%s.txt' % algorithm, '%.02f' % max_overhead)
-  write_string('../report/figures/less-than-processing-time-overhead-%s.txt' % algorithm, '%d' % ceil(max_overhead))
 
 
 def present_total_times(configurations, algorithm):
@@ -77,7 +74,7 @@ def present_total_times(configurations, algorithm):
                  ft_total_time_after, fs_total_time_after, total_time_after_difference])
 
   write_csv('../report/figures/total-times-%s.csv' % algorithm, headers, rows)
-  write_string('../report/figures/total-time-ratio-250-%s.txt' % algorithm, '%.02f' % ratio_250)
+
 
 def compare_token_bytes(configurations):
   for network_size, (fault_tolerant, fs) in configurations.items():
