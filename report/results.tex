@@ -31,6 +31,7 @@ Therefore, I analyse both together and explicitly state if an observation or exp
 
 \subsection{Correctness of SafraFT}
 \label{ssec:correctness}
+\label{extended-definition}
 The experiment is aimed to support our paper with a practical, correct application of our algorithm.
 Towards this goal, I build multiple correctness checks into the experiment.
 
@@ -64,7 +65,7 @@ I propose an extended definition of termination to close this gap between theory
 	\item No messages are in the channels
 	\item Termination is postponed until the last node failure that leads to action is detected
 \end{enumerate}
-\label{extended-definition}
+
 All repetitions of this experiment have been analysed according to the common definition of termination used to develop SafraFT and the extended definition.
 As stated above, SafraFT did never detect termination too early according to its definition.
 According to the extended definition, it detects termination to early in \OutputFileNum{figures/early-termination.txt} out 1500 runs.  % NUMBER NUMBER
@@ -192,7 +193,7 @@ The huge quantitative effect could in part be caused by threads being preempted 
 This theory is supported by the fact that the effect is stronger for networks with 2000 nodes.
 However, confirmation of that assumption is not in the scope of this project.
 
-The processing time \cref{table:processing-times} also presents a comparison of the time spent on the basic algorithm and both Safra versions.
+The processing time tables \ref{table:processing-times-cm} and \ref{table:processing-times-aky} also presents a comparison of the time spent on the basic algorithm and both Safra versions.
 Although SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of NUMBER for 2000 nodes and AKY.
 % NUMBER
 
@@ -405,7 +406,7 @@ Although both extremes exist, the average amount of backup token is close to the
 	\label{table:token-sizes-faulty-aky}
 \end{table}
 
-The average token size increases with faults because the IDs of faulty nodes are propagated by the token (see~\cref{table:token-sizes-faulty} and~\ref{table:token-sizes-faulty-aky}).
+The average token size increases with faults because the IDs of faulty nodes are propagated by the token (see~\cref{table:token-sizes-faulty-cm} and~\ref{table:token-sizes-faulty-aky}).
 The influence on token size is between 5 and 8 bytes for networks with 1 to 5 failing nodes.  % NUMBER
 90\% node failure leads to a linear increase of token bytes to the network size of a factor 1.29. % NUMBER
 
@@ -480,7 +481,7 @@ This situation might be explained by the fact that the sum of all token counters
 
 
 \subsubsection{Total time}
-Total time in faulty networks is presented in \cref{table:total-times-faulty} and \ref{table:total-times-aky}.
+Total time in faulty networks is presented in \cref{table:total-times-faulty-cm} and \ref{table:total-times-aky}.
 In line with the observations from the processing time section, one observes:
 \begin{itemize}
 	\item an increase in total time spent on fault scenarios

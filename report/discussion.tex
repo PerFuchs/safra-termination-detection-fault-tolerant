@@ -14,7 +14,7 @@ Still, termination is detected in every case with no case of early detection.
 However, the experiment shows that the definition of termination used to develop SafraFT, although very common and widely accepted, does not cover all situations arising in practice.
 The definition assumes passive nodes only become active when they receive a basic message.
 In reality, nodes can also change to an active state when they detect the crash of another node and need to take corrective actions.
-When I realized this, I extended the definition of termination as described in \label{extended-definition} and evaluated the results of the experiment according to the original definition and the extension.
+When I realized this, I extended the definition of termination as described in~\cref{extended-definition} and evaluated the results of the experiment according to the original definition and the extension.
 As stated above, SafraFT does not detect termination early according to the original definition.
 When the extended version is used SafraFT detects early termination in only (\OutputFileNum{figures/early-termination.txt} out of 1000 runs and in only NUMBER cases, this leads to a corrupted result. % NUMBER
 Such cases are unlikely in praxis because it is less likely there than in our experiment that a fault happens just before termination because in our experiment many faults are triggered when a token is forwarded or received while in praxis most fault ought to happen within the basic algorithm or idle time because the vast majority of the time is spent for these purposes.
@@ -57,7 +57,7 @@ The situation could be improved by:
 IPL does not provide rather important primitives as broadcasting or barriers.
 So both had to be implemented by me during the project.
 Especially, implementing robust and performant barriers showed to be more work than expected as one IPL feature (signals) breaks with 2000 nodes and it demonstrated to be impossible to connect each node to one master node to orchestrate actions.
-Hence, I recommend checking if a messaging library with a more comprehensive library exists e.g. MPI or Akka~\footnote{An implementation of the Actor model for the JVM written in Scala}.
+Hence, I recommend checking if a messaging library with a more comprehensive library exists e.g. MPI or Akka\footnote{An implementation of the Actor model for the JVM written in Scala}.
 
 Although showing the general relationship between network size and behaviour in the presence of faults is not the main goal of this project, I hoped to come to more precise conclusions regarding this matter.
 To do so one would need to run the experiments on bigger networks and preferably concentrate on a specific but relevant fault scenario.
@@ -67,5 +67,5 @@ Finally, this project leaves the open question: how to define termination in the
 The commonly used definition seems to be fundamentally flawed by the fact that most fault tolerant algorithm needs to react to a fault.
 Therefore, they become active when they detect a fault.
 This is not trivially fixed because a fault can happen at any time and is not predictable.
-An interesting starting point for further research on this topic can be found in the literature about self-stabilizing algorithms which use the notion of \texit{final fault}.
+An interesting starting point for further research on this topic can be found in the literature about self-stabilizing algorithms which use the notion of \textit{final fault}.
 Note, that the extended definition, which I proposed, nor the notion of \textit{final fault} are practical solutions because they can only be checked after execution by offline analysis.
