@@ -1,0 +1,6 @@
+networkSize,noFaults,fiveN,differenceFiveN,ninety,differenceNinety,noFaultsAfter,fiveNAfter,differenceFiveNAfter,ninetyAfter,differenceNinetyAfter
+50,69,101,1.46,105,1.52,42,52,1.24,21,0.5
+250,287,493,1.72,543,1.89,236,289,1.22,75,0.32
+500,540,774,1.43,1101,2.04,486,557,1.15,142,0.29
+1000,1052,2021,1.92,2190,2.08,977,1320,1.35,239,0.24
+2000,2062,3826,1.86,4397,2.13,1973,2406,1.22,458,0.23
