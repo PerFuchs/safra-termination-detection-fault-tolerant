@@ -32,9 +32,9 @@ Therefore, I analyse both together and explicitly state if an observation or exp
 \subsection{Correctness of SafraFT}
 \label{ssec:correctness}
 The experiment is aimed to support our paper with a practical, correct application of our algorithm.
-Towards this goal, I build multiple correctness checks into the experiment. 
+Towards this goal, I build multiple correctness checks into the experiment.
 
-To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced. 
+To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced.
 The analysis tools provided with the experiment point these logs out to make sure they are not overlooked.
 
 To proof termination is not detected too early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
@@ -47,12 +47,12 @@ SafraFT is developed for the following and commonly used definition of terminati
 	\item All nodes are passive
 	\item No messages are in the channels
 \end{enumerate}
-This definition is based on the fact that a node is either an initiator or can only become active if it receives a message. 
+This definition is based on the fact that a node is either an initiator or can only become active if it receives a message.
 Anyhow, in the presence of failures and if additionally, the outcome of the algorithm depends on the set of alive nodes, nodes might get activated by the detection of a failure.
 For example, when Chandy Misra builds a sink tree, nodes that detect a crash of their parents will become active afterwards to find a new path towards the root.
-This fact leads to the following concrete scenario in which the definition of termination assumes termination too early: let us consider the situation that all nodes are passive and no messages are in the channel. 
+This fact leads to the following concrete scenario in which the definition of termination assumes termination too early: let us consider the situation that all nodes are passive and no messages are in the channel.
 In other words, the system terminated by our definition.
-Node \co{X} forwards the token to \co{Y} and crashes afterwards. 
+Node \co{X} forwards the token to \co{Y} and crashes afterwards.
 Node \co{Y} calls announce after receipt of the token.
 Assume node \co{Z} is a child of \co{X} and detects the crash of its parent, it becomes active after termination has been formally reached and announced.
 By sending out \co{REQUEST} messages, it might activate other nodes again.
@@ -75,7 +75,7 @@ I carefully reviewed each repetition in which termination is detected too early 
 The logs of these runs provide a summary of all detections of parent crashes close to the announce call to ease this procedure.
 
 \subsection{Comparision of Safra versions}
-This section compares SafraFS and SafraFT. 
+This section compares SafraFS and SafraFT.
 Additionally, it analysis how the network size influences both algorithms.
 
 The number of tokens sends in total and after termination is presented in \cref{fig:tokens-and-tokens-after-aky} for CM and in \cref{fig:tokens-and-tokens-after-aky} for AKY.
@@ -87,23 +87,23 @@ The number of tokens sends in total and after termination is presented in \cref{
 \end{sidewaysfigure}
 
 %\begin{sidewaysfigure}[ht]
-%	\includegraphics{figures/tokens-and-tokens-after-aky.png}
-%	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Afek-Kutten-Yung.}
-%	\label{fig:tokens-and-tokens-after-aky}
+%    \includegraphics{figures/tokens-and-tokens-after-aky.png}
+%    \caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Afek-Kutten-Yung.}
+%    \label{fig:tokens-and-tokens-after-aky}
 %\end{sidewaysfigure}
 % TODO
 
 
 The key observation is that SafraFS and SafraFT behave highly similar.
-SafraFT sends slightly fewer tokens in average.
-Also, its results shows less variance.
+SafraFT sends slightly fewer tokens on average.
+Also, its results show less variance.
 Most likely these differences are caused by implementation details and are not generalizable.
 
 As one would expect, the number of tokens grows linearly with the network size.
 Note that the first network size is 5 times smaller than the second for bigger networks the size doubles for each run.
 
 The same can be observed for tokens sent after termination.
-By far most tokens are send after termination as one would expect.
+By far most tokens are sent after termination as one would expect.
 
 The bit complexity of SafraFS is constant.
 In this experiment, each token of SafraFS contains 12 bytes.
@@ -113,15 +113,15 @@ The growth can be described by $bytes = 4 * <network size> + 20$.
 
 I measured two kinds of timing metrics in this experiment.
 On the one hand, there are the wall time metrics of total time and total time after termination.
-Both were recorded in elapsed seconds between two events. 
-For total time, these events are the start of the basic algorithm and termination detection event at the last node.
+Both were recorded in elapsed seconds between two events.
+For the total time, these events are the start of the basic algorithm and termination detection event at the last node.
 Total time after termination is defined as the number of seconds between the actual termination (extended termination definition from \cref{ssec:correctness}) and the event of a node calling
 announce. % TODO is that too much explanation, does everybody but you know so?
 On the other hand, there are basic, Safra and Safra after termination processing times (including the time needed to send messages).
 These are the accumulated times all instances needed to process basic or Safra functions.
-Total times and processing times are measured in a different way and should not be compared directly for multiple reasons. 
+Total times and processing times are measured in a different way and should not be compared directly for multiple reasons.
 First, while total times include idle times, e.g. time spent for logging, processing time do not include these.
-Secondly, total time is wall time between two events and processing times are accumulated over all processes. 
+Secondly, total time is wall time between two events and processing times are accumulated over all processes.
 One particular example of when this leads to differences is that time spent concurrently by two processes counts double in processing time metrics but only once in wall time metrics.
 
 \begin{table}
@@ -135,7 +135,7 @@ One particular example of when this leads to differences is that time spent conc
 		\multicolumn{1}{c}{Overhead FS} &
 		\multicolumn{1}{c||}{Overhead FT} &
 		\multicolumn{1}{c}{Safra FS}   &
-		\multicolumn{1}{c}{Safra FT} 
+		\multicolumn{1}{c}{Safra FT}
 		\\
 		\midrule
 		\csvreader[head to column names]{figures/processing-times-cm.csv}{}
@@ -171,22 +171,22 @@ One particular example of when this leads to differences is that time spent conc
 One can observe in \cref{table:processing-times-cm} and \cref{table:processing-times-aky} that SafraFT uses more processing time than SafraFS and much of the additional time is spent between actual termination and termination detection.
 The processing time increases linearly with the network size for SafraFS.
 For SafraFT doubling the network size leads to a 2 or threefold increase in processing time.
-Most of the additional processing time of SafraFT is spent betweeen termination and termination detection.
+Most of the additional processing time of SafraFT is spent between termination and termination detection.
 One can also see that the processing time increased more than twofold for networks of 1000 nodes to 2000 nodes.
 This is most likely due to the fact that 2000 node networks were simulated by running 125 instances instead of 50 instances per physical node.
 
 A good candidate to explain the difference in processing time between SafraFS and SafraFT is the different token size of SafraFS and SafraFT: it takes longer to send bigger tokens.
 Also, this theory is supported by the fact that most additional time is spent after termination - Safra is only concerned with moving the token around after termination.
-To confirm this idea, I ran a ad-hoc experiment of excluding the time spent to send messages from the processing time.
+To confirm this idea, I ran an ad-hoc experiment of excluding the time spent to send messages from the processing time.
 Indeed, this experiment revealed that most of the differences can be tributed to writing tokens onto the wire.
-Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT. 
+Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT.
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the bigger influence of network size - bigger networks lead to even larger tokens.
 
 The qualitative result is not surprising.
 However, we are surprised by the quantitative size it has.
 We would have expected that the difference between SafraFS and SafraFT in processing time is observable but much lower.
 A possible explanation can be found in my experiment setup: each physical node simulates between 50 and 125 instances.
-Each of this instances uses multiple threads; alltogether there are at least 4 times as many threads as cores on each machine.
+Each of this instances uses multiple threads; altogether there are at least 4 times as many threads as cores on each machine.
 
 The huge quantitative effect could in part be caused by threads being preempted which happens more often for threads that try to send big messages.
 This theory is supported by the fact that the effect is stronger for networks with 2000 nodes.
@@ -240,16 +240,16 @@ Although SafraFT uses significantly more time, the overhead on the processing ti
 
 The same pattern of SafraFT using more time and reacting stronger to an increase in network size is visible for total times in \cref{table:total-times-cm} and \cref{table:total-times-aky} for CM and AKY respectively.
 
-For SafraFS and CM roughly half of the time is spent after termination for small networks.
+For SafraFS and CM, roughly half of the time is spent after termination for small networks.
 In big networks, the part of the time spent after termination is lower because the fraction spent by the basic algorithm becomes dominant.
 The systems using SafraFT spent half or more of their time to detect termination.
 
 For AKY most of the time is spent before termination (except for 1000 and 2000 nodes and SafraFT).
-This shows that the time measurments highly depend on the basic algorithm.
+This shows that the time measurements highly depend on the basic algorithm.
 AKY is a synchronized algorithm and needs more time than CM.
 
 I would like to note that the low processing time overhead of Safra is not in contradiction to a large amount of wall time spent after termination.
-These seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active at the beginning that is when it accumulates a lot of processing time; while Safra causes a lot of idle time in the end when all processes wait for their predecessor to pass on the token. 
+These seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active at the beginning that is when it accumulates a lot of processing time; while Safra causes a lot of idle time in the end when all processes wait for their predecessor to pass on the token.
 This idle time is not included in processing time but wall time does include it.
 
 To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes it to use more time which leads to a later termination detection.
@@ -275,9 +275,9 @@ The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:to
 \end{sidewaysfigure}
 
 %\begin{sidewaysfigure}[ht]
-%	\includegraphics{figures/tokens-and-tokens-after-faulty-aky.png}
-%	\caption{SafraFT and AKY: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
-%	\label{fig:tokens-and-tokens-after-faulty-aky}
+%    \includegraphics{figures/tokens-and-tokens-after-faulty-aky.png}
+%    \caption{SafraFT and AKY: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
+%    \label{fig:tokens-and-tokens-after-faulty-aky}
 %\end{sidewaysfigure}
 % TODO
 
@@ -300,7 +300,7 @@ The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:to
 		\midrule
 		\csvreader[head to column names]{figures/tokens-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
-			\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
+		\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
 		\\\bottomrule
 	\end{tabular}
 	\caption{SafraFT and CM: Tokens in total (left) and after termination (right) for different fault scenarios compared to fault-free networks.}
@@ -335,8 +335,8 @@ The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:to
 Otherwise, the two types of fault simulation have a highly different influence on the tokens and tokens after termination metrics.
 
 5n configurations lead to a strong increase in the variance of tokens sent and in tokens sent after termination.
-This seems reasonable because runs with failing nodes might lead to more different situations as runs without fails e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), at the same time, a single failing node that is a leaf in a Chandy Misra sink tree and that crashes just before the call of announce at the successor  causes no further activity.
-The same example provides an idea of why the variability increases in big networks. 
+This seems reasonable because runs with failing nodes might lead to more different situations as runs without fails e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), at the same time, a single failing node that is a leaf in a Chandy Misra sink tree and that crashes just before the call of announcing at the successor  causes no further activity.
+The same example provides an idea of why the variability increases in big networks.
 That is because one extra round in a big network has a much higher impact on the token count than in a small network.
 
 Opposed to the results for 5n, networks with up to 90\% node failure lead to a similar low variance in tokens and tokens after termination as fault-free networks.
@@ -349,14 +349,14 @@ Different from all other networks, highly faulty networks exhibit a much lower t
 
 As expected, faults lead to more token being sent.
 This is caused mostly because a fault detection requires an additional round.
-However, SafraFT handles faults kindly - neither 5n nor 90\% scenarios lead to an overhead higher than 2.13 compared to a fault free execution.
+However, SafraFT handles faults kindly - neither 5n nor 90\% scenarios lead to an overhead higher than 2.13 compared to a fault-free execution.
 Hence, not every fault causes an extra round but all faults together cost an extra round.
 This result holds for all network sizes, both basic algorithm and for two highly different fault scenarios.
 
 \subsubsection{Backup tokens}
 The average amount of backup tokens sent for either fault simulation or network size is lower than the number of faults.
 This is due to the fact that SafraFT only issues backup tokens when the fault of its successor is detected via the fault detector but not if this fault is noticed by receiving a token.
-There are even runs where 1 to 5 nodes fail but no backup token is issued up to networks containing 2000 nodes. 
+There are even runs where 1 to 5 nodes fail but no backup token is issued up to networks containing 2000 nodes.
 
 The other extreme that more backup tokens, than faults occur, are issued exists as well.
 This can be explained by my decision to have node failing after issuing a backup token.
@@ -364,7 +364,7 @@ For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node
 After, issueing the backup token \co{B} fails on detection \co{A} issues a backup token towards \co{C}.
 Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.
 
-Although both extremes exists, the average amount of backup token is close to the number of faulty nodes.
+Although both extremes exist, the average amount of backup token is close to the number of faulty nodes.
 
 \subsubsection{Token size}
 \begin{table}
@@ -413,11 +413,11 @@ The influence on token size is between 5 and 8 bytes for networks with 1 to 5 fa
 \subsubsection{Processing Time}
 The observations of this chapter are backed by \cref{table:processing-times-faulty-cm} and \ref{table:processing-times-aky}.
 As for tokens, one can see an increase in total processing times under the presence of faults compared to fault-free runs which is no surprise because more tokens are sent.
-This also explains why the processing time is higher for the 90\% scenario than in th 5n configurations.
+This also explains why the processing time is higher for the 90\% scenario than in the 5n configurations.
 There is one exception: the processing time for 2000 nodes and AKY in the 5n scenario decreased.
 
 Processing times after termination for 90\% drastically decreased for both algorithm and all network sizes - except for CM and 50 nodes where one sees a 20\% increase.
-The general result can be explained by less tokens being sent after termination.
+The general result can be explained by fewer tokens being sent after termination.
 The exception cannot be explained with the data at hand because it does only occur for one algorithm.
 
 The influence of 5n scenarios on processing time after termination is highly varied.
@@ -448,7 +448,7 @@ This situation might be explained by the fact that the sum of all token counters
 		\midrule
 		\csvreader[head to column names]{figures/processing-times-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
-			\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
+		\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
 		\\\bottomrule
 	\end{tabular}
 	\caption{SafraFT and CM: Total processing times (left) and after termination (right) in seconds for different fault scenarios compared to fault-free networks.}
@@ -485,7 +485,7 @@ This situation might be explained by the fact that the sum of all token counters
 Total time in faulty networks is presented in \cref{table:total-times-faulty} and \ref{table:total-times-aky}.
 In line with the observations from the processing time section, one observes:
 \begin{itemize}
-	\item an increase in total time spent for fault scenarios
+	\item an increase in total time spent on fault scenarios
 	\item less time spent after termination by highly faulty networks - except for 50 nodes and CM
 	\item varied results for 5n scenarios and time spent after termination
 \end{itemize}
@@ -508,7 +508,7 @@ In line with the observations from the processing time section, one observes:
 		\midrule
 		\csvreader[head to column names]{figures/total-times-faulty-cm.csv}{}
 		{\\\networkSize & \noFaults & \fiveN & \differenceFiveN & \ninety & \differenceNinety &
-			\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
+		\noFaultsAfter & \fiveNAfter & \differenceFiveNAfter & \ninetyAfter & \differenceNinetyAfter }
 		\\\bottomrule
 	\end{tabular}
 	\caption{SafraFT and CM: Total times (left) and after termination (right) in seconds. For different fault scenarios compared to fault-free networks.}
