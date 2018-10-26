@@ -2,7 +2,7 @@
 First, this section concludes what the results imply about SafraFT. After, I discuss limitations and improvements of my approach.
 
 The most important aim of the experiment is to show the correctness of SafraFT.
-Towards this aim, the results leave no doubt that SafraFT behaved correctly in all 1500 %NUMBER
+Towards this aim, the results leave no doubt that SafraFT behaved correctly in all 2149 %NUMBER
 runs.
 These runs cover a wide range of different environments from small networks of 50 nodes to big networks with 2000 instances and for each network size the fault-free case, as well as, two quite different fault scenarios.
 The basic algorithm is carefully chosen to exhibit an interesting and varied message pattern in terms of the number of messages and communication partners.
@@ -16,7 +16,7 @@ The definition assumes passive nodes only become active when they receive a basi
 In reality, nodes can also change to an active state when they detect the crash of another node and need to take corrective actions.
 When I realized this, I extended the definition of termination as described in~\cref{extended-definition} and evaluated the results of the experiment according to the original definition and the extension.
 As stated above, SafraFT does not detect termination early according to the original definition.
-When the extended version is used SafraFT detects early termination in only (\OutputFileNum{figures/early-termination.txt} out of 1000 runs and in only NUMBER cases, this leads to a corrupted result. % NUMBER
+When the extended version is used SafraFT detects early termination in only 14 out of 1124 runs with crashes and in only 2 cases, this leads to a corrupted result. % NUMBER
 Such cases are unlikely in praxis because it is less likely there than in our experiment that a fault happens just before termination because in our experiment many faults are triggered when a token is forwarded or received while in praxis most fault ought to happen within the basic algorithm or idle time because the vast majority of the time is spent for these purposes.
 Furthermore, one can actively reduce the chance of early termination detection by using a failure detector that propagates failures fast to all nodes and then enforces an extra token round.
 
@@ -26,15 +26,15 @@ This higher bit complexity is the reason why SafraFT takes longer to detect term
 I would like to point out that my experimental setup imposes that the time taken by SafraFT to detect termination is long.
 This is because Chandy Misra and Afek-Kutten-Yung complete their tasks in a few seconds and then SafraFT needs roughly the same time to detect termination.
 However, if I had chosen a basic algorithm that takes multiple hours to complete, the seconds taken by SafraFT to detect termination would be seen in a different perspective.
-Furthermore, the low processing time overhead (less than NUMBER)  % NUMBER
+Furthermore, the low processing time overhead (less than 13\% in all runs of this experiment)  % NUMBER
 of SafraFT plays a bigger role in long-running jobs.
 
 Towards SafraFT performance in the presence of faults, I conclude that the number of backup tokens issued is not limited by the number of faults but the average is lower than the number of faults.
-Also, the increase in bytes per token is only constant (5 to 9 bytes) for a few faults and grows only linearly with the network size for 90\% node failure.  % NUMBER
+Also, the increase in bytes per token is only constant (5 to 8 bytes) for a few faults and increases by 1.29 times for 90\% node failure.  % NUMBER
 It is difficult to predict general relationships between the number of faults, network size and other measured metrics e.g. time or token sent.
 Still, the experiments clearly show that even in big networks and with 90\% node failure the algorithm performs well and that none of the metrics shows exponential growth.
 An especially interesting metric is the number of tokens sent in faulty networks: it shows relative independence from the number of failing nodes.
-For both fault scenarios of five or less failing nodes and 90\% node failure on all network sizes the biggest increase in token sent over a fault-free execution is 2.13 times. %NUMBER.
+For both fault scenarios of five or less failing nodes and 90\% node failure on all network sizes, at most 3 times as many tokens were sent as for a fault free run. %NUMBER.
 This indicates that independent from the number of faults one more token round is necessary to detect termination.
 To conclude, SafraFT handles faults in a sound and kind manner.
 

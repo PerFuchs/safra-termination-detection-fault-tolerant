@@ -12,15 +12,15 @@ The raw data including a manual on how to interpret it can be found TODO here.
 	\centering
 	\begin{tabular}{@{}llrrr@{}}
 		\toprule
-		Algorithm & Network              & Faults & Repetitions  & \#Instances / DAS-4 node   \\ \midrule
-		SafraFS on CM and AKY  & 50/250/500/1000      & 0      & 50          & 50                    \\
-		SafraFS on CM and AKY  & 2000                 & 0      & 50          & 100                   \\
-		SafraFT on CM and AKY  & 50/250/500/1000      & 0      & 50          & 50                    \\
-		SafraFT on CM and AKY  & 2000                 & 0      & 50          & 100                   \\
-		SafraFT on CM and AKY  & 50/250/500/1000      & 5n     & 50          & 50                    \\
-		SafraFT on CM and AKY  &    2000              & 5n     & 50          & 100                   \\
-		SafraFT on CM and AKY  & 50/250/500/1000/     & 90\%   & 50          & 50                    \\
-		SafraFT on CM and AKY  &    2000              & 90\%   & 50          & 100                   \\ \bottomrule
+		Algorithm & Network    & Faults               & Repetitions per basic algorithm  & \#Instances / DAS-4 node   \\ \midrule
+		SafraFS on CM / AKY  & 50/250/500/1000      & 0      & > 50          & 50                    \\
+		SafraFS on CM / AKY  & 2000                 & 0      & > 50          & 100                   \\
+		SafraFT on CM / AKY  & 50/250/500/1000      & 0      & > 50          & 50                    \\
+		SafraFT on CM / AKY  & 2000                 & 0      & > 50          & 100                   \\
+		SafraFT on CM / AKY  & 50/250/500/1000      & 5n     & > 50          & 50                    \\
+		SafraFT on CM / AKY  &    2000              & 5n     & > 50          & 100                   \\
+		SafraFT on CM / AKY  & 50/250/500/1000/     & 90\%   & > 50          & 50                    \\
+		SafraFT on CM / AKY  &    2000              & 90\%   & > 50          & 100                   \\ \bottomrule
 	\end{tabular}
 	\caption{List of all configurations run. Per physical DAS-4 node with 8 cores multiple multiple virtual instances in their own processes where run (columm '\#Instances / DAS-4 node`). The amount of physical node equates to network size divided by instances.}
 	\label{table:runs}
@@ -39,7 +39,7 @@ To assure nothing happens after termination detection, the application logs if a
 The analysis tools provided with the experiment point these logs out to make sure they are not overlooked.
 
 To proof termination is not detected too early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
-All 1000 runs using SafraFT under the presence of faults confirm that termination was never detected too early.
+All 1124 runs using SafraFT under the presence of faults confirm that termination was never detected too early.
 % NUMBER
 
 However, the experiment revealed that the framework for termination chosen to develop SafraFT is not complete and does not cover all cases for my experimental setup.
@@ -68,9 +68,8 @@ I propose an extended definition of termination to close this gap between theory
 
 All repetitions of this experiment have been analysed according to the common definition of termination used to develop SafraFT and the extended definition.
 As stated above, SafraFT did never detect termination too early according to its definition.
-According to the extended definition, it detects termination to early in \OutputFileNum{figures/early-termination.txt} out 1500 runs.  % NUMBER NUMBER
-However, due to the fact that repairing the constructed trees after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes, only in \OutputFileNum{figures/early-termination-corrupted.txt} of these cases that leads to the situation that basic activity happened after detected termination. % NUMBNER
-
+According to the extended definition, it detects termination to early in 13 out 1124 runs with crashes.  % NUMBER NUMBER
+However, due to the fact that repairing the constructed trees after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes, only in 2 of these cases that leads to the situation that basic activity happened after detected termination. % NUMBNER
 
 I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact caused by a situation as described above.
 The logs of these runs provide a summary of all detections of parent crashes close to the announce call to ease this procedure.
@@ -193,7 +192,7 @@ This theory is supported by the fact that the effect is stronger for networks wi
 However, confirmation of that assumption is not in the scope of this project.
 
 The processing time tables \ref{table:processing-times-cm} and \ref{table:processing-times-aky} also presents a comparison of the time spent on the basic algorithm and both Safra versions.
-Although SafraFT uses significantly more time, the overhead on the processing time stays moderate with a maximum of NUMBER for 2000 nodes and AKY.
+Although SafraFT uses significantly more time, the overhead on the processing time of the basic algorithm stays moderate with a maximum of 12.68\% for 2000 nodes and AKY.
 % NUMBER
 
 
@@ -253,7 +252,7 @@ These seemingly opposing results arise from the difference between wall time and
 This idle time is not included in processing time but wall time does include it.
 
 To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes it to use more time which leads to a later termination detection.
-Still, SafraFT causes only a moderate processing time overheads between NUMBER and NUMBER. % NUMBER
+Still, SafraFT causes only a moderate processing time overheads between 2\% and 13\%. % NUMBER
 
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs in the presence of node crashes.
@@ -342,7 +341,7 @@ Opposed to the results for 5n, networks with up to 90\% node failure lead to a s
 A likely explanation is that the low survival rate of 1 out of 10 instances leads to less different scenarios than in the fault scenario treated in the last paragraphs.
 
 Even though only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
-That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty})
+That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty-cm} and \ref{fig:tokens-and-tokens-after-faulty-aky})
 
 Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
 
@@ -477,7 +476,7 @@ This situation might be explained by the fact that the sum of all token counters
 	\label{table:processing-times-faulty-aky}
 \end{table}
 
-
+\newpage
 \subsubsection{Total time}
 Total time in faulty networks is presented in \cref{table:total-times-faulty-cm} and \ref{table:total-times-aky}.
 In line with the observations from the processing time section, one observes:

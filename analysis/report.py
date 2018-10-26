@@ -17,11 +17,14 @@ configurations = get_configurations(experiment_folder)
 
 expected_configurations = {}
 
+
 for network_size in [50, 250, 500, 1000, 2000]:
   for fault_group in ['0 fs', '0', '5n', '90']:
     expected_configurations[(network_size, fault_group)] = 50
 
+all_valid_repetitions = 0
 for c in configurations:
+  all_valid_repetitions += len(c.repetitions)
   expected_configurations[(c.number_of_nodes, c.fault_group)] = expected_configurations[
                                                                   (c.number_of_nodes, c.fault_group)] - len(
     c.repetitions)
@@ -40,6 +43,8 @@ for c in configurations:
   len(list(filter(lambda r: r.reanalysis_warnings, c.repetitions)))))
   print("")
   print("")
+
+print('All valid repetitions: %i' % all_valid_repetitions)
 
 repetitions_with_crashes = 0
 repetitions_with_rea_warnings = 0
