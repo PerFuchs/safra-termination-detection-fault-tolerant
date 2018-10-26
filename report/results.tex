@@ -82,17 +82,16 @@ Additionally, it analysis how the network size influences both algorithms.
 The number of tokens sends in total and after termination is presented in \cref{fig:tokens-and-tokens-after-aky} for CM and in \cref{fig:tokens-and-tokens-after-aky} for AKY.
 
 \begin{sidewaysfigure}[ht]
-	\includegraphics{figures/tokens-and-tokens-after-cm.png}
+	\includegraphics{figures/tokens-cm.png}
 	\caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Chandy-Misra.}
 	\label{fig:tokens-and-tokens-after-cm}
 \end{sidewaysfigure}
 
-%\begin{sidewaysfigure}[ht]
-%    \includegraphics{figures/tokens-and-tokens-after-aky.png}
-%    \caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Afek-Kutten-Yung.}
-%    \label{fig:tokens-and-tokens-after-aky}
-%\end{sidewaysfigure}
-% TODO add figure
+\begin{sidewaysfigure}[ht]
+    \includegraphics{figures/tokens-aky.png}
+    \caption{Tokens (blue) and tokens after termination (orange) for SafraFT and SafraFS in fault free runs for all network sizes with the basic algorithm Afek-Kutten-Yung.}
+    \label{fig:tokens-and-tokens-after-aky}
+\end{sidewaysfigure}
 
 
 The key observation is that SafraFS and SafraFT behave highly similar.
@@ -270,17 +269,16 @@ Runs with 90\% failure produced even more tokens than runs with only 1 to 5 node
 The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:tokens-and-tokens-after-faulty-aky} and~\cref{table:tokens-faulty-cm}~/~\ref{table:tokens-faulty-aky} for CM respectively AKY.
 
 \begin{sidewaysfigure}[ht]
-	\includegraphics{figures/tokens-and-tokens-after-faulty-cm.png}
+	\includegraphics{figures/tokens-faulty-cm.png}
 	\caption{SafraFT and CM: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
 	\label{fig:tokens-and-tokens-after-faulty-cm}
 \end{sidewaysfigure}
 
-%\begin{sidewaysfigure}[ht]
-%    \includegraphics{figures/tokens-and-tokens-after-faulty-aky.png}
-%    \caption{SafraFT and AKY: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
-%    \label{fig:tokens-and-tokens-after-faulty-aky}
-%\end{sidewaysfigure}
-% TODO add figure
+\begin{sidewaysfigure}[ht]
+    \includegraphics{figures/tokens-faulty-aky.png}
+    \caption{SafraFT and AKY: Tokens (blue) and tokens after termination (orange) for SafraFT on the x-axis for 5 network sizes and 5n and 90\% fault configurations on the y-axis.        Backup tokens in green, shown only for 90\%}
+    \label{fig:tokens-and-tokens-after-faulty-aky}
+\end{sidewaysfigure}
 
 
 \begin{table}
