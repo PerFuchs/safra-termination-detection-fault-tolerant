@@ -124,7 +124,9 @@ As building a perfect fault detector is a well known and solved problem, but non
 For this experiment, fault detection is simulated by sending \co{CRASH} messages from crashing nodes to their neighbours. 
 These crash messages are send through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with all other messages and this would exclude situations where a basic messag is received after the crash of the sender has been detected.
 
-\co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.  
+\co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.
+
+% TODO known bugs section: CM, null pointer in validation of AKY?
 
 \subsection{Offline Analysis}
 \label{ssec:offline-analysis}
