@@ -1,0 +1,131 @@
+\begin{appendices}
+\section{Buggy SafraFT version}
+\label{sec:oldSafra}
+This is the SafraFT version as proposed before these experiments.
+It includes two bugs which have been fixed in the current version~\cite{safraFT2018}.
+
+\begin{algorithm}[ht]
+	\caption{$\mbox{\rm Initialization}_{\,i\,}$~}
+	\For{$j=0$ \mbox{\bf to} $N-1$}
+	{
+		$\textit{count}_i^{\,j} \leftarrow 0$\;
+		$\textit{count}_t^{\,j} \leftarrow 0$\;
+	}
+	$\textit{black}_i \leftarrow i$\;
+	$\textit{seq}_i \leftarrow 0$\;
+	$\textit{\sc Crashed}_i\leftarrow\emptyset$\;
+	$\textit{\sc Crashed}_t\leftarrow\emptyset$\;
+	$\textit{\sc Report}_i\leftarrow\emptyset$\;
+	$\textit{next}_i \leftarrow (i+1) \bmod N$\;
+	\eIf{$i=0$}
+	{
+		$\textit{black}_t \leftarrow N-1$\;
+		$\textit{seq}_t \leftarrow 1$\;
+		HandleToken$_0$\;
+	}
+	{$\textit{black}_t \leftarrow i$\;}
+\end{algorithm}
+
+\begin{algorithm}[ht]
+	\caption{$\mbox{\rm SendBasicMessage}_{\,i\,}(m,j)$~}
+	\If{$j \notin \textit{\sc Crashed}_i\cup\textit{\sc Report}_i\cup\textit{\sc Crashed}_t$}{
+		$\textit{seq}_m \leftarrow \textit{seq}_i$\;
+		$\textit{sender}_m \leftarrow i$\;
+		$\textit{send}(m,j)$\;
+		$\textit{count}_i^{\,j} \leftarrow \textit{count}_i^{\,j} + 1$\;
+	}
+\end{algorithm}\vspace{.5cm}
+
+\begin{algorithm}[ht]
+	\caption{$\mbox{\rm ReceivedBasicMessage}_{\,i}$~}
+	$m\leftarrow \textit{dequeue}(\textit{\sc MessageQueue}_i)$\;
+	\If{$\textit{sender}_m \notin \textit{\sc Crashed}_i$}
+	{
+		\If{($\textit{sender}_m < i \wedge\,\textit{seq}_m = \textit{seq}_i+1)\vee \linebreak (\textit{sender}_m > i \wedge\,\textit{seq}_m = \textit{seq}_i)$}
+		{$\textit{black}_i\leftarrow\textit{furthest}_i(\textit{black}_i,\textit{sender}_m)$\;}
+		$\textit{count}_i^{\,\textit{\footnotesize sender}_m} \leftarrow  \textit{count}_i^{\,\textit{\footnotesize sender}_m} - 1$\;
+	}
+\end{algorithm}
+\begin{algorithm}[ht]
+    \caption{$\mbox{\rm ReceivedToken}_{\,i}$~}
+    \If{$\textit{seq}_t=\textit{seq}_i+1$}
+    {
+    $\textit{update}(t)$\;
+    $\textit{\sc Crashed}_t\leftarrow\textit{\sc Crashed}_t\setminus\textit{\sc Crashed}_i$\;
+    $\textit{\sc Crashed}_i\leftarrow\textit{\sc Crashed}_i\cup\textit{\sc Crashed}_t$\;
+    HandleToken$_i$\;
+    }
+\end{algorithm}
+\begin{algorithm}[ht]
+    \caption{$\mbox{\rm FailureDetector}_{\,i}$~}
+    $\textit{crashed}(j)$\;
+    \If{$j\notin\textit{\sc Crashed}_i\cup\textit{\sc Report}_i$}
+    {
+    $\textit{\sc Report}_i\leftarrow\textit{\sc Report}_i\cup\{j\}$\;
+    \If{$j=\textit{next}_i$}
+    {NewSuccessor$_i$\;
+    \If{$\textit{seq}_i>0\vee\textit{next}_i<i$}
+    {
+    $\textit{\sc Crashed}_t\leftarrow \textit{\sc Crashed}_t\cup\textit{\sc Report}_i$\;
+    $\textit{black}_t\leftarrow i$\;
+    \If{$\textit{next}_i<i$}
+    {$\textit{seq}_t\leftarrow\textit{seq}_i+1$\;}
+    $\textit{send}(t,\textit{next}_i)$\;
+    }
+    }
+    }
+\end{algorithm}
+\begin{algorithm}[ht]
+    \caption{$\mbox{\rm NewSuccessor}_{\,i}$~}{}{}
+    $\textit{next}_i\leftarrow (\textit{next}_i+1)\bmod N$\;
+    \While{$\textit{next}_i\in\textit{\sc Crashed}_i\cup\textit{\sc Report}_i$}
+    {$\textit{next}_i\leftarrow(\textit{next}_i+1)\bmod N$\;}
+    \If{$\textit{next}_i=i$}
+    {
+    $\textit{wait}(\textit{passive}_i)$\;
+    {\rm Announce}\;
+    }
+    \If{$\textit{black}_i\neq i$}
+    {
+    $\textit{black}_i\leftarrow\textit{furthest}_i(\textit{black}_i,\textit{next}_i)$\;
+    }
+\end{algorithm}
+\begin{algorithm}[ht]
+    \caption{$\mbox{\rm HandleToken}_{\,i\,}$~}
+    $\textit{wait}(\textit{passive}_i)$\;
+    $\textit{black}_i\leftarrow \textit{furthest}_i(\textit{black}_i,\textit{black}_t)$\;
+    $\textit{\sc Report}_i\leftarrow\textit{\sc Report}_i\setminus\textit{\sc Crashed}_t$\;
+    \If{$\textit{black}_i=i\vee\textit{\sc Report}_i=\emptyset$}
+    {
+    $\textit{count}_t^{\,i}\leftarrow 0$\;
+    \For{{\rm all} $j\in\{0,\ldots,N{-}1\}\setminus(\textit{\sc Crashed}_i\cup\{i\})$}
+    {$\textit{count}_t^{\,i}\leftarrow \textit{count}_t^{\,i}+\textit{count}_i^{\,j}$\;}
+    }
+    \If{$\textit{black}_i=i$}
+    {$\textit{sum}_i\leftarrow 0$\;
+    \For{{\rm all} $j\in\{0,\ldots,N{-}1\}\setminus\textit{\sc Crashed}_i$}
+    {$\textit{sum}_i\leftarrow \textit{sum}_i+\textit{count}_t^{\,j}$\;}
+    \If{$\textit{sum}_i=0$}
+    {{\rm Announce}\;}}
+    \If{$\textit{next}_i\in \textit{\sc Crashed}_t$}
+    {NewSuccessor$_i$\;}
+    \If{$\textit{next}_i<i$}
+    {$\textit{seq}_t\leftarrow\textit{seq}_t+1$\;}
+    \eIf{$\textit{\sc Report}_i\neq\emptyset$}
+    {
+    $\textit{\sc Crashed}_t\leftarrow\textit{\sc Crashed}_t\cup\textit{\sc Report}_i$\;
+    $\textit{\sc Crashed}_i\leftarrow\textit{\sc Crashed}_i\cup\textit{\sc Report}_i$\;
+    $\textit{\sc Report}_i\leftarrow\emptyset$\;
+    $\textit{black}_t\leftarrow i$\;
+    }
+    {
+    $\textit{black}_t\leftarrow\textit{furthest}_i(\textit{black}_i,\textit{next}_i)$\;
+    }
+    $\textit{send}(t, \textit{next}_i)$\;
+    %$\textit{backup}_i\leftarrow t$\;
+    $\textit{black}_i \leftarrow i$\;
+    $\textit{seq}_i\leftarrow\textit{seq}_i+1$\;
+\end{algorithm}
+
+
+\end{appendices}
