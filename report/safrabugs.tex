@@ -1,0 +1,54 @@
+\section{Discovered bugs and fixes}
+\label{sec:safraBugs}
+
+During the experiments, I found two bugs in SafraFT.
+I first give an example execution that leads to the bugs.
+After, I describe how they can be fixed.
+This fix is implemented and tested - all repetitions mentioned in~\cref{sec:results} were run on the fixed version of SafraFT.
+
+The first bug is that if SafraFT receives two tokens in one round, it removes all nodes from the crash report of the second token and does not forward them.
+This can lead to disagreement about which nodes crashed between the alive nodes.
+In this case the alive nodes cannot agree on how to calculate the sum over the token message counters
+Hence, they may never call announce.
+The bug only surfaces if the failure detector employed does not propagate failures to all nodes but relies on SafraFT to do so.
+Consider the following example:
+
+% TODO appendix with old safraFT version
+\begin{itemize}
+    \item \co{X} receives a token from \co{X-1} with $CRASHED_t$ set to \{1\}
+    \item \co{X} is not passive and does not forward the token but it updates $CRASHED_x$
+    \item \co{X-1} crashes
+    \item \co{X-2} detects the crash of \co{X-1}
+    \item \co{X-2} sends a backup token with $CRASHED_t$ set to \{1\}
+    \item \co{X} receives this token
+    \item \co{X} removes \co{1} from $CRASHED_t$
+    \item When \co{X} forwards the token \co{1} is not in the crash set and \co{X+1} might never detect the crash of \co{1}
+    \item \co{X} and all nodes before it know that \co{1} crashed but some nodes after \co{X} do not.
+    \item They disagree on which counters to use to calculate the sum and never call \co{announce}
+\end{itemize}
+
+The second bug is caused by the fact that SafraFT updates its token variables when a token is received but only increases its sequence number when the token is forwarded.
+However, if it forwards a backup token it uses the sequence number of the updated token variables.
+This can lead to a situation in which SafraFT ignores a valid token because its token number is to high as presented in the following example:
+
+\begin{enumerate}
+    \item \co{X} with $seq_x = a$ receives token \co{T} with $seq_t=a+1$, it updates its token variables
+    \item \co{X} is not passive and does not forward the token
+    \item \co{X} detects the crash of \co{X+1}
+    \item \co{X} forwards a backup token $T_1$ with the sequence number \co{a+1} (\co{X} is not the biggest node ID in the ring)
+    \item $T_1$ completes the full round and
+    \item It reaches \co{X} with the sequence number \co{a+2}; \co{X} drops the token because it expected a token with the sequence number \co{a+1}
+    \item The token has been lost and SafraFT will never call \co{announce}
+\end{enumerate}
+
+Both bugs have the same root cause, namely that the update of the token variables in \co{ReceivedToken} is not atomic with the updates of other variables in \co{HandleToken}.
+Therefore, both can be fixed with the same changes which I present next:
+\begin{itemize}
+    \item Move line to line from \co{ReceivedToken} to the beginning of \co{HandleToken} after line % LINE
+    \item Update only the $CRASHED_t$ set in \co{ReceivedToken}
+    \item Check if the receiver (\co{j}) is not in $CRASHED_i \cup REPORT_t \cup CRASHED_t$
+\end{itemize}
+
+The last two points are necessary to avoid the overhead of sending many messages to a node, that has crashed, even though this could have been avoided because the sender is aware that this node crashed but did not update $CRASEHD_t$.
+This fixes the first bug because $CRASHED_t$ is only updated once.
+The second bug is fixed because the $seq_t$ is only updated atomically wiht $seq_i$.

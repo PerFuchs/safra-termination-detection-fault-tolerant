@@ -1,3 +1,4 @@
+import statistics
 import sys
 from collections import defaultdict
 
@@ -17,6 +18,9 @@ configurations = get_configurations(experiment_folder)
 
 expected_configurations = {}
 
+
+for c in configurations:
+  print("Average processing time (%s): %f" % (c.fault_group, statistics.mean(c.get_safra_times())))
 
 for network_size in [50, 250, 500, 1000, 2000]:
   for fault_group in ['0 fs', '0', '5n', '90']:

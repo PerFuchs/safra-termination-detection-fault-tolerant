@@ -37,6 +37,10 @@ Therefore, detailing the dependence would not be helpful to anyone considering t
 However, this experiment should enable the reader to judge if SafraFT could be used for his system and convince him that SafraFT performance is comparable to that of SafraFS in a fault-free environment (except for its higher bit complexity).
 Furthermore, this report aims to show how SafraFT behaves in a faulty environment.
 
+During this experiments, I found two bugs in SafraFT.
+We could fix those without much change and the results presented later are runs on the fixed version of SafraFT.
+The bugs and the fixes are explained in \cref{sec:safraBugs}.
+
 Before performing this experiment George Karlos applied SafraFT to a simulated basic algorithm in a multi-threaded environment emulating a distributed system.
 These experiments showed strong evidence towards correctness and scalability of SafraFT.
 The implementation, technical report and results can be found in George's bachelor thesis~\cite{karlos}.
