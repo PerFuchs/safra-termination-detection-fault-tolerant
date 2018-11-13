@@ -1,14 +1,14 @@
 \section{Methods}
 \label{sec:methods}
-This section describes the most important software design decision taken during implementation e.g. how to add fault-tolerance to Chandy-Misra or how to simulate faults.
+This section describes the most important software design decisions taken during implementation, e.g. how to add fault-tolerance to Chandy-Misra or how to simulate faults.
 Later, I describe the software and machines used.
 
-\subsection {Fault-tolerant Chandy Misra}
+\subsection {Fault-tolerant Chandy-Misra}
 \label{ssec:fault-tolerant-chandy-misra}
 This subsection describes the fault-tolerant extentsion of Chandy-Misra's routing algorithm.
-For a description of the original algorithm refer to~\cite[page 56]{fokkink:2018}.
-The fault-tolerant version used for the experiments constructs a sink tree in an undirected network under the assumption that a perfect failure detector\footnote{a perfect failure detector does not suspect nodes that haven't actually failed and detects each failure eventually} is present at each node.
-Other than the original Chandy Misra algorithm, the fault tolerant version requires FIFO-channels.
+For a description of the original algorithm see~\cite[page 56]{fokkink:2018}.
+The fault-tolerant version used for the experiments constructs a sink tree in a bidirectional network under the assumption that a perfect failure detector\footnote{a perfect failure detector does not suspect nodes that haven't actually failed and detects each failure eventually} is present at each node.
+Other than the original Chandy-Misra algorithm, the fault-tolerant version requires FIFO-channels.
 Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
 The following assumes that the reader is familiar with the original Chandy-Misra algorithm and describes only the extensions necessary to add fault-tolerance.
 
@@ -20,7 +20,7 @@ If \co{Y} happens to be a child of \co{X}, it resets its own \co{dist} and \co{p
 In this case \co{Y} sends no \co{DIST} message as an answer to \co{X}.
 
 Next, I present an intuition why this extension is fault-tolerant.
-Each failure only affects nodes that see themselves as children, grandchildren or deeper ancestor of the crashing node; that is, a failure only affects subtrees.
+Each failure only affects nodes that see themselves as children, grandchildren or deeper ancestors of the crashing node; that is, a failure only affects subtrees.
 The children of the failing node eventually send \co{REQUEST} messages to all their neighbours because the perfect failure detector guarantees that each node failure is eventually detected by them.
 The neighbours send \co{REQUEST} messages to all their neighbours if they receive a \co{REQUEST} message from their parent.
 Therefore, eventually, all nodes in the subtrees of a failing node are reached by a \co{REQUEST} message and reset their \co{dist} and \co{parent} values.
@@ -31,43 +31,43 @@ However, if they are part of an affected subtree (e.g. grandchildren of the cras
 These invalid paths are corrected when the grandchildren are reached by the \co{REQUEST} message of their parent because on the receipt they send \co{REQUEST} messages which reset all nodes considering them parents.
 This behaviour of introducing invalid paths that are corrected later might lead to a bad theoretical message complexity but did not hinder the experiments.
 
-The requirement for FIFO channels is best understood by a counterexample example based on a none FIFO network.
-The network used for this example is shown in \cref{fig:fifoNecessaryNetwork}.
+The requirement for FIFO channels is best understood by a counterexample based on a non-FIFO network.
+The network used for this example is shown in~\cref{fig:fifoNecessaryNetwork}.
 Only important messages are mentioned; all others can be assumed to be sent and received in any order.
-The Chandy Misra algorithm starts with \co{A} as root node sending \co{DIST 0} messages to \co{B} and \co{C} which on receive consider \co{A} there parent and update their \co{dist} variable.
+The Chandy-Misra algorithm starts with \co{A} as root node sending \co{DIST 0} messages to \co{B} and \co{C}, which on reception consider \co{A} their parent and update their \co{dist} variable.
 They also send \co{DIST} messages to their neighbours.
-When \co{C} and \co{D} receive the \co{DIST} messages from \co{B} respectively \co{C} they consider \co{B} respecitively \co{C} their parents.
+When \co{C} and \co{D} receive the \co{DIST} messages from, \co{B} respectively \co{C}, they consider \co{B} respecitively \co{C} their parents.
 \co{C} sends a \co{DIST 2} message to \co{D} - lets call it \co{M1}.
 Now \co{B} crashes and when \co{C} detects this, it sends a \co{REQUEST} message towards \co{A} and \co{D} - call the latter \co{M2}.
-If \co{M2} overtakes \co{M1}, \co{D} resets its variabbles and on receive of \co{M1} considers \co{C} its parent which is correct but with an incorrect \co{dist} value of 2.
+If \co{M2} overtakes \co{M1}, \co{D} resets its variabbles and on receiving \co{M1} considers \co{C} its parent, which is correct but with an incorrect \co{dist} value of 2.
 All \co{DIST} messages received by \co{D} from now on have a higher distance value and are dismissed.
 So the error is never corrected.
 A straightforward fix for this is to use FIFO networks because the original problem is that \co{M2} overtook \co{M1}\footnote{During the experiments, SafraFT uses the same FIFO channels as its basic algorithm.
 Nonetheless, we still claim it does not require this property.
-This claim is straightforward to proof: SafraFT guarantees that at most one message is in any channel at all times because it forwards a single token and when a backup token is issued, it is sent to a different node than the original token and only one of both tokens is forwarded.
+This claim is straightforward to prove: SafraFT guarantees that at most one message is in any channel at all times because it forwards a single token and when a backup token is issued, it is sent to a different node than the original token and only one of both tokens is forwarded.
 Following the reasoning that only one message is in flight between any two nodes, SafraFT is indifferent to the property FIFO property of the channels.}.
 
 \begin{figure}[h]
     \includegraphics[height=5cm]{figures/FIFO_necessary}
     \centering
-    \caption{None FIFO network with \co{A} as root to demonstrate necessity of FIFO networks.}
+    \caption{Non-FIFO network with \co{A} as root to demonstrate necessity of FIFO networks.}
     \label{fig:fifoNecessaryNetwork}
 \end{figure}
 
-The presented fault tolerant Chandy Misra algorithm could be incorrect as it calculated the wrong tree in 12 out of 1500 runs,
+The presented fault-tolerant Chandy-Misra algorithm could be incorrect as it calculated the wrong tree in 12 out of 1500 runs,
 %number
 Unfortunately, I could not fix it in time for the final experiment runs.
-However, this does not influence the evaluation of SafraFT because the correctness check for SafraFT and Chandy Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:offline-analysis}).
-The verification of SafraFT does show that SafraFT detected termination correctly in these cases and did not cause the corrupted Chandy Misra result.
+However, this does not influence the evaluation of SafraFT, because the correctness check for SafraFT and Chandy-Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:offline-analysis}).
+The verification of SafraFT does show that SafraFT detected termination correctly in these cases and did not cause the corrupted Chandy-Misra result.
 Additionally, the bug also shows in runs with SafraFS.
 
-Additionally, to fixing the last bugs, fault-tolerant Chandy Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
+Additionally to fixing the last bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
 
 \subsection{An adaption to Afek-Kutten-Yung}
-I implement Afek-Kutten-Yung's self-stabilizing spanning tree algorithm as described in \cite[page 183ff]{fokkink:2018}.
+I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm as described in \cite[page 183ff]{fokkink:2018}.
 The original Afek-Kutten-Yung is a synchronized algorithm for shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
-Hence, I optimize it to allow runs up to 2000 nodes.
+Hence, I optimized it to allow runs up to 2000 nodes.
 The optimization could exhibit infinite runs.
 Next, I explain the optimization and present the idea why it might exhibit infinite runs and state why this is no problem for the experiments.
 
@@ -80,19 +80,19 @@ Following, this intuition I use an adapted Afek-Kutten-Yung algorithm that does 
 After implementation and successful testing of this optimization, I realized, by reading the original Afek-Kutten-Yung paper~\cite{afek}, that this variation could lead to infinite runs.
 It breaks the proof of Lemma 4.9 which states that the set of false roots is monotonically decreasing\footnote{False roots are root variables set to a value that is not a valid ID in the network}.
 With this optimization, this cannot be proven as in the original paper because they rely on the fact that no node can join an illegal tree.
-This is the case in the original algorithm because no join request can be approved before reaching the root which is not possible for an illegal root.
+This is the case in the original algorithm because no join request can be approved before reaching the root, which is not possible for an illegal root.
 In the optimized version, this is not the case because nodes can join an illegal tree without noting that the root does not exist
 Although the original proof is broken, it is not straightforward to find a concise example of an infinite run because joining a tree takes three rounds while the process of leaving a tree takes only one.
-I do not attempt to proof or disproof the existence of infinite executions in the scope of this project.
-However, I note that (1) infinite runs are no problem for Safra\footnote{in this case announce is never called which is correct behaviour} and (2) no infinite run occurred in my experiments.
+I do not attempt to prove or disprove the existence of infinite executions in the scope of this project.
+However, I note that (1) infinite runs are no problem for Safra\footnote{In this case announce is never called, which is correct behaviour.} and (2) no infinite run occurred in my experiments.
 
 \subsection{Fault Simulation}
 I simulate faults by stopping Safra and the basic algorithm on the failing instance.
 In particular, a crashed node does not send or react to tokens or basic messages.
-Faults are triggered before and after interesting events e.g. directly before or after sending a basic message or token.
-Before every experiment run it is determined at random which node is going to fail, on which event it is going to fail and after how many repetitions of this event e.g. after the 3rd time it forwards a token.
+Faults are triggered before and after interesting events, e.g. directly before or after sending a basic message or token.
+Before every experiment run it is determined at random which node is going to fail, on which event it is going to fail, and after how many repetitions of this event, e.g. after the 3rd time, it forwards a token.
 
-In particular, I selected the following events to trigger a crash if not specified differently the crash is triggered before or after the event:
+In particular, I selected the following events to trigger a crash, if not specified differently, the crash is triggered right before or after the event:
 \begin{itemize}
     \item sending a token (1 to 3 repetitions)
     \item sending a backup token (1 to 2 repetitions)
@@ -116,17 +116,17 @@ I deliberately decided against choosing special failure points with regard to th
 
 \subsection{Fault Detection}
 Our Safra version assumes the presence of a perfect fault detector.
-This kind of fault detection is easy to implement and integrate with the system e.g.~\cite{fokkink:2018} on page 113 describes a straightforward implementation.
+This kind of fault detection is easy to implement and integrate with the system, e.g.~\cite{fokkink:2018} on page 113 describes a straightforward implementation.
 
-As building a perfect fault detector is a well known and solved problem, but nonetheless time-consuming, I decided to avoid implementing one.
+As building a perfect fault detector is a well-known and solved problem, but nonetheless time-consuming, I decided to avoid implementing one.
 For this experiment, fault detection is simulated by sending \co{CRASH} messages from crashing nodes to their neighbours.
-These crash messages are sent through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with all other messages and this would exclude situations, where a basic message is received after the crash of the sender, has been detected.
+These crash messages are sent through different channels than basic and Safra messages because otherwise they would arrive in FIFO order with all other messages and this would exclude situations where a basic message is received after the crash of the sender has been detected.
 
 \co{CRASH} messages are not broadcasted to all nodes because IBIS (the message passing library I used) does not provide broadcasting.
 
 \subsection{Offline Analysis}
 \label{ssec:offline-analysis}
-For the experiment, I measure some metrics before and after termination e.g. the total token count and tokens sent after termination of the basic algorithm.
+For the experiment, I measure some metrics before and after termination, e.g. the total token count and tokens sent after termination of the basic algorithm.
 To allow generation of these metrics, I need a close estimate of when the basic algorithm terminated.
 For this, I generate log files of events during execution and analyse these afterwards.
 
@@ -140,8 +140,8 @@ The second point can be verified indirectly by logging all changes of the messag
 These counters are incremented for each message sent and decremented when a message is received.
 Therefore, one can conclude that no messages are in flight when the sum of all counters is 0.
 All nodes log the aforementioned events combined with a timestamp.
-By sorting and keeping track of active statuses, as well as, the sum of message counters, one can estimate the time of basic termination by the timestamp of the last node becoming passive while the sum of all message counters is zero.
-This technique is similar to the one Safra uses but a global view on the system achieved by offline analysis allows to detect the time of basic termination precisely.
+By sorting and keeping track of active statuses, as well as the sum of message counters, one can estimate the time of basic termination by the timestamp of the last node becoming passive while the sum of all message counters is zero.
+This technique is similar to the one Safra uses, but a global view on the system achieved by offline analysis allows to detect the time of basic termination precisely.
 
 With this system in place, it is possible to determine the number of tokens sent after termination by logging each token sent event and categorizing them during the offline analysis.
 
@@ -164,34 +164,26 @@ The nodes use primarily SuperMicro 2U-twins with Intel E5620 CPUs and a Linux Ce
 For communication 1Gbit/s Lan is used.
 At the time of the experiments, the VU had 41 nodes with 8 cores each.
 Therefore, multiple instances were run on each physical node to be able to test our algorithm on decently sized networks (the number of machines and instances per machine can be found in \cref{table:runs}).
-This is possible because Safra and Chandy Misra are both communication heavy with rather low processing and memory requirements.
+This is possible because Safra and Chandy-Misra are both communication heavy with rather low processing and memory requirements.
 
 \newpage
 \subsubsection{Network Topology}
-Chandy Misra needs a network topology to work on.
-It requires an undirected network.
+Chandy-Misra needs a network topology to work on.
+It requires a bidirectional network.
 To generate more interesting runs I use weighted networks.
 
-Our Safra version needs an undirected ring.
+Our Safra version needs a bidirectional ring.
 For simplicity in my setup, this ring is part of the network the basic algorithm runs on.
-That means there is always an undirected ring connecting all nodes within simulated networks.
+That means there is always a bidirectional ring connecting all nodes within simulated networks.
 
 All networks for the experiments are generated by choosing randomly between 1 and 5 neighbours for each node and assigning a random, unique weight between 1 and 50000 to each channel.
 
-After this channels with the heavy weight of 400000 are added between the root and some nodes to ensure the network stays connected when nodes fail.
+After this, channels with the heavy weight of 400000 are added between the root and some nodes to ensure the network stays connected when nodes fail.
 For this, I calculate the expected network with knowledge of the nodes predetermined to fail and add connections between nodes that could become disconnected as some other nodes fail and the root.
-These channels are heavyweight to avoid using them over `regular' channels which might create highly similar topologies with a lot of nodes directly connected to the root.
+These channels are heavy-weight to avoid using them over `regular' channels which might create highly similar topologies with a lot of nodes directly connected to the root.
 
-At last, channels are added to form an undirected ring in which each channel has the weight of 100000.
+At last, channels are added to form a bidirectional ring in which each channel has the weight of 100000.
 Again the weight is chosen to avoid `overusing' the ring channels for the trees built.
 
-For the experiments, I am not interested in the relationship between network topology and the measured metrics because this kind of analysis seems too detailed to show the correctness of our Safra version or to compare
-our Safra version with the traditional Safra version.
-Therefore, the exact network topology is not recorded.
-Anyhow, I output the depth of resulting trees and the nodes per level for runs up to 500 nodes.
-This information is recorded to allow for quality checks and ensure the experiments were not run on trivial networks.
-Generating these statistics for runs with over 500 nodes turned out to be time-consuming.
-Hence, I decided not to generate them.
-However, if the network topology leads to none trivial, deep trees for 500 nodes and less, it seems highly unlikely that it would not for even more nodes.
-Furthermore, I verified that the topology generated for more than 500 nodes still leads to interesting cases by spot sample.
+The network topology used for each run is recorded.
 

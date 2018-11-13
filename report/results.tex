@@ -42,7 +42,7 @@ Towards this goal, I build multiple correctness checks into the experiment.
 To assure nothing happens after termination detection, the application logs if any messages are received or actions are executed after termination has been detected and announced.
 The analysis tools provided with the experiment point these logs out to make sure they are not overlooked.
 
-To proof termination is not detected too early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
+To prove termination is not detected too early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
 All 1124 runs using SafraFT under the presence of faults confirm that termination was never detected too early.
 % NUMBER
 
@@ -54,7 +54,7 @@ SafraFT is developed for the following and commonly used definition of terminati
 \end{enumerate}
 This definition is based on the fact that a node is either an initiator or can only become active if it receives a message.
 Anyhow, in the presence of failures and if additionally, the outcome of the algorithm depends on the set of alive nodes, nodes might get activated by the detection of a failure.
-For example, when Chandy Misra builds a sink tree, nodes that detect a crash of their parents will become active afterwards to find a new path towards the root.
+For example, when Chandy-Misra builds a sink tree, nodes that detect a crash of their parents will become active afterwards to find a new path towards the root.
 This fact leads to the following concrete scenario in which the definition of termination assumes termination too early: let us consider the situation that all nodes are passive and no messages are in the channel.
 In other words, the system terminated by our definition.
 Node \co{X} forwards the token to \co{Y} and crashes afterwards.
@@ -75,14 +75,14 @@ As stated above, SafraFT did never detect termination too early according to its
 According to the extended definition, it detects termination to early in 13 out 1124 runs with crashes.  % NUMBER NUMBER
 However, due to the fact that repairing the constructed trees after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes, only in 2 of these cases that leads to the situation that basic activity happened after detected termination. % NUMBNER
 
-I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact caused by a situation as described above.
+I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact, caused by a situation as described above.
 The logs of these runs provide a summary of all detections of parent crashes close to the announce call to ease this procedure.
 
 \subsection{Comparision of Safra versions}
 This section compares SafraFS and SafraFT.
-Additionally, it analysis how the network size influences both algorithms.
+Additionally, it analyses how the network size influences both algorithms.
 
-The number of tokens sends in total and after termination is presented in \cref{fig:tokens-and-tokens-after-aky} for CM and in \cref{fig:tokens-and-tokens-after-aky} for AKY.
+The number of tokens sent in total and after termination is presented in \cref{fig:tokens-and-tokens-after-aky} for CM and in \cref{fig:tokens-and-tokens-after-aky} for AKY.
 
 \begin{sidewaysfigure}[ht]
 	\includegraphics{figures/tokens-cm.png}
@@ -103,16 +103,16 @@ Also, its results show less variance.
 Most likely these differences are caused by implementation details and are not generalizable.
 
 As one would expect, the number of tokens grows linearly with the network size.
-Note that the first network size is 5 times smaller than the second for bigger networks the size doubles for each run.
+Note that the first network size is 5 times smaller than the second; for bigger networks the size doubles for each run.
 
 The same can be observed for tokens sent after termination.
-By far most tokens are sent after termination as one would expect.
+By far most tokens are sent after termination, as one would expect.
 
 The bit complexity of SafraFS is constant.
 In this experiment, each token of SafraFS contains 12 bytes.
 SafraFT has a bit complexity linearly to the network size (when no faults occur).
-For a network of 50 nodes, each token has 220 bytes; a token in a 2000 node network counts 8020 bytes.
-The growth can be described by $bytes = 4 * <network size> + 20$.
+For a network of 50 nodes, each token has 220 bytes; a token in a 2000 nodes network counts 8020 bytes.
+The growth can be described by $bytes = 4 * \langle network size\rangle + 20$.
 
 I measured two kinds of timing metrics in this experiment.
 On the one hand, there are the wall time metrics of total time and total time after termination.
@@ -176,14 +176,14 @@ The processing time increases linearly with the network size for SafraFS.
 For SafraFT doubling the network size leads to a 2 or threefold increase in processing time.
 Most of the additional processing time of SafraFT is spent between termination and termination detection.
 One can also see that the processing time increased more than twofold for networks of 1000 nodes to 2000 nodes.
-This is most likely due to the fact that 2000 node networks were simulated by running 100 instances instead of 50 instances per physical node.
+This is most likely due to the fact that 2000 nodes networks were simulated by running 100 instances instead of 50 instances per physical node.
 
 A good candidate to explain the difference in processing time between SafraFS and SafraFT is the different token size of SafraFS and SafraFT: it takes longer to send bigger tokens.
 Also, this theory is supported by the fact that most additional time is spent after termination - Safra is only concerned with moving the token around after termination.
 To confirm this idea, I ran an ad-hoc experiment of excluding the time spent to send messages from the processing time.
 Indeed, this experiment revealed that most of the differences can be tributed to writing tokens onto the wire.
 Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT.
-This would explain the total increase in the timing from SafraFS to SafraFT, as well as, the bigger influence of network size - bigger networks lead to even larger tokens.
+This would explain the total increase in the timing from SafraFS to SafraFT, as well as the bigger influence of network size - bigger networks lead to even larger tokens.
 
 The qualitative result is not surprising.
 However, we are surprised by the quantitative size it has.
@@ -195,7 +195,7 @@ The huge quantitative effect could in part be caused by threads being preempted 
 This theory is supported by the fact that the effect is stronger for networks with 2000 nodes.
 However, confirmation of that assumption is not in the scope of this project.
 
-The processing time tables \ref{table:processing-times-cm} and \ref{table:processing-times-aky} also presents a comparison of the time spent on the basic algorithm and both Safra versions.
+The processing time tables \ref{table:processing-times-cm} and \ref{table:processing-times-aky} also present a comparison of the time spent on the basic algorithm and both Safra versions.
 Although SafraFT uses significantly more time, the overhead on the processing time of the basic algorithm stays moderate with a maximum of 12.68\% for 2000 nodes and AKY.
 % NUMBER
 
@@ -253,22 +253,22 @@ AKY is a synchronized algorithm and needs more time than CM.
 
 I would like to note that the low processing time overhead of Safra is not in contradiction to a large amount of wall time spent after termination.
 These seemingly opposing results arise from the difference between wall time and processing time: the basic algorithm is much more active at the beginning that is when it accumulates a lot of processing time; while Safra causes a lot of idle time in the end when all processes wait for their predecessor to pass on the token.
-This idle time is not included in processing time but wall time does include it.
+This idle time is not included in processing time, but wall time does include it.
 
-To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault sensitive version but its higher bit complexity causes it to use more time which leads to a later termination detection.
-Still, SafraFT causes only a moderate processing time overheads between 2\% and 13\%. % NUMBER
+To conclude, the experiments confirm that the message complexity of SafraFT remains as for the fault-sensitive version, but its higher bit complexity causes it to use more time, which leads to a later termination detection.
+Still, SafraFT causes only a moderate processing time overhead between 2\% and 13\%. % NUMBER
 
 \subsection{Influence of faults}
 In the following paragraphs, I present and explain the data generated by runs in the presence of node crashes.
 I run two highly different scenarios: one considering networks with 1 to 5 nodes failing and one with 90\% of all nodes crashing.
-These scenarios are chosen to show SafraFT in both the realistic case of a low number of faults to handle, as well as, an extreme case; with the aim to confirm that SafraFT handles both cases correctly and without unreasonable deterioration in any metric.
+These scenarios are chosen to show SafraFT in both the realistic case of a low number of faults to handle, as well as an extreme case; with the aim to confirm that SafraFT handles both cases correctly and without unreasonable deterioration in any metric.
 
 I used the extended definition of termination to determine the point of time of actual termination to generate the metrics shown in this section.
 
 \subsubsection{Tokens}
 \label{ssec:tokens-faulty}
-For both the networks where between 1 and 5 nodes failed, as well as, for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
-Runs with 90\% failure produced even more tokens than runs with only 1 to 5 node failing - except in networks of 2000 nodes where 5n exhibits a higher token sent average.
+For both the networks where between 1 and 5 nodes failed, as well as for the highly faulty runs with 90\% node failure, the number of tokens increased compared to runs without any faults.
+Runs with 90\% failure produced even more tokens than runs with only 1 to 5 node failing - except in networks of 2000 nodes where 5n exhibits a higher tokens sent average.
 The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:tokens-and-tokens-after-faulty-aky} and~\cref{table:tokens-faulty-cm}~/~\ref{table:tokens-faulty-aky} for CM respectively AKY.
 
 \begin{sidewaysfigure}[ht]
@@ -337,36 +337,36 @@ The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:to
 Otherwise, the two types of fault simulation have a highly different influence on the tokens and tokens after termination metrics.
 
 5n configurations lead to a strong increase in the variance of tokens sent and in tokens sent after termination.
-This seems reasonable because runs with failing nodes might lead to more different situations as runs without fails e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), at the same time, a single failing node that is a leaf in a Chandy Misra sink tree and that crashes just before the call of announcing at the successor  causes no further activity.
+This seems reasonable because runs with failing nodes might lead to more different situations than runs without fails, e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), at the same time, a single failing node that is a leaf in a Chandy-Misra sink tree and that crashes just before the call of announcing at the successor  causes no further activity.
 The same example provides an idea of why the variability increases in big networks.
 That is because one extra round in a big network has a much higher impact on the token count than in a small network.
 
 Opposed to the results for 5n, networks with up to 90\% node failure lead to a similar low variance in tokens and tokens after termination as fault-free networks.
-A likely explanation is that the low survival rate of 1 out of 10 instances leads to less different scenarios than in the fault scenario treated in the last paragraphs.
+A likely explanation is that the low survival rate of 1 out of 10 instances leads to fewer different scenarios than in the fault scenario treated in the last paragraphs.
 
 Even though only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
-That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty-cm} and \ref{fig:tokens-and-tokens-after-faulty-aky})
+That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty-cm} and \ref{fig:tokens-and-tokens-after-faulty-aky}).
 
 Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
 
-As expected, faults lead to more token being sent.
+As expected, faults lead to more tokens being sent.
 This is caused mostly because a fault detection requires an additional round.
 However, SafraFT handles faults kindly - neither 5n nor 90\% scenarios lead to an overhead higher than 2.13 compared to a fault-free execution.
-Hence, not every fault causes an extra round but all faults together cost an extra round.
-This result holds for all network sizes, both basic algorithm and for two highly different fault scenarios.
+Hence, not every fault causes an extra round, but all faults together cost an extra round.
+This result holds for all network sizes, both basic algorithms and for two highly different fault scenarios.
 
 \subsubsection{Backup tokens}
-The average amount of backup tokens sent for either fault simulation or network size is lower than the number of faults.
+The average number of backup tokens sent for either fault simulation or network size is lower than the number of faults.
 This is due to the fact that SafraFT only issues backup tokens when the fault of its successor is detected via the fault detector but not if this fault is noticed by receiving a token.
-There are even runs where 1 to 5 nodes fail but no backup token is issued up to networks containing 2000 nodes.
+There are even runs where 1 to 5 nodes fail but no backup token is issued, up to networks containing 2000 nodes.
 
-The other extreme that more backup tokens, than faults occur, are issued exists as well.
-This can be explained by my decision to have node failing after issuing a backup token.
-For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node \co{C} fails which is detected by \co{B} and a backup token is issued.
-After, issueing the backup token \co{B} fails on detection \co{A} issues a backup token towards \co{C}.
+The other extreme that more backup tokens are issued than faults occur exists as well.
+This can be explained by my decision to let nodes fail after issuing a backup token.
+For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node \co{C} fails, which is detected by \co{B}, and a backup token is issued.
+After, issueing the backup token, \co{B} fails, on detection \co{A} issues a backup token towards \co{C}.
 Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.
 
-Although both extremes exist, the average amount of backup token is close to the number of faulty nodes.
+Although both extremes exist, the average number of backup tokens is close to the number of faulty nodes.
 
 \subsubsection{Token size}
 \begin{table}
@@ -407,27 +407,27 @@ Although both extremes exist, the average amount of backup token is close to the
 	\label{table:token-sizes-faulty-aky}
 \end{table}
 
-The average token size increases with faults because the IDs of faulty nodes are propagated by the token (see~\cref{table:token-sizes-faulty-cm} and~\ref{table:token-sizes-faulty-aky}).
+The average token size increases with faults because the IDs of faulty nodes are propagated by the token (see tables~\ref{table:token-sizes-faulty-cm} and~\ref{table:token-sizes-faulty-aky}).
 The influence on token size is between 5 and 8 bytes for networks with 1 to 5 failing nodes.  % NUMBER
 90\% node failure leads to a linear increase of token bytes to the network size of a factor 1.29. % NUMBER
 
 
 \subsubsection{Processing Time}
-The observations of this chapter are backed by \cref{table:processing-times-faulty-cm} and \ref{table:processing-times-aky}.
-As for tokens, one can see an increase in total processing times under the presence of faults compared to fault-free runs which is no surprise because more tokens are sent.
+The observations of this chapter are backed by~tables \ref{table:processing-times-faulty-cm} and~\ref{table:processing-times-aky}.
+As for tokens, one can see an increase in total processing times under the presence of faults compared to fault-free runs, which is no surprise because more tokens are sent.
 This also explains why the processing time is higher for the 90\% scenario than in the 5n configurations.
 There is one exception: the processing time for 2000 nodes and AKY in the 5n scenario decreased.
 
-Processing times after termination for 90\% drastically decreased for both algorithm and all network sizes - except for CM and 50 nodes where one sees a 20\% increase.
+Processing times after termination for 90\% drastically decreased for both algorithms and all network sizes - except for CM and 50 nodes where one sees a 20\% increase.
 The general result can be explained by fewer tokens being sent after termination.
 The exception cannot be explained with the data at hand because it does only occur for one algorithm.
 
 The influence of 5n scenarios on processing time after termination is highly varied.
-In many configurations, it shows no big effect e.g. 250 nodes and CM.
-In others, it decreases significantly e.g. 1000 and AKY.
+In many configurations, it shows no big effect, e.g. 250 nodes and CM.
+In others, it decreases significantly, e.g. 1000 and AKY.
 And finally, one observes a sharp increase for 50 or 2000 and CM.
 The available data does not allow for a good explanation.
-One highly interesting fact is that 5n scenarios lead to more token being sent after termination (see \cref{table:tokens-faulty-cm} and \ref{table:tokens-faulty-aky}) but to less processing time after termination in many configurations.
+One highly interesting fact is that 5n scenarios lead to more tokens being sent after termination (see \cref{table:tokens-faulty-cm} and \ref{table:tokens-faulty-aky}) but to less processing time after termination in many configurations.
 This situation might be explained by the fact that the sum of all token counters is calculated by most nodes if no nodes failed and only by some nodes when other nodes crashed - due to the different \textit{blackUntil} values.
 
 \begin{table}
@@ -482,7 +482,7 @@ This situation might be explained by the fact that the sum of all token counters
 
 \newpage
 \subsubsection{Total time}
-Total time in faulty networks is presented in \cref{table:total-times-faulty-cm} and \ref{table:total-times-aky}.
+Total times in faulty networks are presented in tables~\ref{table:total-times-faulty-cm} and \ref{table:total-times-aky}.
 In line with the observations from the processing time section, one observes:
 \begin{itemize}
 	\item an increase in total time spent on fault scenarios

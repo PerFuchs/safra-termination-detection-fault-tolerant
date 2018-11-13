@@ -16,13 +16,13 @@ The bug only surfaces if the employed failure detector does not propagate failur
 Consider the following example:
 
 \begin{enumerate}
-	\item \co{X} receives a token from \co{X-1} with $CRASHED_t$ set to \{1\}.
+	\item \co{X} receives a token from \co{X-1} with \textit{CRASHED}$_t$ set to \{1\}.
 	\item \co{X} is not passive and does not forward the token but it updates $CRASHED_x$ (line 4 of \co{ReceivedToken}).
 	\item \co{X-1} crashes.
 	\item \co{X-2} detects the crash of \co{X-1}.
-	\item \co{X-2} sends a backup token with $CRASHED_t$ set to \{1\}.
+	\item \co{X-2} sends a backup token with \textit{CRASHED}$_t$ set to \{1\}.
 	\item \co{X} receives this token.
-	\item \co{X} removes \co{1} from $CRASHED_t$ (line 3 of \co{ReceivedToken}).
+	\item \co{X} removes \co{1} from \textit{CRASHED}$_t$ (line 3 of \co{ReceivedToken}).
 	\item When \co{X} forwards the token, \co{1} is not in the crash set and \co{X+1} might never detect the crash of \co{1}.
 	\item \co{X} and all nodes before it know that \co{1} crashed but some nodes after \co{X} do not.
 	\item They disagree on which counters to use for calculating the sum and never call \co{announce}.
@@ -46,10 +46,10 @@ Both bugs have the same root cause, namely that the updates in \co{ReceivedToken
 Therefore, both can be fixed with the same changes which I present next:
 \begin{itemize}
 	\item Move line 3 to 5 from \co{ReceivedToken} to the beginning of \co{HandleToken} after line 1.
-	\item Instead of updating all token variables (line 2 of \co{ReceivedToken}), update only the $CRASHED_t$ set in \co{ReceivedToken}\footnote{This means only populating $CRASHED_t$ with the value of the current token, not removing $CRASHED_i$ from it because this functionality moves to \co{HandleToken}}.
+	\item Instead of updating all token variables (line 2 of \co{ReceivedToken}), update only the $CRASHED_t$ set in \co{ReceivedToken}\footnote{This means only populating \textit{CRASHED}$_t$ with the value of the current token, not removing \textit{CRASHED}$_i$ from it because this functionality moves to \co{HandleToken}}.
 	\item Check if the receiver (\co{j}) is not in $CRASHED_i \cup REPORT_t \cup CRASHED_t$ in line 1 of $SendBasicMessage_i$.
 \end{itemize}
 
-The last two points are necessary to avoid the overhead of sending many messages to a node, that has crashed, even though this could have been avoided because the sender is aware that this node crashed but did not update $CRASEHD_t$.
-This fixes the first bug because $CRASHED_t$ is only updated once.
+The last two points are necessary to avoid the overhead of sending many messages to a node, that has crashed, even though this could have been avoided because the sender is aware that this node crashed but did not update \textit{CRASEHD}$_t$.
+This fixes the first bug because \textit{CRASHED}$_t$ is only updated once.
 The second bug is fixed because the $seq_t$ is only updated atomically with $seq_i$.
