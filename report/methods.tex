@@ -5,8 +5,8 @@ Later, I describe the software and machines used.
 
 \subsection {Fault-tolerant Chandy-Misra}
 \label{ssec:fault-tolerant-chandy-misra}
-This subsection describes the fault-tolerant extentsion of Chandy-Misra's routing algorithm.
-For a description of the original algorithm see~\cite[page 56]{fokkink:2018}.
+This subsection describes the fault-tolerant extentsion of Chandy-Misra's routing algorithm~\cite{chandy1982}.
+For a detailed description of original the algorithm see~\cite[page 56]{fokkink:2018}.
 The fault-tolerant version used for the experiments constructs a sink tree in a bidirectional network under the assumption that a perfect failure detector\footnote{a perfect failure detector does not suspect nodes that haven't actually failed and detects each failure eventually} is present at each node.
 Other than the original Chandy-Misra algorithm, the fault-tolerant version requires FIFO-channels.
 Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
@@ -64,7 +64,7 @@ Additionally, the bug also shows in runs with SafraFS.
 Additionally to fixing the last bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
 
 \subsection{An adaption to Afek-Kutten-Yung}
-I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm as described in \cite[page 183ff]{fokkink:2018}.
+I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}.
 The original Afek-Kutten-Yung is a synchronized algorithm for shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
 Hence, I optimized it to allow runs up to 2000 nodes.
@@ -151,7 +151,7 @@ Wall time between basic termination and detection by Safra is determined by comp
 \subsection{Environment}
 This chapter describes software, hardware and simulated network topology used for the experiments.
 \subsubsection{IBIS}
-IBIS is a Java-based platform for distributed computing developed by researchers of the Vrije Universiteit Amsterdam.
+IBIS is a Java-based platform for distributed computing developed by researchers of the Vrije Universiteit Amsterdam~\cite{bal2010}.
 Its subpart IPL is used as the message passing library for this project.
 I use version 2.3.1 which can be found on GitHub: \href{https://github.com/JungleComputing/ipl/releases/tag/v2.3.1}{https://github.com/JungleComputing/ipl/releases/tag/v2.3.1}.
 
@@ -159,7 +159,7 @@ Communication channels in IPL are backed by TCP and provide asynchronous messagi
 For this experiments, I also used IPL's ability to guarantee FIFO channels.
 
 \subsubsection{DAS 4}
-The experiment is conducted on the part of DAS-4 that belongs to the Vrije Universiteit Amsterdam.
+The experiment is conducted on the part of DAS-4 that belongs to the Vrije Universiteit Amsterdam~\cite{bal2016}.
 The nodes use primarily SuperMicro 2U-twins with Intel E5620 CPUs and a Linux CentOS build with the kernel version 3.10.0-693.17.1.el7.x86\_6.
 For communication 1Gbit/s Lan is used.
 At the time of the experiments, the VU had 41 nodes with 8 cores each.
