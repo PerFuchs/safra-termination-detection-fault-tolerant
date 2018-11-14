@@ -3,14 +3,16 @@
 In the next sections, I present the main results of my experiment to support our claim that SafraFT is correct, to show how SafraFT compares to SafraFS and to exemplify the performance of SafraFT under the presence of faults.
 
 The observations are based on runs of the system described in \cref{sec:methods} on the DAS-4 cluster at the Vrije Universiteit of Amsterdam.
-I measured runs on networks from 50 to 2000 nodes for SafraFT and SafraFS.
+I measured runs on networks from 50 to 2000 nodes (see \cref{sec:discussion} for an explanation of the upper limit) for SafraFT and SafraFS.
 SafraFT was also tested with 1 to 5 nodes failing per run (dubbed 5n) and with 90\% node failure.
 \cref{table:runs} presents how many repetitions of each configuration were run.
+The table also shows that for runs with 2000 nodes more instances shared the same physical machine (due to limited hardware availability).
+This might lead to differences between the experiment results of smaller networks and networks with 2000 instances.
 
 The implementation can be found at GitHub\footnote{https://github.com/PerFuchs/safra-termination-detection-fault-tolerant}.
 The README of this project is the manual on how to conduct experiments and how to interpret the results.
 I used one version to generate all results\footnote{Commit Hash: aa4e52c56885b565776604be99456f58ac8866b9}.
-The raw data used for this report can be found TODO here.
+The raw data used for this report can be obtained on request from Wan Fokkink (https://www.cs.vu.nl/~wanf/).
 
 \begin{table}[]
 	\centering
@@ -99,8 +101,7 @@ The number of tokens sent in total and after termination is presented in \cref{f
 
 The key observation is that SafraFS and SafraFT behave highly similar.
 SafraFT sends slightly fewer tokens on average.
-Also, its results show less variance.
-Most likely these differences are caused by implementation details and are not generalizable.
+Also, its results show somewhat less variance.
 
 As one would expect, the number of tokens grows linearly with the network size.
 Note that the first network size is 5 times smaller than the second; for bigger networks the size doubles for each run.
@@ -176,24 +177,18 @@ The processing time increases linearly with the network size for SafraFS.
 For SafraFT doubling the network size leads to a 2 or threefold increase in processing time.
 Most of the additional processing time of SafraFT is spent between termination and termination detection.
 One can also see that the processing time increased more than twofold for networks of 1000 nodes to 2000 nodes.
-This is most likely due to the fact that 2000 nodes networks were simulated by running 100 instances instead of 50 instances per physical node.
 
 A good candidate to explain the difference in processing time between SafraFS and SafraFT is the different token size of SafraFS and SafraFT: it takes longer to send bigger tokens.
 Also, this theory is supported by the fact that most additional time is spent after termination - Safra is only concerned with moving the token around after termination.
 To confirm this idea, I ran an ad-hoc experiment of excluding the time spent to send messages from the processing time.
 Indeed, this experiment revealed that most of the differences can be tributed to writing tokens onto the wire.
-Therefore, I believe that these differences are caused by the higher bit complexity of SafraFT.
+This confirms that these differences are caused by the higher bit complexity of SafraFT.
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as the bigger influence of network size - bigger networks lead to even larger tokens.
 
 The qualitative result is not surprising.
 However, we are surprised by the quantitative size it has.
 We would have expected that the difference between SafraFS and SafraFT in processing time is observable but much lower.
-A possible explanation can be found in my experiment setup: each physical node simulates between 50 and 100 instances.
-Each of this instances uses multiple threads; altogether there are at least 4 times as many threads as cores on each machine.
-
-The huge quantitative effect could in part be caused by threads being preempted which happens more often for threads that try to send big messages.
-This theory is supported by the fact that the effect is stronger for networks with 2000 nodes.
-However, confirmation of that assumption is not in the scope of this project.
+I discuss this issue in~\cref{sec:discussion}.
 
 The processing time tables \ref{table:processing-times-cm} and \ref{table:processing-times-aky} also present a comparison of the time spent on the basic algorithm and both Safra versions.
 Although SafraFT uses significantly more time, the overhead on the processing time of the basic algorithm stays moderate with a maximum of 12.68\% for 2000 nodes and AKY.
@@ -337,7 +332,7 @@ The data is presented~\cref{fig:tokens-and-tokens-after-faulty-cm}~/~\ref{fig:to
 Otherwise, the two types of fault simulation have a highly different influence on the tokens and tokens after termination metrics.
 
 5n configurations lead to a strong increase in the variance of tokens sent and in tokens sent after termination.
-This seems reasonable because runs with failing nodes might lead to more different situations than runs without fails, e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), at the same time, a single failing node that is a leaf in a Chandy-Misra sink tree and that crashes just before the call of announcing at the successor  causes no further activity.
+This seems reasonable because runs with failing nodes might lead to more different situations than runs without fails, e.g. one failing node could easily cause an extra token round when it leads to a backup token being issued and forwarded (this token is marked black until it reaches the node it originates from), while by contrast, a single failing node that is a leaf in a Chandy-Misra sink tree and that crashes just before the call of announcing at the successor  causes no further activity.
 The same example provides an idea of why the variability increases in big networks.
 That is because one extra round in a big network has a much higher impact on the token count than in a small network.
 
@@ -482,13 +477,23 @@ This situation might be explained by the fact that the sum of all token counters
 
 \newpage
 \subsubsection{Total time}
-Total times in faulty networks are presented in tables~\ref{table:total-times-faulty-cm} and \ref{table:total-times-aky}.
+Total times in faulty networks are presented in tables~\ref{table:total-times-faulty-cm} and \ref{table:total-times-faulty-aky}.
 In line with the observations from the processing time section, one observes:
 \begin{itemize}
 	\item an increase in total time spent on fault scenarios
 	\item less time spent after termination by highly faulty networks - except for 50 nodes and CM
 	\item varied results for 5n scenarios and time spent after termination
 \end{itemize}
+
+None of these observations is suprising.
+Total time includes time spent by SafraFT as well as the basic algorithm.
+It is to be expected that faulty scenarios take more time because the faults need to be handled: the tree fixed and the token passed on at leat an extra round.
+Highly faulty networks become very small.
+Hence, SafraFT needs less time after termination to detect the fact because the token needs to cover only 10\% of the network.
+As explained before, 5n runs naturally to varied results because they lead to wider range of situations (see \cref{ssec:tokens-faulty}).
+
+To conclude, the total times measurements are as expected. 
+In particular, they show that SafraFT handles faults gracefully: the total times increase by a maximum of 4.14 times (partly due to the basic algorithm) and in most cases less time or a similiar amount of time is spent after termination to detect the fact.
 
 \begin{table}
 	\centering
