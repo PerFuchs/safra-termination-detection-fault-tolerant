@@ -21,7 +21,7 @@ When the extended version is used, SafraFT detects early termination in only 14 
 Such cases are unlikely in praxis because it is less likely there than in our experiment that a fault happens just before termination, because in our experiment many faults are triggered when a token is forwarded or received while in praxis most faults ought to happen within the basic algorithm or idle time because the vast majority of the time is spent for these purposes.
 Furthermore, one can actively reduce the chance of early termination detection by using a failure detector that propagates failures fast to all nodes and then enforces an extra token round.
 Finally, this is a general problem of termination detection in the presence of faults:
-when a basic algorithm can be activated by detecting a fault, this can happen directly before actual termination but then there is inevitably a short period of time in which termination can be announced because detection of the crash  and propagation of this information cannot be instantly.
+when a basic algorithm can be activated by detecting a fault, this can happen directly before actual termination but then there is inevitably a short period of time in which termination can be announced correctly because detection of the crash  and propagation of this information cannot be instantly.
 
 The practical comparison between SafraFT and SafraFS shows that there is no change in message complexity and confirmed the hypothesis that bit complexity raises linearly with the network size.
 This higher bit complexity is the reason why SafraFT takes longer to detect termination after actual termination and leads to a higher processing time overhead over the basic algorithm than for SafraFS.
@@ -33,7 +33,7 @@ This leads to threads being preempted by the operating system (its stopped and c
 This theory is supported by the fact that the effect is stronger for networks with 2000 nodes.
 However, experimental confirmation of this hypothesis could not be gained within the time limits of this project.
 
-I would like to point out that my experimental setup imposes that the time taken by SafraFT to detect termination is long.
+Futhermore, I would like to point out that my experimental setup imposes that the time taken by SafraFT to detect termination is long.
 This is because Chandy-Misra and Afek-Kutten-Yung complete their tasks in a few seconds and then SafraFT needs roughly the same time to detect termination.
 However, if I had chosen a basic algorithm that takes multiple hours to complete, the seconds taken by SafraFT to detect termination would be seen in a different perspective.
 Furthermore, the low processing time overhead (less than 13\% in all runs of this experiment)  % NUMBER

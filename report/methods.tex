@@ -69,14 +69,14 @@ Additionally, the bug also shows in runs with SafraFS.
 Additionally to fixing the last bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
 
 \subsection{An adaption to Afek-Kutten-Yung}
-I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: wrong variable used, a serious bug leading to deadlocks and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author happily kindly the feedback and will correct the next revision.}.
+I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: wrong variable used, a serious bug leading to deadlocks and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author kindly the feedback and will correct the pseudo code in the next revision.}.
 The original Afek-Kutten-Yung operates in lock-step fashion in shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
 Hence, I optimized it to allow runs up to 2000 nodes.
 The optimization could exhibit infinite runs.
 Next, I explain the optimization and present the idea why it might exhibit infinite runs and state why this is no problem for the experiments. Before, I give a short explanation of the original Afek-Kutten-Yung.
 
-The original Afek-Kutten-Yung algorithm is self-stabilizing and builds a spanning tree of all processes in a distributed system with shared memory. 
+The original Afek-Kutten-Yung algorithm is self-stabilizing and builds a spanning tree of all nodes in a distributed system with shared memory. 
 Each node is supposed to have an ID; the node with the highest ID becomes the root of the spanning tree.
 Nodes reset all internal variables if they detect inconsistency with their neighbours.
 After, they request to join the tree of their neigbour with the highest root.
