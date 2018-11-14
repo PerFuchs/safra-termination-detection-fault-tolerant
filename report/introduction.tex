@@ -1,6 +1,20 @@
 \section{Introduction}
-This technical report presents an experiment using our fault-tolerant Safra version (short SafraFT)~\cite{safraFT2018}
-to detect termination of a fault-tolerant version of Chandy-Misra's routing algorithm and Afek-Kutten-Yung's self-stabilizing spanning tree algorithm.
+This technical report presents an experiment using our fault-tolerant version of Safra's termination detection algorithm for rings (short SafraFT)~\cite{safraFT2018}
+as control algorithm to detect termination of two different basic algorithms: a fault-tolerant version of Chandy-Misra's routing algorithm and Afek-Kutten-Yung's self-stabilizing spanning tree algorithm.
+Both basic algorithms build a tree containing all nodes in a distributed system.
+However, they cannot determine termination by themselves; that is, they cannot detect if they succeeded to build tree themselves, but they need a termination detection algorithm to verify that they completed their goal.
+This is the task of SafraFT; when it detects termination, it announces this finding to all nodes of the distributed system.
+SafraFT is a version of Safra's termination detection algorithm~\cite{safraFS} that can deal with fail-stop failures\footnote{Fail-stop is a failure model that models failures as a binary, permanent property: a node is either running as normal or has failed; if a node fails, it does not send or react to any messages anymore and cannot be repaired.}. 
+That means it detects termination correctly even in the presence of fail-stop failures.
+
+The following report is not self-contained.
+I recommend to read these texts first:
+\begin{itemize}
+	\item the chapters about Chandy-Misra, Afek-Kutten-Yung, Safra's termination detection algorithm and a definition of termination detection in \textit{Distributed Algorithms an Intuitive Approach} by Fokkink~\cite{fokkink:2018}
+	\item the technical report \textit{Fault-Tolerant Termination Detection with Safra’s Algorithm} by Fokkink and Karlos~\cite{safraFT2018} for a detailed explanation of SafraFT.
+\end{itemize}
+The next paragraphs give an overview on the structure of this report and the experiments conducted.
+
 The fault-tolerant Chandy-Misra version is developed for this project as an extension of the fault sensitive Chandy-Misra algorithm described in~\cite{fokkink:2018} on page 57.
 An explanation of the extension and further important implementation decisions can be found in \cref{sec:methods}.
 

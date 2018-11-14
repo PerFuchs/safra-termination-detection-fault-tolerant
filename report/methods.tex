@@ -5,9 +5,14 @@ Later, I describe the software and machines used.
 
 \subsection {Fault-tolerant Chandy-Misra}
 \label{ssec:fault-tolerant-chandy-misra}
-This subsection describes the fault-tolerant extentsion of Chandy-Misra's routing algorithm~\cite{chandy1982}.
+This subsection describes the fault-tolerant extentsion of Chandy-Misra's routing algorithm~\cite{chandy1982}. 
 For a detailed description of original the algorithm see~\cite[page 56]{fokkink:2018}.
-The fault-tolerant version used for the experiments constructs a sink tree in a bidirectional network under the assumption that a perfect failure detector\footnote{a perfect failure detector does not suspect nodes that haven't actually failed and detects each failure eventually} is present at each node.
+The algorithm builds a shortest path sink-tree towards a single node, called root, in a bidirectional network.
+The root initializes the algorithm by sending \co{dist 0} messages to all its neighbours.
+On reception of a \co{dist d} message each nodes checks if the path via the sender would be shorter than its current path to the root node if so, it updates its distance variable, parent and sends \co{dist d} messages to all its neighbours.
+The algoritm terminates when all \co{dist d} messages have been processed. 
+
+The fault-tolerant version used for the experiments constructs a sink-tree in a bidirectional network under the assumption that a perfect failure detector\footnote{a perfect failure detector does not suspect nodes that haven't actually failed and detects each failure eventually} is present at each node.
 Other than the original Chandy-Misra algorithm, the fault-tolerant version requires FIFO-channels.
 Furthermore, I assume that the root node cannot fail because otherwise there is no sink tree to construct.
 The following assumes that the reader is familiar with the original Chandy-Misra algorithm and describes only the extensions necessary to add fault-tolerance.
@@ -64,24 +69,35 @@ Additionally, the bug also shows in runs with SafraFS.
 Additionally to fixing the last bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
 
 \subsection{An adaption to Afek-Kutten-Yung}
-I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}.
-The original Afek-Kutten-Yung is a synchronized algorithm for shared-memory environments.
+I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: wrong variable used, a serious bug leading to deadlocks and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author happily kindly the feedback and will correct the next revision. }.
+The original Afek-Kutten-Yung operates in lock-step fashion in shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
 Hence, I optimized it to allow runs up to 2000 nodes.
 The optimization could exhibit infinite runs.
-Next, I explain the optimization and present the idea why it might exhibit infinite runs and state why this is no problem for the experiments.
+Next, I explain the optimization and present the idea why it might exhibit infinite runs and state why this is no problem for the experiments. Before, I give a short explanation of the original Afek-Kutten-Yung.
 
-Afek-Kutten-Yung only allows nodes to join a tree after forwarding their join request to root and returning an approval.
-This is quite slow for big networks because each node is only allowed to handle a single join request at any time.
-Intuitively, it is not necessary to forward a join request to the root every time because every node who joined the tree has been approved before.
+The original Afek-Kutten-Yung algorithm is self-stabilizing and builds a spanning tree of all processes in a distributed system with shared memory. 
+Each node is supposed to have an ID; the node with the highest ID becomes the root of the spanning tree.
+Nodes reset all internal variables if they detect inconsistency with their neighbours.
+After, they request to join the tree of their neigbour with the highest root.
+To ensure, that they can only join via a node that is actually part of a valid tree, i.e. a node that can reach its root, the join request is forwarded to the root and the approval is returned via the same path.
+So, Afek-Kutten-Yung only allows nodes to join a tree after forwarding their join request to root and returning an approval.
+This is quite slow for big networks because each node is only allowed to handle a single join request at any time; 
+it is a good starting point for optimizations.
+
+Intuitively, it is not necessary to forward a join request to the root every time because every node who joined the tree has been approved before (except for the case that it has been initilized incorrectly which is handled later).
 Therefore, it can directly (without forwarding) approve further nodes.
 Following, this intuition I use an adapted Afek-Kutten-Yung algorithm that does not forward join requests but approves them directly.
+As stated above, the assumption, that a node has been approved before it joins a tree, does not hold for initially existing illegal trees.
+However, in this case at least one node does not have a consistent parent.
+When it detects this, it resets its variables which leads to its children reseting and so on.
+So, the initially existing tree will dissolve.
 
 After implementation and successful testing of this optimization, I realized, by reading the original Afek-Kutten-Yung paper~\cite{afek}, that this variation could lead to infinite runs.
 It breaks the proof of Lemma 4.9 which states that the set of false roots is monotonically decreasing\footnote{False roots are root variables set to a value that is not a valid ID in the network}.
 With this optimization, this cannot be proven as in the original paper because they rely on the fact that no node can join an illegal tree.
 This is the case in the original algorithm because no join request can be approved before reaching the root, which is not possible for an illegal root.
-In the optimized version, this is not the case because nodes can join an illegal tree without noting that the root does not exist
+In the optimized version, this is not the case because nodes can join an illegal tree without noting that the root does not exist.
 Although the original proof is broken, it is not straightforward to find a concise example of an infinite run because joining a tree takes three rounds while the process of leaving a tree takes only one.
 I do not attempt to prove or disprove the existence of infinite executions in the scope of this project.
 However, I note that (1) infinite runs are no problem for Safra\footnote{In this case announce is never called, which is correct behaviour.} and (2) no infinite run occurred in my experiments.
