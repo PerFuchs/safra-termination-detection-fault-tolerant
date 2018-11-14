@@ -69,7 +69,7 @@ Additionally, the bug also shows in runs with SafraFS.
 Additionally to fixing the last bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
 
 \subsection{An adaption to Afek-Kutten-Yung}
-I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: wrong variable used, a serious bug leading to deadlocks and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author happily kindly the feedback and will correct the next revision. }.
+I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: wrong variable used, a serious bug leading to deadlocks and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author happily kindly the feedback and will correct the next revision.}.
 The original Afek-Kutten-Yung operates in lock-step fashion in shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
 Hence, I optimized it to allow runs up to 2000 nodes.
