@@ -12,7 +12,7 @@ This might lead to differences between the experiment results of smaller network
 The implementation can be found at GitHub\footnote{https://github.com/PerFuchs/safra-termination-detection-fault-tolerant}.
 The README of this project is the manual on how to conduct experiments and how to interpret the results.
 I used one version to generate all results\footnote{Commit Hash: aa4e52c56885b565776604be99456f58ac8866b9}.
-The raw data used for this report can be obtained on request from Wan Fokkink (https://www.cs.vu.nl/~wanf/).
+The raw data used for this report can be obtained on request from Wan Fokkink (https://www.cs.vu.nl/$\sim$wanf/).
 
 \begin{table}[]
 	\centering
@@ -45,7 +45,7 @@ To assure nothing happens after termination detection, the application logs if a
 The analysis tools provided with the experiment point these logs out to make sure they are not overlooked.
 
 To prove termination is not detected too early, I use offline analysis (see \cref{ssec:offline-analysis}) to determine the point of actual termination and verify that detection happened after.
-All 1124 runs using SafraFT under the presence of faults confirm that termination was never detected too early.
+All 1638 runs using SafraFT confirm that termination was never detected too early.
 % NUMBER
 
 However, the experiment revealed that the framework for termination chosen to develop SafraFT is not complete and does not cover all cases for my experimental setup.
@@ -73,8 +73,8 @@ I propose an extended definition of termination to close this gap between theory
 \end{enumerate}
 
 All repetitions of this experiment have been analysed according to the common definition of termination used to develop SafraFT and the extended definition.
-As stated above, SafraFT did never detect termination too early according to its definition.
-According to the extended definition, it detects termination to early in 13 out 1124 runs with crashes.  % NUMBER NUMBER
+As stated above, SafraFT never detected termination too early according to its definition.
+According to the extended definition, it detects termination too early in 14 out of the 1124 runs with crashes.  % NUMBER NUMBER
 However, due to the fact that repairing the constructed trees after detecting a parent crash is quite fast and there is a short time window to do so while the announce call propagates to all nodes, only in 2 of these cases that leads to the situation that basic activity happened after detected termination. % NUMBNER
 
 I carefully reviewed each repetition in which termination is detected too early according to the extended definition to verify that early termination detection is in fact, caused by a situation as described above.
@@ -186,8 +186,7 @@ This confirms that these differences are caused by the higher bit complexity of 
 This would explain the total increase in the timing from SafraFS to SafraFT, as well as the bigger influence of network size - bigger networks lead to even larger tokens.
 
 The qualitative result is not surprising.
-However, we are surprised by the quantitative size it has.
-We would have expected that the difference between SafraFS and SafraFT in processing time is observable but much lower.
+However, we expected a smaller difference between SafraFS and SafraFT in processing time.
 I discuss this issue in~\cref{sec:discussion}.
 
 The processing time tables \ref{table:processing-times-cm} and \ref{table:processing-times-aky} also present a comparison of the time spent on the basic algorithm and both Safra versions.
@@ -342,7 +341,7 @@ A likely explanation is that the low survival rate of 1 out of 10 instances lead
 Even though only one 10th of the nodes survive to participate in the latter token rounds, the highly faulty networks produced more tokens than any other network of the same size.
 That is most likely due to the high amount of backup tokens generated (also shown in \cref{fig:tokens-and-tokens-after-faulty-cm} and \ref{fig:tokens-and-tokens-after-faulty-aky}).
 
-Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio caused by the low number of nodes alive in the last rounds.
+Different from all other networks, highly faulty networks exhibit a much lower token to token after termination ratio, caused by the low number of nodes alive in the last rounds.
 
 As expected, faults lead to more tokens being sent.
 This is caused mostly because a fault detection requires an additional round.
@@ -358,7 +357,7 @@ There are even runs where 1 to 5 nodes fail but no backup token is issued, up to
 The other extreme that more backup tokens are issued than faults occur exists as well.
 This can be explained by my decision to let nodes fail after issuing a backup token.
 For example, nodes \co{A}, \co{B} and \co{C} follow each other in the ring, node \co{C} fails, which is detected by \co{B}, and a backup token is issued.
-After, issueing the backup token, \co{B} fails, on detection \co{A} issues a backup token towards \co{C}.
+After, issuing the backup token, \co{B} fails, on detection \co{A} issues a backup token towards \co{C}.
 Only then \co{A} detects the failing of \co{C} and issues a second backup token to its new successor.
 
 Although both extremes exist, the average number of backup tokens is close to the number of faulty nodes.

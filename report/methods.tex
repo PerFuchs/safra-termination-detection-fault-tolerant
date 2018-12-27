@@ -64,12 +64,12 @@ The presented fault-tolerant Chandy-Misra algorithm could be incorrect as it cal
 Unfortunately, I could not fix it in time for the final experiment runs.
 However, this does not influence the evaluation of SafraFT, because the correctness check for SafraFT and Chandy-Misra in the experiment setup are designed to work independently from each other (see \cref{ssec:offline-analysis}).
 The verification of SafraFT does show that SafraFT detected termination correctly in these cases and did not cause the corrupted Chandy-Misra result.
-Additionally, the bug also shows in runs with SafraFS.
+The bug in the fault-tolerant Chandy-Misra algorithm also shows in runs with SafraFS.
 
-Additionally to fixing the last bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
+Additionally to fixing these bugs, the fault-tolerant Chandy-Misra version could be improved by relieving the necessity for FIFO-channels, a more formal and adapted proof of correctness and a thorough complexity analysis.
 
 \subsection{An adaption to Afek-Kutten-Yung}
-I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: wrong variable used, a serious bug leading to deadlocks and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author kindly the feedback and will correct the pseudo code in the next revision.}.
+I implemented the Afek-Kutten-Yung's self-stabilizing spanning tree algorithm originally proposed in~\cite{afek} and  described in a message passing setting in \cite[page 183ff]{fokkink:2018}\footnote{During my implementation, I found 3 flaws in the pseudo code given: a wrong variable used, leading to deadlocks, and a case of pseudo code that guides the developer towards an implementation which exhibists null pointer exceptions. The author kindly the feedback and will correct the pseudo code in the next revision.}.
 The original Afek-Kutten-Yung operates in lock-step fashion in shared-memory environments.
 Therefore, it becomes extremely slow when it is used in a message passing environment with many nodes.
 Hence, I optimized it to allow runs up to 2000 nodes.

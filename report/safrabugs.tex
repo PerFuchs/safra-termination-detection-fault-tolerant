@@ -1,18 +1,18 @@
-\section{Discovered bugs and fixes}
+\section{Discovered implementation issues and fixes}
 \label{sec:safraBugs}
 
-During the experiments, I found two bugs in SafraFT.
-I first give an example execution for each bug.
-After, I describe how they can be fixed.
-This fix is implemented and tested - all repetitions mentioned in~\cref{sec:results} were run on the fixed version of SafraFT.
-The old version of SafraFT, which includes the bugs, can be found in~\cref{sec:oldSafra}.
-The new, fixed version is presented in the technical report proposing the algorithm~\cite{safraFT2018}.
+During the experiments, I found two implementation issues in SafraFT.
+I first give an example execution for each issue.
+After, I describe how they can be addressed.
+This has been implemented and tested - all repetitions mentioned in~\cref{sec:results} were run on this version of SafraFT.
+%The old version of SafraFT, which includes the bugs, can be found in~\cref{sec:oldSafra}.
+%The fixed version is presented in the technical report proposing the algorithm~\cite{safraFT2018}.
 
-The first bug is that if SafraFT receives two tokens in one round, it removes all nodes from the crash report of the second token and does not forward them.
+The first implementation issue is that if SafraFT receives two tokens in one round, it may remove all nodes from the crash report of the second token and not forward them.
 This can lead to disagreement about which nodes crashed between the alive nodes.
 In this case, the alive nodes cannot agree on how to calculate the sum over the token message counters.
 Hence, they may never call announce.
-The bug only surfaces if the employed failure detector does not propagate failures to all nodes but relies on SafraFT to do so.
+The issue only surfaces if the employed failure detector does not propagate failures to all nodes but relies on SafraFT to do so.
 Consider the following example:
 
 \begin{enumerate}
@@ -28,7 +28,7 @@ Consider the following example:
 	\item They disagree on which counters to use for calculating the sum and never call \co{announce}.
 \end{enumerate}
 
-The second bug is caused by the fact that SafraFT updates its token variables when a token is received but only increases its sequence number when the token is forwarded.
+The second implementation issue is caused by the fact that SafraFT updates its token variables when a token is received but only increases its sequence number when the token is forwarded.
 However, if it forwards a backup token, it uses the sequence number of the updated token variables.
 This can lead to a situation in which SafraFT ignores a valid token because its token number is too high. This situation is presented in the following example:
 
@@ -42,14 +42,14 @@ This can lead to a situation in which SafraFT ignores a valid token because its 
 	\item The token has been lost and SafraFT will never call \co{announce}.
 \end{enumerate}
 
-Both bugs have the same root cause, namely that the updates in \co{ReceivedToken} are not atomic with the updates of other variables in \co{HandleToken}.
-Therefore, both can be fixed with the same changes which I present next:
+Both issues have the same root cause, namely that the updates in \co{ReceivedToken} are not atomic with the updates of other variables in \co{HandleToken}.
+Therefore, both can be addressed with the same changes, which I present next:
 \begin{itemize}
 	\item Move line 3 to 5 from \co{ReceivedToken} to the beginning of \co{HandleToken} after line 1.
 	\item Instead of updating all token variables (line 2 of \co{ReceivedToken}), update only the $CRASHED_t$ set in \co{ReceivedToken}\footnote{This means only populating \textit{CRASHED}$_t$ with the value of the current token, not removing \textit{CRASHED}$_i$ from it because this functionality moves to \co{HandleToken}}.
 	\item Check if the receiver (\co{j}) is not in $CRASHED_i \cup REPORT_t \cup CRASHED_t$ in line 1 of $SendBasicMessage_i$.
 \end{itemize}
 
-The last two points are necessary to avoid the overhead of sending many messages to a node, that has crashed, even though this could have been avoided because the sender is aware that this node crashed but did not update \textit{CRASEHD}$_t$.
-This fixes the first bug because \textit{CRASHED}$_t$ is only updated once.
-The second bug is fixed because the $seq_t$ is only updated atomically with $seq_i$.
+The last two points are necessary to avoid the overhead of sending many messages to a node, that has crashed, even though this could have been avoided because the sender is aware that this node crashed but did not update \textit{CRASHED}$_t$.
+This fixes the first issue because \textit{CRASHED}$_t$ is only updated once.
+The second issue is fixed because the $seq_t$ is only updated atomically with $seq_i$.
